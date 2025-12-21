@@ -1,5 +1,5 @@
 import * as readline from "readline";
-import { existsSync, readFileSync, appendFileSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join, dirname } from "path";
 
@@ -14,20 +14,22 @@ function loadHistory(): string[] {
   return [];
 }
 
-function saveHistoryLine(line: string): void {
+function saveHistory(history: string[]): void {
   const dir = dirname(HISTORY_FILE);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
-  appendFileSync(HISTORY_FILE, line + "\n");
+  writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
 }
 
 export async function repl(run: (input: string) => string): Promise<void> {
+  const history = loadHistory().slice(-MAX_HISTORY);
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: "> ",
-    history: loadHistory().slice(-MAX_HISTORY),
+    history: history,
     historySize: MAX_HISTORY,
   });
 
@@ -40,7 +42,7 @@ export async function repl(run: (input: string) => string): Promise<void> {
       return;
     }
 
-    saveHistoryLine(trimmed);
+    history.push(trimmed);
 
     try {
       const result = run(trimmed);
@@ -57,6 +59,7 @@ export async function repl(run: (input: string) => string): Promise<void> {
   });
 
   rl.on("close", () => {
+    saveHistory(history.slice(-MAX_HISTORY));
     console.log();
     process.exit(0);
   });
