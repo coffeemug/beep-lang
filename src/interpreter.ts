@@ -20,6 +20,10 @@ export function print(obj: RuntimeObj): string {
       return '<type int>';
     case 'RootTypeObj':
       return '<type type>';
+    case 'SymbolObj':
+      return `:${obj.name}`;
+    case 'SymbolTypeObj':
+      return '<type symbol>';
   }
 
   const _exhaustive: never = obj;

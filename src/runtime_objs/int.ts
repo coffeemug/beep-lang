@@ -1,4 +1,4 @@
-import { findSym, type Env } from "../env";
+import { findSymbol, type Env } from "../env";
 import { assertObj } from "../util";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -15,7 +15,7 @@ export type IntObj =
   }
 
 export function makeIntTypeObj(env: Env): IntTypeObj {
-  const rootTypeObj = findSym(env, 'type');
+  const rootTypeObj = findSymbol(env, 'type')?.value;
   assertObj<RootTypeObj>(rootTypeObj, 'RootTypeObj');
 
   return {
@@ -26,7 +26,7 @@ export function makeIntTypeObj(env: Env): IntTypeObj {
 }
 
 export function makeIntObj(value: number, env: Env): IntObj {
-  const intTypeObj = findSym(env, 'int');
+  const intTypeObj = findSymbol(env, 'int')?.value;
   assertObj<IntTypeObj>(intTypeObj, 'IntTypeObj');
 
   return {
