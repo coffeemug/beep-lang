@@ -1,3 +1,4 @@
+import type { Env } from "../env";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
@@ -29,3 +30,5 @@ export function makeStringObj(value: string, stringTypeObj: StringTypeObj): Stri
     value,
   };
 }
+
+export function registerStringMethods(_env: Env) {}

@@ -1,5 +1,5 @@
 import type { TypeObj, RuntimeObj } from ".";
-import type { Frame } from "../env";
+import type { Env, Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -59,3 +59,5 @@ export function makeNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argC
     closureFrame,
   };
 }
+
+export function registerMethodMethods(_env: Env) {}

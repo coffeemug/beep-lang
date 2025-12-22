@@ -1,9 +1,9 @@
 import type { RuntimeObj } from './runtime_objs';
-import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
-import { makeMethodTypeObj, makeNativeMethodObj, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
-import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
-import { makeStringTypeObj, type StringTypeObj } from './runtime_objs/string';
-import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
+import { makeIntTypeObj, registerIntMethods, type IntTypeObj } from './runtime_objs/int';
+import { makeMethodTypeObj, makeNativeMethodObj, registerMethodMethods, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
+import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from './runtime_objs/root_type';
+import { makeStringTypeObj, registerStringMethods, type StringTypeObj } from './runtime_objs/string';
+import { makeSymbolObj, makeSymbolTypeObj, registerSymbolMethods, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
 
 /*
   Full environment
@@ -31,7 +31,8 @@ export function createEnv(): Env {
 
   const thisSymbol = intern(bootstrapEnv, 'this');
 
-  // Native `type` method - returns the object's type
+  // Native `type` method - returns the object's type. Registering
+  // here because it's the same for every type.
   const typeSym = intern(bootstrapEnv, 'type');
   const typeMethod = (method: MethodObj) =>
       method.closureFrame.bindings.get(thisSymbol.id)!.type;
@@ -47,13 +48,21 @@ export function createEnv(): Env {
     ));
   }
 
-  return {
+  const env: Env = {
     ...bootstrapEnv,
     intTypeObj: new WeakRef(intTypeObj),
     methodTypeObj: new WeakRef(methodTypeObj),
     stringTypeObj: new WeakRef(stringTypeObj),
     thisSymbol,
   };
+
+  registerIntMethods(env);
+  registerStringMethods(env);
+  registerSymbolMethods(env);
+  registerMethodMethods(env);
+  registerRootTypeMethods(env);
+
+  return env;
 }
 
 /*

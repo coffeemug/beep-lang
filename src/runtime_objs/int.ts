@@ -1,3 +1,4 @@
+import type { Env } from "../env";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
@@ -29,3 +30,5 @@ export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
     value,
   };
 }
+
+export function registerIntMethods(_env: Env) {}

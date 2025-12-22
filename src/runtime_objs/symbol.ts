@@ -1,3 +1,4 @@
+import type { Env } from "../env";
 import type { RuntimeObj } from ".";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -30,3 +31,5 @@ export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTyp
     id,
   };
 }
+
+export function registerSymbolMethods(_env: Env) {}
