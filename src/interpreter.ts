@@ -1,7 +1,7 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "./runtime_objs";
 import { makeIntObj } from "./runtime_objs/int";
-import { makeMethodObj } from "./runtime_objs/methods";
+import { makeMethodObj, type MethodObj } from "./runtime_objs/methods";
 import { findBinding, makeFrame, bindSymbol, withFrame, type Env } from "./env";
 
 export function evaluate(expr: Expr, env: Env): RuntimeObj {
@@ -54,14 +54,21 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
     }
 
     case 'funcall': {
-      const fn = evaluate(expr.fn, env);
+      const fn = evaluate(expr.fn, env) as MethodObj;
       if (fn.tag !== 'MethodObj') {
         throw new Error(`Cannot call ${print(fn)}`);
       }
 
+      const args = expr.args.map(arg => evaluate(arg, env));
+      const receiver = fn.closureFrame.bindings.get(env.thisSymbol.id)!;
+
+      if (fn.mode === 'native') {
+        return fn.nativeFn(receiver, args);
+      }
+
       return withFrame(env, fn.closureFrame, () => {
         for (let i = 0; i < fn.argNames.length; i++) {
-          bindSymbol(env, fn.argNames[i], evaluate(expr.args[i], env));
+          bindSymbol(env, fn.argNames[i], args[i]);
         }
         return evaluate(fn.body, env);
       });
@@ -84,7 +91,7 @@ export function print(obj: RuntimeObj): string {
     case 'SymbolTypeObj':
       return '<type symbol>';
     case 'MethodObj':
-      return `${obj.receiverType.name.name}/${obj.name.name}`;
+      return `<method:${obj.mode} ${obj.receiverType.name.name}/${obj.name.name}>`;
     case "MethodTypeObj":
       return '<type method>';
   }

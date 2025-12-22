@@ -1,24 +1,29 @@
-import type { TypeObj } from ".";
+import type { TypeObj, RuntimeObj } from ".";
 import type { Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
 
+export type NativeFn = (thisObj: RuntimeObj, args: RuntimeObj[]) => RuntimeObj;
+
 export type MethodTypeObj =
   & RuntimeObjMixin<'MethodTypeObj', RootTypeObj>
   & TypeObjMixin
   & {}
 
-export type MethodObj =
+type MethodObjBase =
   & RuntimeObjMixin<'MethodObj', MethodTypeObj>
   & {
     receiverType: TypeObj,
     name: SymbolObj,
-    argNames: SymbolObj[],
-    body: Expr,
     closureFrame: Frame,
   }
+
+export type MethodObj = MethodObjBase & (
+  | { mode: 'interpreted', argNames: SymbolObj[], body: Expr }
+  | { mode: 'native', nativeFn: NativeFn }
+)
 
 export function makeMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): MethodTypeObj {
   return {
@@ -35,8 +40,21 @@ export function makeMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: 
     type: methodTypeObj,
     receiverType,
     name,
+    mode: 'interpreted',
     argNames,
     body,
+    closureFrame,
+  };
+}
+
+export function makeNativeMethodObj(receiverType: TypeObj, name: SymbolObj, nativeFn: NativeFn, methodTypeObj: MethodTypeObj, closureFrame: Frame): MethodObj {
+  return {
+    tag: 'MethodObj',
+    type: methodTypeObj,
+    receiverType,
+    name,
+    mode: 'native',
+    nativeFn,
     closureFrame,
   };
 }
