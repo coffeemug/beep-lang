@@ -1,7 +1,7 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj } from "./runtime_objs";
 import { makeIntObj, type IntTypeObj } from "./runtime_objs/int";
-import { intern, findBinding, type Env } from "./env";
+import { findBinding, intern, type Env } from "./env";
 
 export function evaluate(expr: Expr, env: Env): RuntimeObj {
   switch (expr.type) {
@@ -12,10 +12,9 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
       return makeIntObj(expr.value, intType);
     }
     case 'ident': {
-      const sym = intern(env, expr.name);
-      const value = findBinding(env, sym);
+      const value = findBinding(env, expr.sym);
       if (!value) {
-        throw new Error(`Unbound symbol ${print(sym)}`);
+        throw new Error(`Unbound symbol ${print(expr.sym)}`);
       }
       return value;
     }
@@ -33,7 +32,7 @@ export function print(obj: RuntimeObj): string {
     case 'RootTypeObj':
       return '<type type>';
     case 'SymbolObj':
-      return `:${obj.name}`;
+      return `'${obj.name}:${obj.id}`;
     case 'SymbolTypeObj':
       return '<type symbol>';
   }

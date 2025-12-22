@@ -14,7 +14,7 @@ async function main(): Promise<void> {
 }
 
 function run(input: string, env: Env): string {
-  const ast = parse(input);
+  const ast = parse(input, env);
   const result = evaluate(ast, env);
   return print(result);
 }
