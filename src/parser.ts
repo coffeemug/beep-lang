@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, maybe, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import { intern, type Env } from "./env";
 import type { SymbolObj } from "./runtime_objs/symbol";
@@ -33,6 +33,12 @@ export function parse(input: string, env: Env): Expr {
     return intern(env, name);
   });
 
+  // Method names can have an optional ! at the end (e.g., push!)
+  const methodNameSym = lex(seq(alpha, many(alnum), maybe("!"))).map(([first, rest, bang]) => {
+    const name = [first, ...rest, bang ?? ""].join("");
+    return intern(env, name);
+  });
+
   const ident = identSym.map((sym) => ({ type: "ident" as const, sym }));
 
   // Integer literals
@@ -54,7 +60,7 @@ export function parse(input: string, env: Env): Expr {
 
   // Method definition: def type/name(params) body end
   const methodDef = seq(
-    "def", identSym, "/", identSym, "(", sepBy(identSym, ","), ")",
+    "def", identSym, "/", methodNameSym, "(", sepBy(identSym, ","), ")",
     expr,
     "end"
   ).map(([_def, receiverType, _slash, name, _lp, params, _rp, body, _end]): Expr => ({
@@ -74,7 +80,7 @@ export function parse(input: string, env: Env): Expr {
   }));
 
   // Suffix: .name for field access
-  const fieldAccessSuffix = seq(".", identSym).map(([_dot, name]): Suffix => ({
+  const fieldAccessSuffix = seq(".", methodNameSym).map(([_dot, name]): Suffix => ({
     type: "fieldAccess",
     name,
   }));
