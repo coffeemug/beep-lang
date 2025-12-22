@@ -1,4 +1,5 @@
 import { getThisObj, type Env } from "../env";
+import { makeIntObj } from "./int";
 import { nativeMethod } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -105,4 +106,11 @@ export function registerListMethods(env: Env) {
     return thisObj;
   });
   mPopFrontMut.receiverType.methods.set(mPopFrontMut.name, mPopFrontMut);
+
+  // len - returns number of elements
+  const mLen = nativeMethod(env, 'list', 'len', 0, (method) => {
+    const thisObj = getThisObj<ListObj>(method, env);
+    return makeIntObj(thisObj.elements.length, env.intTypeObj.deref()!);
+  });
+  mLen.receiverType.methods.set(mLen.name, mLen);
 }
