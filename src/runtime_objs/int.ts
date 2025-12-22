@@ -1,5 +1,3 @@
-import { findSymbol, type Env } from "../env";
-import { assertObj } from "../util";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 
@@ -14,10 +12,7 @@ export type IntObj =
     value: number,
   }
 
-export function makeIntTypeObj(env: Env): IntTypeObj {
-  const rootTypeObj = findSymbol(env, 'type')?.value;
-  assertObj<RootTypeObj>(rootTypeObj, 'RootTypeObj');
-
+export function makeIntTypeObj(rootTypeObj: RootTypeObj): IntTypeObj {
   return {
     tag: 'IntTypeObj',
     type: rootTypeObj,
@@ -25,10 +20,7 @@ export function makeIntTypeObj(env: Env): IntTypeObj {
   };
 }
 
-export function makeIntObj(value: number, env: Env): IntObj {
-  const intTypeObj = findSymbol(env, 'int')?.value;
-  assertObj<IntTypeObj>(intTypeObj, 'IntTypeObj');
-
+export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
   return {
     tag: 'IntObj',
     type: intTypeObj,

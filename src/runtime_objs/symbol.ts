@@ -1,6 +1,4 @@
 import type { RuntimeObj } from ".";
-import { findSymbol, type Env } from "../env";
-import { assertObj } from "../util";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 
@@ -13,7 +11,7 @@ export type SymbolObj =
   & RuntimeObjMixin<'SymbolObj', SymbolTypeObj>
   & {
     name: string,
-    value: RuntimeObj | null,
+    id: number,
   }
 
 export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): SymbolTypeObj {
@@ -24,23 +22,11 @@ export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): SymbolTypeObj {
   };
 }
 
-export function makeSymbolObj_(name: string, symbolTypeObj: SymbolTypeObj, value: RuntimeObj | null = null): SymbolObj {
+export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTypeObj): SymbolObj {
   return {
     tag: 'SymbolObj',
     type: symbolTypeObj,
     name,
-    value,
-  };
-}
-
-export function makeSymbolObj(name: string, env: Env): SymbolObj {
-  const symbolTypeObj = findSymbol(env, 'symbol')?.value;
-  assertObj<SymbolTypeObj>(symbolTypeObj, 'SymbolTypeObj');
-
-  return {
-    tag: 'SymbolObj',
-    type: symbolTypeObj,
-    name,
-    value: null,
+    id,
   };
 }
