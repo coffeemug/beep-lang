@@ -1,5 +1,6 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
+import type { SymbolObj } from "./symbol";
 
 export type IntTypeObj =
   & RuntimeObjMixin<'IntTypeObj', RootTypeObj>
@@ -12,10 +13,11 @@ export type IntObj =
     value: number,
   }
 
-export function makeIntTypeObj(rootTypeObj: RootTypeObj): IntTypeObj {
+export function makeIntTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): IntTypeObj {
   return {
     tag: 'IntTypeObj',
     type: rootTypeObj,
+    name,
     methods: new Map(),
   };
 }

@@ -1,4 +1,6 @@
 import type { TypeObj } from ".";
+import type { MethodObj } from "./methods";
+import type { SymbolObj } from "./symbol";
 
 export type RuntimeObjMixin<Tag extends string, T extends TypeObj> = {
   /* Fields common to every runtime object */
@@ -8,7 +10,8 @@ export type RuntimeObjMixin<Tag extends string, T extends TypeObj> = {
 
 export type TypeObjMixin = {
   /* Fields common to every type object */
+  name: SymbolObj,
   methods: MethodsMap,
 }
 
-export type MethodsMap = Map<string, null>;
+export type MethodsMap = Map<SymbolObj, MethodObj>;

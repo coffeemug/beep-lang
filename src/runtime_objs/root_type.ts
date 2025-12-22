@@ -8,7 +8,7 @@ export type RootTypeObj = TypeObjMixin & {
   /* Fields specific to RootTypeObj */
 }
 
-export function makeRootTypeObj(): RootTypeObj {
+export function makeRootTypeObj(): Omit<RootTypeObj, 'name'> {
   const obj: Partial<RootTypeObj> = {
     tag: 'RootTypeObj',
     methods: new Map(),
@@ -16,5 +16,5 @@ export function makeRootTypeObj(): RootTypeObj {
 
   // The type of RootTypeObj is itself
   obj.type = obj as RootTypeObj;
-  return obj as RootTypeObj;
+  return obj as Omit<RootTypeObj, 'name'>;
 }

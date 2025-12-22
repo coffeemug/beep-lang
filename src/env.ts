@@ -22,10 +22,15 @@ export type Frame = {
 }
 
 export function createEnv(): Env {
-  const rootTypeObj = makeRootTypeObj();
-  const symbolTypeObj = makeSymbolTypeObj(rootTypeObj);
+  const env = bootstrapEnv();
+  registerBuiltinTypes(env);
+  return env;
+}
 
-  const intTypeObj = makeIntTypeObj(rootTypeObj);
+function bootstrapEnv(): Env {
+  // Phase I: Create bootstrapped type objects without names (circular dependency)
+  const rootTypeObj = makeRootTypeObj() as RootTypeObj;
+  const symbolTypeObj = makeSymbolTypeObj(rootTypeObj) as SymbolTypeObj;
 
   const env: Env = {
     currentFrame: makeFrame(),
@@ -33,14 +38,26 @@ export function createEnv(): Env {
     nextSymbolId: 0,
     cachedRootTypeObj: new WeakRef(rootTypeObj),
     cachedSymbolTypeObj: new WeakRef(symbolTypeObj),
-    cachedIntTypeObj: new WeakRef(intTypeObj),
+    cachedIntTypeObj: undefined!,
   };
 
-  const typeSym = intern(env, 'type', rootTypeObj);
-  const symbolSym = intern(env, 'symbol', symbolTypeObj);
-  const intSym = intern(env, 'int', intTypeObj);
+  // Phase II: Assign and bind names now that symbolTypeObj exists
+  rootTypeObj.name = intern(env, 'type');
+  symbolTypeObj.name = intern(env, 'symbol');
+
+  bindSymbol(env, rootTypeObj.name, rootTypeObj);
+  bindSymbol(env, symbolTypeObj.name, symbolTypeObj);
 
   return env;
+}
+
+function registerBuiltinTypes(env: Env): void {
+  const rootTypeObj = env.cachedRootTypeObj.deref()!;
+
+  // int
+  const intTypeObj = makeIntTypeObj(intern(env, 'int'), rootTypeObj);
+  env.cachedIntTypeObj = new WeakRef(intTypeObj);
+  bindSymbol(env, intTypeObj.name, intTypeObj);
 }
 
 function makeFrame(parent?: Frame): Frame {

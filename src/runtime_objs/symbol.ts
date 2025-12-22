@@ -14,7 +14,7 @@ export type SymbolObj =
     id: number,
   }
 
-export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): SymbolTypeObj {
+export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj, 'name'> {
   return {
     tag: 'SymbolTypeObj',
     type: rootTypeObj,

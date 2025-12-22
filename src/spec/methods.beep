@@ -1,0 +1,14 @@
+
+def int/id()
+  this
+end
+
+def int/other(x)
+  x
+end
+
+1.id
+1.other
+
+1.id()
+1.other(42)

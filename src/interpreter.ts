@@ -32,6 +32,10 @@ export function print(obj: RuntimeObj): string {
       return `'${obj.name}:${obj.id}`;
     case 'SymbolTypeObj':
       return '<type symbol>';
+    case 'MethodObj':
+      return `TODO:receiverTypeName/${obj.name.name}`;
+    case "MethodTypeObj":
+      return '<type method>';
   }
 
   const _exhaustive: never = obj;
