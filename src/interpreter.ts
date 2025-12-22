@@ -1,19 +1,70 @@
 import type { Expr } from "./parser";
-import type { RuntimeObj } from "./runtime_objs";
+import type { RuntimeObj, TypeObj } from "./runtime_objs";
 import { makeIntObj } from "./runtime_objs/int";
-import { findBinding, type Env } from "./env";
+import { makeMethodObj } from "./runtime_objs/methods";
+import { findBinding, makeFrame, bindSymbol, withFrame, type Env } from "./env";
 
 export function evaluate(expr: Expr, env: Env): RuntimeObj {
   switch (expr.type) {
     case 'int': {
-      return makeIntObj(expr.value, env.cachedIntTypeObj.deref()!);
+      return makeIntObj(expr.value, env.intTypeObj.deref()!);
     }
+
     case 'ident': {
       const value = findBinding(env, expr.sym);
       if (!value) {
         throw new Error(`Unbound symbol ${print(expr.sym)}`);
       }
       return value;
+    }
+
+    case 'methodDef': {
+      const receiverType = findBinding(env, expr.receiverType) as TypeObj;
+      if (!receiverType) {
+        throw new Error(`Unknown type ${expr.receiverType.name}`);
+      }
+      const methodObj = makeMethodObj(
+        receiverType,
+        expr.name,
+        expr.params,
+        expr.body,
+        env.methodTypeObj.deref()!,
+        env.currentFrame
+      );
+      receiverType.methods.set(expr.name, methodObj);
+      return methodObj;
+    }
+
+    case 'fieldAccess': {
+      const receiver = evaluate(expr.receiver, env);
+      const method = receiver.type.methods.get(expr.fieldName);
+      if (!method) {
+        throw new Error(`No method ${expr.fieldName.name} on ${print(receiver)}`);
+      }
+
+      // Create a new frame with `this` bound, closing over method's closure frame
+      const closureFrame = makeFrame(method.closureFrame);
+      closureFrame.bindings.set(env.thisSymbol.id, receiver);
+
+      // Return a new method that closes over this frame
+      return {
+        ...method,
+        closureFrame,
+      };
+    }
+
+    case 'funcall': {
+      const fn = evaluate(expr.fn, env);
+      if (fn.tag !== 'MethodObj') {
+        throw new Error(`Cannot call ${print(fn)}`);
+      }
+
+      return withFrame(env, fn.closureFrame, () => {
+        for (let i = 0; i < fn.argNames.length; i++) {
+          bindSymbol(env, fn.argNames[i], evaluate(expr.args[i], env));
+        }
+        return evaluate(fn.body, env);
+      });
     }
   }
 

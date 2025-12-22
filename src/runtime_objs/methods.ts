@@ -1,4 +1,5 @@
 import type { TypeObj } from ".";
+import type { Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -16,6 +17,7 @@ export type MethodObj =
     name: SymbolObj,
     argNames: SymbolObj[],
     body: Expr,
+    closureFrame: Frame,
   }
 
 export function makeMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): MethodTypeObj {
@@ -27,7 +29,7 @@ export function makeMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): Me
   };
 }
 
-export function makeMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr, methodTypeObj: MethodTypeObj): MethodObj {
+export function makeMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr, methodTypeObj: MethodTypeObj, closureFrame: Frame): MethodObj {
   return {
     tag: 'MethodObj',
     type: methodTypeObj,
@@ -35,5 +37,6 @@ export function makeMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: 
     name,
     argNames,
     body,
+    closureFrame,
   };
 }
