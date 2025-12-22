@@ -1,5 +1,7 @@
 import type { Env } from "../env";
+import { makeNativeMethodObj } from "./methods";
 import type { TypeObjMixin } from "./mixins";
+import { makeStringObj } from "./string";
 
 export type RootTypeObj = TypeObjMixin & {
   /* Fields common to every runtime object */
@@ -20,4 +22,14 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name'> {
   return obj as Omit<RootTypeObj, 'name'>;
 }
 
-export function registerRootTypeMethods(_env: Env) {}
+export function registerRootTypeMethods(env: Env) {
+  const rootTypeObj = env.rootTypeObj.deref()!;
+  rootTypeObj.methods.set(env.showSym, makeNativeMethodObj(
+    rootTypeObj, env.showSym, 0,
+    (method) => {
+      const thisObj = method.closureFrame.bindings.get(env.thisSymbol.id)! as RootTypeObj;
+      return makeStringObj(`<type ${thisObj.name.name}>`, env.stringTypeObj.deref()!);
+    },
+    env.methodTypeObj.deref()!, env.currentFrame
+  ));
+}

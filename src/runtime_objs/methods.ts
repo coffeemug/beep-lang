@@ -3,6 +3,7 @@ import type { Env, Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
+import { makeStringObj } from "./string";
 import type { SymbolObj } from "./symbol";
 
 export type NativeFn = (method: MethodObj, args: RuntimeObj[]) => RuntimeObj;
@@ -60,4 +61,14 @@ export function makeNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argC
   };
 }
 
-export function registerMethodMethods(_env: Env) {}
+export function registerMethodMethods(env: Env) {
+  const methodTypeObj = env.methodTypeObj.deref()!;
+  methodTypeObj.methods.set(env.showSym, makeNativeMethodObj(
+    methodTypeObj, env.showSym, 0,
+    (method) => {
+      const thisObj = method.closureFrame.bindings.get(env.thisSymbol.id)! as MethodObj;
+      return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
+    },
+    methodTypeObj, env.currentFrame
+  ));
+}

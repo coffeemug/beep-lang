@@ -1,4 +1,5 @@
 import type { Env } from "../env";
+import { makeNativeMethodObj } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
@@ -31,4 +32,14 @@ export function makeStringObj(value: string, stringTypeObj: StringTypeObj): Stri
   };
 }
 
-export function registerStringMethods(_env: Env) {}
+export function registerStringMethods(env: Env) {
+  const stringTypeObj = env.stringTypeObj.deref()!;
+  stringTypeObj.methods.set(env.showSym, makeNativeMethodObj(
+    stringTypeObj, env.showSym, 0,
+    (method) => {
+      const thisObj = method.closureFrame.bindings.get(env.thisSymbol.id)! as StringObj;
+      return makeStringObj(`'${thisObj.value}'`, stringTypeObj);
+    },
+    env.methodTypeObj.deref()!, env.currentFrame
+  ));
+}

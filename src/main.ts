@@ -1,6 +1,6 @@
 import { repl } from "./repl";
 import { parse } from "./parser";
-import { evaluate, print } from "./interpreter";
+import { evaluate, show } from "./interpreter";
 import { createEnv, type Env } from "./env";
 
 async function main(): Promise<void> {
@@ -13,7 +13,7 @@ async function main(): Promise<void> {
 function run(input: string, env: Env): string {
   const ast = parse(input, env);
   const result = evaluate(ast, env);
-  return print(result);
+  return show(result, env);
 }
 
 main();

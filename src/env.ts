@@ -14,6 +14,7 @@ export type Env = BootstrapEnv & {
   methodTypeObj: WeakRef<MethodTypeObj>,
   stringTypeObj: WeakRef<StringTypeObj>,
   thisSymbol: SymbolObj,
+  showSym: SymbolObj,
 }
 
 export function createEnv(): Env {
@@ -48,12 +49,15 @@ export function createEnv(): Env {
     ));
   }
 
+  const showSym = intern(bootstrapEnv, 'show');
+
   const env: Env = {
     ...bootstrapEnv,
     intTypeObj: new WeakRef(intTypeObj),
     methodTypeObj: new WeakRef(methodTypeObj),
     stringTypeObj: new WeakRef(stringTypeObj),
     thisSymbol,
+    showSym,
   };
 
   registerIntMethods(env);
