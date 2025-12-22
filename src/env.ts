@@ -2,6 +2,7 @@ import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
 import { makeMethodTypeObj, makeNativeMethodObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
+import { makeStringTypeObj, type StringTypeObj } from './runtime_objs/string';
 import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
 
 /*
@@ -11,6 +12,7 @@ import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } 
 export type Env = BootstrapEnv & {
   intTypeObj: WeakRef<IntTypeObj>,
   methodTypeObj: WeakRef<MethodTypeObj>,
+  stringTypeObj: WeakRef<StringTypeObj>,
   thisSymbol: SymbolObj,
 }
 
@@ -21,9 +23,11 @@ export function createEnv(): Env {
 
   const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
   const methodTypeObj = makeMethodTypeObj(intern(bootstrapEnv, 'method'), rootTypeObj);
+  const stringTypeObj = makeStringTypeObj(intern(bootstrapEnv, 'string'), rootTypeObj);
 
   bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
   bindSymbol(bootstrapEnv, methodTypeObj.name, methodTypeObj);
+  bindSymbol(bootstrapEnv, stringTypeObj.name, stringTypeObj);
 
   const thisSymbol = intern(bootstrapEnv, 'this');
 
@@ -31,7 +35,7 @@ export function createEnv(): Env {
   const typeSym = intern(bootstrapEnv, 'type');
   const typeMethod = (thisObj: RuntimeObj) => thisObj.type;
 
-  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj]) {
+  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj, stringTypeObj]) {
     typeObj.methods.set(typeSym, makeNativeMethodObj(
       typeObj,
       typeSym,
@@ -45,6 +49,7 @@ export function createEnv(): Env {
     ...bootstrapEnv,
     intTypeObj: new WeakRef(intTypeObj),
     methodTypeObj: new WeakRef(methodTypeObj),
+    stringTypeObj: new WeakRef(stringTypeObj),
     thisSymbol,
   };
 }

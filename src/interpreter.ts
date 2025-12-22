@@ -1,6 +1,7 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "./runtime_objs";
 import { makeIntObj } from "./runtime_objs/int";
+import { makeStringObj } from "./runtime_objs/string";
 import { makeMethodObj, type MethodObj } from "./runtime_objs/methods";
 import { findBinding, makeFrame, bindSymbol, withFrame, type Env } from "./env";
 
@@ -8,6 +9,10 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
   switch (expr.type) {
     case 'int': {
       return makeIntObj(expr.value, env.intTypeObj.deref()!);
+    }
+
+    case 'string': {
+      return makeStringObj(expr.value, env.stringTypeObj.deref()!);
     }
 
     case 'ident': {
@@ -94,6 +99,10 @@ export function print(obj: RuntimeObj): string {
       return `<method:${obj.mode} ${obj.receiverType.name.name}/${obj.name.name}>`;
     case "MethodTypeObj":
       return '<type method>';
+    case 'StringObj':
+      return `'${obj.value}'`;
+    case 'StringTypeObj':
+      return '<type string>';
   }
 
   const _exhaustive: never = obj;

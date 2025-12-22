@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import { intern, type Env } from "./env";
 import type { SymbolObj } from "./runtime_objs/symbol";
@@ -15,6 +15,7 @@ function postfix<B, S, R>(
 
 export type Expr =
   | { type: "int"; value: number }
+  | { type: "string"; value: string }
   | { type: "ident"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
@@ -36,8 +37,12 @@ export function parse(input: string, env: Env): Expr {
   // Integer literals
   const intLit = int.map((n) => ({ type: "int" as const, value: n }));
 
+  // String literals: 'foo bar'
+  const strLit = lex(seq("'", many(anych({ but: "'" })), "'"))
+    .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
+
   // Primary expressions (atoms)
-  const primary = either(intLit, ident);
+  const primary = either(strLit, intLit, ident);
 
   // Forward reference for full expressions (needed for method bodies and args)
   const expr: parser<Expr> = fwd(() => postfixExpr);
