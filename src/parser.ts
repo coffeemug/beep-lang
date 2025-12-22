@@ -16,6 +16,7 @@ function postfix<B, S, R>(
 export type Expr =
   | { type: "int"; value: number }
   | { type: "string"; value: string }
+  | { type: "list"; elements: Expr[] }
   | { type: "ident"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
@@ -41,11 +42,15 @@ export function parse(input: string, env: Env): Expr {
   const strLit = lex(seq("'", many(anych({ but: "'" })), "'"))
     .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
 
-  // Primary expressions (atoms)
-  const primary = either(strLit, intLit, ident);
-
-  // Forward reference for full expressions (needed for method bodies and args)
+  // Forward reference for full expressions (needed for list elements, method bodies, and args)
   const expr: parser<Expr> = fwd(() => postfixExpr);
+
+  // List literals: [elem, elem, ...]
+  const listLit = seq("[", sepBy(expr, ","), "]")
+    .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
+
+  // Primary expressions (atoms)
+  const primary = either(listLit, strLit, intLit, ident);
 
   // Method definition: def type/name(params) body end
   const methodDef = seq(

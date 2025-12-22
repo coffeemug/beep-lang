@@ -1,6 +1,7 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "./runtime_objs";
 import { makeIntObj } from "./runtime_objs/int";
+import { makeListObj } from "./runtime_objs/list";
 import { makeMethodObj, type MethodObj } from "./runtime_objs/methods";
 import { makeStringObj, type StringObj } from "./runtime_objs/string";
 import { findBinding, makeFrame, bindSymbol, withFrame, type Env } from "./env";
@@ -13,6 +14,11 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
 
     case 'string': {
       return makeStringObj(expr.value, env.stringTypeObj.deref()!);
+    }
+
+    case 'list': {
+      const elements = expr.elements.map(e => evaluate(e, env));
+      return makeListObj(elements, env.listTypeObj.deref()!);
     }
 
     case 'ident': {

@@ -1,5 +1,6 @@
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, registerIntMethods, type IntTypeObj } from './runtime_objs/int';
+import { makeListTypeObj, registerListMethods, type ListTypeObj } from './runtime_objs/list';
 import { makeMethodTypeObj, makeNativeMethodObj, registerMethodMethods, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from './runtime_objs/root_type';
 import { makeStringTypeObj, registerStringMethods, type StringTypeObj } from './runtime_objs/string';
@@ -11,6 +12,7 @@ import { makeSymbolObj, makeSymbolTypeObj, registerSymbolMethods, type SymbolObj
 
 export type Env = BootstrapEnv & {
   intTypeObj: WeakRef<IntTypeObj>,
+  listTypeObj: WeakRef<ListTypeObj>,
   methodTypeObj: WeakRef<MethodTypeObj>,
   stringTypeObj: WeakRef<StringTypeObj>,
   thisSymbol: SymbolObj,
@@ -23,10 +25,12 @@ export function createEnv(): Env {
   const symbolTypeObj = bootstrapEnv.symbolTypeObj.deref()!;
 
   const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
+  const listTypeObj = makeListTypeObj(intern(bootstrapEnv, 'list'), rootTypeObj);
   const methodTypeObj = makeMethodTypeObj(intern(bootstrapEnv, 'method'), rootTypeObj);
   const stringTypeObj = makeStringTypeObj(intern(bootstrapEnv, 'string'), rootTypeObj);
 
   bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
+  bindSymbol(bootstrapEnv, listTypeObj.name, listTypeObj);
   bindSymbol(bootstrapEnv, methodTypeObj.name, methodTypeObj);
   bindSymbol(bootstrapEnv, stringTypeObj.name, stringTypeObj);
 
@@ -36,6 +40,7 @@ export function createEnv(): Env {
   const env: Env = {
     ...bootstrapEnv,
     intTypeObj: new WeakRef(intTypeObj),
+    listTypeObj: new WeakRef(listTypeObj),
     methodTypeObj: new WeakRef(methodTypeObj),
     stringTypeObj: new WeakRef(stringTypeObj),
     thisSymbol,
@@ -45,7 +50,7 @@ export function createEnv(): Env {
   // Native `type` method - returns the object's type. Registering
   // here because it's the same for every type.
   const typeSym = intern(env, 'type');
-  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj, stringTypeObj]) {
+  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, listTypeObj, methodTypeObj, stringTypeObj]) {
     typeObj.methods.set(typeSym, makeNativeMethodObj(
       typeObj,
       typeSym,
@@ -57,6 +62,7 @@ export function createEnv(): Env {
   }
 
   registerIntMethods(env);
+  registerListMethods(env);
   registerStringMethods(env);
   registerSymbolMethods(env);
   registerMethodMethods(env);
