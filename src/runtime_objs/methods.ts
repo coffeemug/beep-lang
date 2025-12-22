@@ -1,5 +1,5 @@
 import type { TypeObj, RuntimeObj } from ".";
-import type { Env, Frame } from "../env";
+import { getThisObj, type Env, type Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -66,7 +66,7 @@ export function registerMethodMethods(env: Env) {
   methodTypeObj.methods.set(env.showSym, makeNativeMethodObj(
     methodTypeObj, env.showSym, 0,
     (method) => {
-      const thisObj = method.closureFrame.bindings.get(env.thisSymbol.id)! as MethodObj;
+      const thisObj = getThisObj<MethodObj>(method, env);
       return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
     },
     methodTypeObj, env.currentFrame

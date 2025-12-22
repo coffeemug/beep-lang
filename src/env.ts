@@ -31,24 +31,6 @@ export function createEnv(): Env {
   bindSymbol(bootstrapEnv, stringTypeObj.name, stringTypeObj);
 
   const thisSymbol = intern(bootstrapEnv, 'this');
-
-  // Native `type` method - returns the object's type. Registering
-  // here because it's the same for every type.
-  const typeSym = intern(bootstrapEnv, 'type');
-  const typeMethod = (method: MethodObj) =>
-      method.closureFrame.bindings.get(thisSymbol.id)!.type;
-
-  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj, stringTypeObj]) {
-    typeObj.methods.set(typeSym, makeNativeMethodObj(
-      typeObj,
-      typeSym,
-      0,
-      typeMethod,
-      methodTypeObj,
-      bootstrapEnv.currentFrame
-    ));
-  }
-
   const showSym = intern(bootstrapEnv, 'show');
 
   const env: Env = {
@@ -59,6 +41,20 @@ export function createEnv(): Env {
     thisSymbol,
     showSym,
   };
+
+  // Native `type` method - returns the object's type. Registering
+  // here because it's the same for every type.
+  const typeSym = intern(env, 'type');
+  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj, stringTypeObj]) {
+    typeObj.methods.set(typeSym, makeNativeMethodObj(
+      typeObj,
+      typeSym,
+      0,
+      (method) => getThisObj(method, env).type,
+      methodTypeObj,
+      env.currentFrame
+    ));
+  }
 
   registerIntMethods(env);
   registerStringMethods(env);
@@ -188,4 +184,8 @@ function findBinding_(frame: Frame | null, symbol: SymbolObj): RuntimeObj | null
 
   const binding = frame.bindings.get(symbol.id);
   return binding ?? findBinding_(frame.parent, symbol);
+}
+
+export function getThisObj<T extends RuntimeObj>(method: MethodObj, env: Env): T {
+  return method.closureFrame.bindings.get(env.thisSymbol.id)! as T;
 }
