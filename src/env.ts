@@ -1,5 +1,6 @@
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
+import { makeMethodTypeObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
 import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
 
@@ -9,6 +10,7 @@ import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } 
 
 export type Env = BootstrapEnv & {
   cachedIntTypeObj: WeakRef<IntTypeObj>,
+  cachedMethodTypeObj: WeakRef<MethodTypeObj>,
 }
 
 export function createEnv(): Env {
@@ -19,13 +21,16 @@ export function createEnv(): Env {
 function registerBuiltinTypes(bootstrapEnv: BootstrapEnv): Env {
   const rootTypeObj = bootstrapEnv.cachedRootTypeObj.deref()!;
 
-  // int
   const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
+  const methodTypeObj = makeMethodTypeObj(intern(bootstrapEnv, 'method'), rootTypeObj);
+
   bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
+  bindSymbol(bootstrapEnv, methodTypeObj.name, methodTypeObj)
 
   return {
     ...bootstrapEnv,
     cachedIntTypeObj: new WeakRef(intTypeObj),
+    cachedMethodTypeObj: new WeakRef(methodTypeObj),
   };
 }
 

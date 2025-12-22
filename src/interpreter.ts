@@ -33,7 +33,7 @@ export function print(obj: RuntimeObj): string {
     case 'SymbolTypeObj':
       return '<type symbol>';
     case 'MethodObj':
-      return `TODO:receiverTypeName/${obj.name.name}`;
+      return `${obj.receiverType.name.name}/${obj.name.name}`;
     case "MethodTypeObj":
       return '<type method>';
   }
