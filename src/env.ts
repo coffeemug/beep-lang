@@ -3,28 +3,44 @@ import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
 import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
 import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
 
-export type SymbolId = number;
-
-export type BootstrapEnv = {
-  currentFrame: Frame,
-  symbolTable: Map<string, SymbolObj>,
-  nextSymbolId: number,
-  cachedRootTypeObj: WeakRef<RootTypeObj>,
-  cachedSymbolTypeObj: WeakRef<SymbolTypeObj>,
-}
+/*
+  Full environment
+*/
 
 export type Env = BootstrapEnv & {
   cachedIntTypeObj: WeakRef<IntTypeObj>,
 }
 
-export type Frame = {
-  bindings: Map<SymbolId, RuntimeObj>,
-  parent: Frame | null,
-}
-
 export function createEnv(): Env {
   const bootstrapEnv = createBootstrapEnv();
   return registerBuiltinTypes(bootstrapEnv);
+}
+
+function registerBuiltinTypes(bootstrapEnv: BootstrapEnv): Env {
+  const rootTypeObj = bootstrapEnv.cachedRootTypeObj.deref()!;
+
+  // int
+  const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
+  bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
+
+  return {
+    ...bootstrapEnv,
+    cachedIntTypeObj: new WeakRef(intTypeObj),
+  };
+}
+
+/*
+  Bootsrap environment
+*/
+
+export type BootstrapEnv = {
+  symbolTable: Map<string, SymbolObj>,
+  nextSymbolId: SymbolId,
+
+  currentFrame: Frame,
+
+  cachedRootTypeObj: WeakRef<RootTypeObj>,
+  cachedSymbolTypeObj: WeakRef<SymbolTypeObj>,
 }
 
 function createBootstrapEnv(): BootstrapEnv {
@@ -50,17 +66,13 @@ function createBootstrapEnv(): BootstrapEnv {
   return env;
 }
 
-function registerBuiltinTypes(bootstrapEnv: BootstrapEnv): Env {
-  const rootTypeObj = bootstrapEnv.cachedRootTypeObj.deref()!;
+/*
+  Frames
+*/
 
-  // int
-  const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
-  bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
-
-  return {
-    ...bootstrapEnv,
-    cachedIntTypeObj: new WeakRef(intTypeObj),
-  };
+export type Frame = {
+  bindings: Map<SymbolId, RuntimeObj>,
+  parent: Frame | null,
 }
 
 function makeFrame(parent?: Frame): Frame {
@@ -82,6 +94,12 @@ export function popFrame(env: BootstrapEnv) {
   env.currentFrame = env.currentFrame.parent;
 }
 
+/*
+  Symbols
+*/
+
+export type SymbolId = number;
+
 export function intern(env: BootstrapEnv, symbolName: string, binding?: RuntimeObj): SymbolObj {
   let symbolObj = env.symbolTable.get(symbolName);
   if (!symbolObj) {
@@ -97,6 +115,14 @@ export function intern(env: BootstrapEnv, symbolName: string, binding?: RuntimeO
   return symbolObj;
 }
 
+/*
+  Bindings
+*/
+
+export function bindSymbol(env: BootstrapEnv, symbol: SymbolObj, value: RuntimeObj) {
+  env.currentFrame.bindings.set(symbol.id, value);
+}
+
 export function findBinding(env: BootstrapEnv, symbol: SymbolObj) {
   return findBinding_(env.currentFrame, symbol);
 }
@@ -108,8 +134,4 @@ function findBinding_(frame: Frame | null, symbol: SymbolObj): RuntimeObj | null
 
   const binding = frame.bindings.get(symbol.id);
   return binding ?? findBinding_(frame.parent, symbol);
-}
-
-export function bindSymbol(env: BootstrapEnv, symbol: SymbolObj, value: RuntimeObj) {
-  env.currentFrame.bindings.set(symbol.id, value);
 }
