@@ -1,5 +1,5 @@
 import type { TypeObj, RuntimeObj } from ".";
-import { getThisObj, type Env, type Frame } from "../env";
+import { findBinding, getThisObj, intern, type Env, type Frame } from "../env";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
@@ -61,14 +61,28 @@ export function makeNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argC
   };
 }
 
+export function nativeMethod(
+  env: Env,
+  receiverTypeName: string,
+  name: string,
+  argCount: number,
+  nativeFn: NativeFn
+): MethodObj {
+  const receiverType = findBinding(env, intern(env, receiverTypeName)) as TypeObj;
+  return makeNativeMethodObj(
+    receiverType,
+    intern(env, name),
+    argCount,
+    nativeFn,
+    env.methodTypeObj.deref()!,
+    env.currentFrame
+  );
+}
+
 export function registerMethodMethods(env: Env) {
-  const methodTypeObj = env.methodTypeObj.deref()!;
-  methodTypeObj.methods.set(env.showSym, makeNativeMethodObj(
-    methodTypeObj, env.showSym, 0,
-    (method) => {
-      const thisObj = getThisObj<MethodObj>(method, env);
-      return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
-    },
-    methodTypeObj, env.currentFrame
-  ));
+  const m = nativeMethod(env, 'method', 'show', 0, (method) => {
+    const thisObj = getThisObj<MethodObj>(method, env);
+    return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
+  });
+  m.receiverType.methods.set(m.name, m);
 }

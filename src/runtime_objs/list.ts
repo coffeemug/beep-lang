@@ -1,5 +1,5 @@
 import { getThisObj, type Env } from "../env";
-import { makeNativeMethodObj } from "./methods";
+import { nativeMethod } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import { makeStringObj } from "./string";
@@ -36,14 +36,10 @@ export function makeListObj(elements: RuntimeObj[], listTypeObj: ListTypeObj): L
 }
 
 export function registerListMethods(env: Env) {
-  const listTypeObj = env.listTypeObj.deref()!;
-  listTypeObj.methods.set(env.showSym, makeNativeMethodObj(
-    listTypeObj, env.showSym, 0,
-    (method) => {
-      const thisObj = getThisObj<ListObj>(method, env);
-      const elemStrs = thisObj.elements.map((e: RuntimeObj) => show(e, env));
-      return makeStringObj(`[${elemStrs.join(', ')}]`, env.stringTypeObj.deref()!);
-    },
-    env.methodTypeObj.deref()!, env.currentFrame
-  ));
+  const m = nativeMethod(env, 'list', 'show', 0, (method) => {
+    const thisObj = getThisObj<ListObj>(method, env);
+    const elemStrs = thisObj.elements.map((e: RuntimeObj) => show(e, env));
+    return makeStringObj(`[${elemStrs.join(', ')}]`, env.stringTypeObj.deref()!);
+  });
+  m.receiverType.methods.set(m.name, m);
 }

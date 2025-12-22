@@ -2,7 +2,7 @@ import { show } from './interpreter';
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, registerIntMethods, type IntTypeObj } from './runtime_objs/int';
 import { makeListObj, makeListTypeObj, registerListMethods, type ListTypeObj } from './runtime_objs/list';
-import { makeMethodTypeObj, makeNativeMethodObj, registerMethodMethods, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
+import { makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from './runtime_objs/root_type';
 import { makeStringTypeObj, registerStringMethods, type StringTypeObj } from './runtime_objs/string';
 import { makeSymbolObj, makeSymbolTypeObj, registerSymbolMethods, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
@@ -51,34 +51,25 @@ export function createEnv(): Env {
     methodsSym,
   };
 
+  const typeNames = ['type', 'symbol', 'int', 'list', 'method', 'string'];
+
   // Native `type` method - returns the object's type. Registering
   // here because it's the same for every type.
-  const typeSym = intern(env, 'type');
-  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, listTypeObj, methodTypeObj, stringTypeObj]) {
-    typeObj.methods.set(typeSym, makeNativeMethodObj(
-      typeObj,
-      typeSym,
-      0,
-      (method) => getThisObj(method, env).type,
-      methodTypeObj,
-      env.currentFrame
-    ));
+  for (const typeName of typeNames) {
+    const m = nativeMethod(env, typeName, 'type', 0,
+      (method: MethodObj) => getThisObj(method, env).type
+    );
+    m.receiverType.methods.set(m.name, m);
   }
 
   // Native `methods` method - returns a list of method names that can be called.
-  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, listTypeObj, methodTypeObj, stringTypeObj]) {
-    typeObj.methods.set(methodsSym, makeNativeMethodObj(
-      typeObj,
-      methodsSym,
-      0,
-      (method) => {
-        const thisObj = getThisObj(method, env);
-        const methods = thisObj.type.methods.values().toArray();
-        return makeListObj(methods, listTypeObj);
-      },
-      methodTypeObj,
-      env.currentFrame
-    ));
+  for (const typeName of typeNames) {
+    const m = nativeMethod(env, typeName, 'methods', 0, (method: MethodObj) => {
+      const thisObj = getThisObj(method, env);
+      const methods = thisObj.type.methods.values().toArray();
+      return makeListObj(methods, listTypeObj);
+    });
+    m.receiverType.methods.set(m.name, m);
   }
 
   registerIntMethods(env);

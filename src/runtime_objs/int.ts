@@ -1,5 +1,5 @@
 import { getThisObj, type Env } from "../env";
-import { makeNativeMethodObj } from "./methods";
+import { nativeMethod } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
 import { makeStringObj } from "./string";
@@ -34,13 +34,9 @@ export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
 }
 
 export function registerIntMethods(env: Env) {
-  const intTypeObj = env.intTypeObj.deref()!;
-  intTypeObj.methods.set(env.showSym, makeNativeMethodObj(
-    intTypeObj, env.showSym, 0,
-    (method) => {
-      const thisObj = getThisObj<IntObj>(method, env);
-      return makeStringObj(thisObj.value.toString(), env.stringTypeObj.deref()!);
-    },
-    env.methodTypeObj.deref()!, env.currentFrame
-  ));
+  const m = nativeMethod(env, 'int', 'show', 0, (method) => {
+    const thisObj = getThisObj<IntObj>(method, env);
+    return makeStringObj(thisObj.value.toString(), env.stringTypeObj.deref()!);
+  });
+  m.receiverType.methods.set(m.name, m);
 }

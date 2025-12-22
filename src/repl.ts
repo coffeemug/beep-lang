@@ -40,10 +40,14 @@ export async function repl(
         const expr = dotMatch[1];
         try {
           const methods = complete(expr);
-          const completions = methods.map(m => `${m}`);
-          return [completions, line];
+          if (methods.length > 0) {
+            // Print completions manually on single TAB
+            process.stdout.write('\n' + methods.join('  ') + '\n');
+            // Redraw the prompt with the current line
+            rl.prompt(true);
+          }
         } catch {
-          return [[], line];
+          // ignore
         }
       }
       return [[], line];
