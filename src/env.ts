@@ -1,6 +1,6 @@
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
-import { makeMethodTypeObj, makeNativeMethodObj, type MethodTypeObj } from './runtime_objs/methods';
+import { makeMethodTypeObj, makeNativeMethodObj, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
 import { makeStringTypeObj, type StringTypeObj } from './runtime_objs/string';
 import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } from './runtime_objs/symbol';
@@ -33,12 +33,14 @@ export function createEnv(): Env {
 
   // Native `type` method - returns the object's type
   const typeSym = intern(bootstrapEnv, 'type');
-  const typeMethod = (thisObj: RuntimeObj) => thisObj.type;
+  const typeMethod = (method: MethodObj) =>
+      method.closureFrame.bindings.get(thisSymbol.id)!.type;
 
   for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, methodTypeObj, stringTypeObj]) {
     typeObj.methods.set(typeSym, makeNativeMethodObj(
       typeObj,
       typeSym,
+      0,
       typeMethod,
       methodTypeObj,
       bootstrapEnv.currentFrame

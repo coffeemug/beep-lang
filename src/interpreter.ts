@@ -65,10 +65,14 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
       }
 
       const args = expr.args.map(arg => evaluate(arg, env));
-      const receiver = fn.closureFrame.bindings.get(env.thisSymbol.id)!;
+
+      const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
+      if (args.length !== expectedCount) {
+        throw new Error(`${fn.name.name} expects ${expectedCount} args, got ${args.length}`);
+      }
 
       if (fn.mode === 'native') {
-        return fn.nativeFn(receiver, args);
+        return fn.nativeFn(fn, args);
       }
 
       return withFrame(env, fn.closureFrame, () => {
