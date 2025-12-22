@@ -1,15 +1,12 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj } from "./runtime_objs";
-import { makeIntObj, type IntTypeObj } from "./runtime_objs/int";
-import { findBinding, intern, type Env } from "./env";
+import { makeIntObj } from "./runtime_objs/int";
+import { findBinding, type Env } from "./env";
 
 export function evaluate(expr: Expr, env: Env): RuntimeObj {
   switch (expr.type) {
     case 'int': {
-      // TODO: interpreter should cache types to avoid reinterning
-      const intSym = intern(env, 'int');
-      const intType = findBinding(env, intSym) as IntTypeObj;
-      return makeIntObj(expr.value, intType);
+      return makeIntObj(expr.value, env.cachedIntTypeObj.deref()!);
     }
     case 'ident': {
       const value = findBinding(env, expr.sym);

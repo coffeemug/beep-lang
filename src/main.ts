@@ -1,14 +1,11 @@
 import { repl } from "./repl";
 import { parse } from "./parser";
 import { evaluate, print } from "./interpreter";
-import { intern, createEnv, type Env, bindSymbol } from "./env";
-import { makeIntTypeObj } from "./runtime_objs/int";
+import { createEnv, type Env } from "./env";
 
 async function main(): Promise<void> {
   const env = createEnv();
-  const intSym = intern(env, 'int');
-  bindSymbol(env, intSym, makeIntTypeObj(env.cachedRootTypeObj.deref()!))
-  
+
   await repl((input: string) =>
     run(input, env));
 }
