@@ -80,7 +80,7 @@ export function show(obj: RuntimeObj, env: Env): string {
   return result.value;
 }
 
-function callMethod(method: MethodObj, args: RuntimeObj[], env: Env): RuntimeObj {
+export function callMethod(method: MethodObj, args: RuntimeObj[], env: Env): RuntimeObj {
   const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
   if (args.length !== expectedCount) {
     throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
@@ -98,7 +98,7 @@ function callMethod(method: MethodObj, args: RuntimeObj[], env: Env): RuntimeObj
   });
 }
 
-function bindThis(method: MethodObj, receiver: RuntimeObj, env: Env): MethodObj {
+export function bindThis(method: MethodObj, receiver: RuntimeObj, env: Env): MethodObj {
   const closureFrame = makeFrame(method.closureFrame);
   closureFrame.bindings.set(env.thisSymbol.id, receiver);
   return { ...method, closureFrame };

@@ -1,6 +1,7 @@
+import { show } from './interpreter';
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, registerIntMethods, type IntTypeObj } from './runtime_objs/int';
-import { makeListTypeObj, registerListMethods, type ListTypeObj } from './runtime_objs/list';
+import { makeListObj, makeListTypeObj, registerListMethods, type ListTypeObj } from './runtime_objs/list';
 import { makeMethodTypeObj, makeNativeMethodObj, registerMethodMethods, type MethodObj, type MethodTypeObj } from './runtime_objs/methods';
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from './runtime_objs/root_type';
 import { makeStringTypeObj, registerStringMethods, type StringTypeObj } from './runtime_objs/string';
@@ -17,6 +18,7 @@ export type Env = BootstrapEnv & {
   stringTypeObj: WeakRef<StringTypeObj>,
   thisSymbol: SymbolObj,
   showSym: SymbolObj,
+  methodsSym: SymbolObj,
 }
 
 export function createEnv(): Env {
@@ -36,6 +38,7 @@ export function createEnv(): Env {
 
   const thisSymbol = intern(bootstrapEnv, 'this');
   const showSym = intern(bootstrapEnv, 'show');
+  const methodsSym = intern(bootstrapEnv, 'methods');
 
   const env: Env = {
     ...bootstrapEnv,
@@ -45,6 +48,7 @@ export function createEnv(): Env {
     stringTypeObj: new WeakRef(stringTypeObj),
     thisSymbol,
     showSym,
+    methodsSym,
   };
 
   // Native `type` method - returns the object's type. Registering
@@ -56,6 +60,22 @@ export function createEnv(): Env {
       typeSym,
       0,
       (method) => getThisObj(method, env).type,
+      methodTypeObj,
+      env.currentFrame
+    ));
+  }
+
+  // Native `methods` method - returns a list of method names that can be called.
+  for (const typeObj of [rootTypeObj, symbolTypeObj, intTypeObj, listTypeObj, methodTypeObj, stringTypeObj]) {
+    typeObj.methods.set(methodsSym, makeNativeMethodObj(
+      typeObj,
+      methodsSym,
+      0,
+      (method) => {
+        const thisObj = getThisObj(method, env);
+        const methods = thisObj.type.methods.values().toArray();
+        return makeListObj(methods, listTypeObj);
+      },
       methodTypeObj,
       env.currentFrame
     ));

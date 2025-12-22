@@ -22,7 +22,10 @@ function saveHistory(history: string[]): void {
   writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
 }
 
-export async function repl(run: (input: string) => string): Promise<void> {
+export async function repl(
+  run: (input: string) => string,
+  complete: (expr: string) => string[]
+): Promise<void> {
   const history = loadHistory().slice(-MAX_HISTORY);
 
   const rl = readline.createInterface({
@@ -31,6 +34,20 @@ export async function repl(run: (input: string) => string): Promise<void> {
     prompt: "> ",
     history: history,
     historySize: MAX_HISTORY,
+    completer: (line: string): [string[], string] => {
+      const dotMatch = line.match(/^(.+)\.$/);
+      if (dotMatch) {
+        const expr = dotMatch[1];
+        try {
+          const methods = complete(expr);
+          const completions = methods.map(m => `${m}`);
+          return [completions, line];
+        } catch {
+          return [[], line];
+        }
+      }
+      return [[], line];
+    }
   });
 
   rl.prompt();
