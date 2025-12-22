@@ -1,7 +1,17 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, attempt, type parser } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import { intern, type Env } from "./env";
 import type { SymbolObj } from "./runtime_objs/symbol";
+
+function postfix<B, S, R>(
+  base: parserlike<B>,
+  suffix: parserlike<S>,
+  fold: (acc: B | R, suf: S) => R
+): parser<B | R> {
+  return seq(base, many(suffix)).map(([b, suffixes]) =>
+    suffixes.reduce<B | R>(fold, b)
+  );
+}
 
 export type Expr =
   | { type: "int"; value: number }
@@ -30,19 +40,13 @@ export function parse(input: string, env: Env): Expr {
   const primary = either(intLit, ident);
 
   // Forward reference for full expressions (needed for method bodies and args)
-  const expr: parser<Expr> = fwd(() => postfix);
+  const expr: parser<Expr> = fwd(() => postfixExpr);
 
   // Method definition: def type/name(params) body end
   const methodDef = seq(
-    lex("def"),
-    identSym,
-    lex("/"),
-    identSym,
-    lex("("),
-    sepBy(identSym, lex(",")),
-    lex(")"),
+    "def", identSym, "/", identSym, "(", sepBy(identSym, ","), ")",
     expr,
-    lex("end")
+    "end"
   ).map(([_def, receiverType, _slash, name, _lp, params, _rp, body, _end]): Expr => ({
     type: "methodDef" as const,
     receiverType,
@@ -53,35 +57,30 @@ export function parse(input: string, env: Env): Expr {
 
   // Suffix: (args) for funcall
   const funcallSuffix = seq(
-    lex("("),
-    sepBy(expr, lex(",")),
-    lex(")")
+    "(", sepBy(expr, ","), ")"
   ).map(([_lp, args, _rp]): Suffix => ({
     type: "funcall",
     args,
   }));
 
   // Suffix: .name for field access
-  const fieldAccessSuffix = seq(lex("."), identSym).map(([_dot, name]): Suffix => ({
+  const fieldAccessSuffix = seq(".", identSym).map(([_dot, name]): Suffix => ({
     type: "fieldAccess",
     name,
   }));
 
   // Postfix operators: .name and (args)
-  const postfix: parser<Expr> = seq(
+  const postfixExpr = postfix(
     either(methodDef, primary),
-    many(either(attempt(funcallSuffix), fieldAccessSuffix))
-  ).map(([base, suffixes]): Expr => {
-    let result: Expr = base;
-    for (const suffix of suffixes) {
-      if (suffix.type === "fieldAccess") {
-        result = { type: "fieldAccess", receiver: result, fieldName: suffix.name };
+    either(funcallSuffix, fieldAccessSuffix),
+    (acc, suf): Expr => {
+      if (suf.type === "fieldAccess") {
+        return { type: "fieldAccess", receiver: acc, fieldName: suf.name };
       } else {
-        result = { type: "funcall", fn: result, args: suffix.args };
+        return { type: "funcall", fn: acc, args: suf.args };
       }
     }
-    return result;
-  });
+  );
 
   const topLevel = seq(expr, eof).map(([e, _]) => e);
 
