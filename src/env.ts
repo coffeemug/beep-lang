@@ -1,5 +1,3 @@
-// Environment for beep language
-
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, type IntTypeObj } from './runtime_objs/int';
 import { makeRootTypeObj, type RootTypeObj } from './runtime_objs/root_type';
