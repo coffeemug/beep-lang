@@ -5,14 +5,15 @@ import { makeSymbolObj, makeSymbolTypeObj, type SymbolObj, type SymbolTypeObj } 
 
 export type SymbolId = number;
 
-export type Env = {
+export type BootstrapEnv = {
   currentFrame: Frame,
   symbolTable: Map<string, SymbolObj>,
   nextSymbolId: number,
-
-  /* Cached frequently used objects */
   cachedRootTypeObj: WeakRef<RootTypeObj>,
   cachedSymbolTypeObj: WeakRef<SymbolTypeObj>,
+}
+
+export type Env = BootstrapEnv & {
   cachedIntTypeObj: WeakRef<IntTypeObj>,
 }
 
@@ -22,23 +23,21 @@ export type Frame = {
 }
 
 export function createEnv(): Env {
-  const env = bootstrapEnv();
-  registerBuiltinTypes(env);
-  return env;
+  const bootstrapEnv = createBootstrapEnv();
+  return registerBuiltinTypes(bootstrapEnv);
 }
 
-function bootstrapEnv(): Env {
+function createBootstrapEnv(): BootstrapEnv {
   // Phase I: Create bootstrapped type objects without names (circular dependency)
   const rootTypeObj = makeRootTypeObj() as RootTypeObj;
   const symbolTypeObj = makeSymbolTypeObj(rootTypeObj) as SymbolTypeObj;
 
-  const env: Env = {
+  const env: BootstrapEnv = {
     currentFrame: makeFrame(),
     symbolTable: new Map(),
     nextSymbolId: 0,
     cachedRootTypeObj: new WeakRef(rootTypeObj),
     cachedSymbolTypeObj: new WeakRef(symbolTypeObj),
-    cachedIntTypeObj: undefined!,
   };
 
   // Phase II: Assign and bind names now that symbolTypeObj exists
@@ -51,13 +50,17 @@ function bootstrapEnv(): Env {
   return env;
 }
 
-function registerBuiltinTypes(env: Env): void {
-  const rootTypeObj = env.cachedRootTypeObj.deref()!;
+function registerBuiltinTypes(bootstrapEnv: BootstrapEnv): Env {
+  const rootTypeObj = bootstrapEnv.cachedRootTypeObj.deref()!;
 
   // int
-  const intTypeObj = makeIntTypeObj(intern(env, 'int'), rootTypeObj);
-  env.cachedIntTypeObj = new WeakRef(intTypeObj);
-  bindSymbol(env, intTypeObj.name, intTypeObj);
+  const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
+  bindSymbol(bootstrapEnv, intTypeObj.name, intTypeObj);
+
+  return {
+    ...bootstrapEnv,
+    cachedIntTypeObj: new WeakRef(intTypeObj),
+  };
 }
 
 function makeFrame(parent?: Frame): Frame {
@@ -67,19 +70,19 @@ function makeFrame(parent?: Frame): Frame {
   }
 }
 
-export function pushFrame(env: Env): Frame {
+export function pushFrame(env: BootstrapEnv): Frame {
   env.currentFrame = makeFrame(env.currentFrame);
   return env.currentFrame;
 }
 
-export function popFrame(env: Env) {
+export function popFrame(env: BootstrapEnv) {
   if (!env.currentFrame.parent) {
     throw new Error("This should never happen!")
   }
   env.currentFrame = env.currentFrame.parent;
 }
 
-export function intern(env: Env, symbolName: string, binding?: RuntimeObj): SymbolObj {
+export function intern(env: BootstrapEnv, symbolName: string, binding?: RuntimeObj): SymbolObj {
   let symbolObj = env.symbolTable.get(symbolName);
   if (!symbolObj) {
     symbolObj = makeSymbolObj(symbolName, env.nextSymbolId, env.cachedSymbolTypeObj.deref()!);
@@ -94,7 +97,7 @@ export function intern(env: Env, symbolName: string, binding?: RuntimeObj): Symb
   return symbolObj;
 }
 
-export function findBinding(env: Env, symbol: SymbolObj) {
+export function findBinding(env: BootstrapEnv, symbol: SymbolObj) {
   return findBinding_(env.currentFrame, symbol);
 }
 
@@ -107,6 +110,6 @@ function findBinding_(frame: Frame | null, symbol: SymbolObj): RuntimeObj | null
   return binding ?? findBinding_(frame.parent, symbol);
 }
 
-export function bindSymbol(env: Env, symbol: SymbolObj, value: RuntimeObj) {
+export function bindSymbol(env: BootstrapEnv, symbol: SymbolObj, value: RuntimeObj) {
   env.currentFrame.bindings.set(symbol.id, value);
 }
