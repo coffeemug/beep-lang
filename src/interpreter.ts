@@ -50,7 +50,7 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
       const receiver = evaluate(expr.receiver, env);
       const method = receiver.type.methods.get(expr.fieldName);
       if (!method) {
-        throw new Error(`No method ${expr.fieldName.name} on ${show(receiver, env)}`);
+        throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type, env)}`);
       }
       return bindThis(method, receiver, env);
     }
