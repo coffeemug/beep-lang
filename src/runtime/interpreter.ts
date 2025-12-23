@@ -9,10 +9,8 @@ import { defineBinding, getBinding, getBindingByName, type ModuleObj } from "../
 import { makeStringObj, type StringObj, type StringTypeObj } from "../data_structures/string";
 
 export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
-  const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule, env)!;
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule, env)!;
-  const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule, env)!;
-  const methodTypeObj = getBindingByName<MethodTypeObj>('method', sysModule, env)!;
+  const { intTypeObj, stringTypeObj, listTypeObj, methodTypeObj } = getCoreTypes();
+  const { thisSym, showSym } = getCoreSymbols();
 
   function evaluate(expr: Expr, m: ModuleObj): RuntimeObj {
     switch (expr.type) {
@@ -78,7 +76,6 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
   }
 
   function show(obj: RuntimeObj, m: ModuleObj): string {
-    const showSym = findSymbolByName('show', env);
     if (!showSym) {
       return `<${obj.tag}:noshow>`;
     }
@@ -99,8 +96,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     }
 
     if (method.mode === 'native') {
-      const thisSymbol = findSymbolByName('this', env)!;
-      const thisObj = method.closureFrame.bindings.get(thisSymbol.id)!;
+      const thisObj = method.closureFrame.bindings.get(thisSym.id)!;
       return method.nativeFn(thisObj, args, method);
     }
 
@@ -114,10 +110,29 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
 
   function bindThis(method: MethodObj, receiver: RuntimeObj): MethodObj {
     const closureFrame = makeFrame(method.closureFrame);
-    const thisSymbol = findSymbolByName('this', env)!;
-    closureFrame.bindings.set(thisSymbol.id, receiver);
+    closureFrame.bindings.set(thisSym.id, receiver);
     return { ...method, closureFrame };
   }
 
-  return { evaluate, show, callMethod, bindThis };
+  function getCoreTypes() {
+    const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule, env)!;
+    const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule, env)!;
+    const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule, env)!;
+    const methodTypeObj = getBindingByName<MethodTypeObj>('method', sysModule, env)!;
+
+    return {
+      intTypeObj, stringTypeObj, listTypeObj, methodTypeObj,    
+    }
+  }  
+
+  function getCoreSymbols() {
+    const thisSym = findSymbolByName('this', env)!;
+    const showSym = findSymbolByName('show', env);
+    return { thisSym, showSym }
+  }
+
+  return {
+    evaluate, show, callMethod, bindThis, getCoreTypes,
+    getCoreSymbols,
+  };
 }
