@@ -1,6 +1,6 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
 import { makeIntObj, type IntTypeObj } from "./int";
-import { getThisObj, nativeMethod } from "../core_objects/methods";
+import { nativeMethod } from "../core_objects/methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
 import { getBindingByName, type ModuleObj } from "../core_objects/module";
 import { type RootTypeObj } from "../core_objects/root_type"
@@ -38,15 +38,12 @@ export function registerStringMethods(m: ModuleObj, env: SymbolEnv) {
   const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
   const intTypeObj = getBindingByName<IntTypeObj>('int', m, env)!;
 
-  const mShow = nativeMethod(m, env, 'string', 'show', 0, (method) => {
-    const thisObj = getThisObj<StringObj>(method, env);
-    return makeStringObj(`'${thisObj.value}'`, stringTypeObj);
-  });
+  const mShow = nativeMethod<StringObj>(m, env, 'string', 'show', 0, thisObj =>
+    makeStringObj(`'${thisObj.value}'`, stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 
   // len - returns number of code points
-  const mLen = nativeMethod(m, env, 'string', 'len', 0, (method) => {
-    const thisObj = getThisObj<StringObj>(method, env);
+  const mLen = nativeMethod<StringObj>(m, env, 'string', 'len', 0, thisObj => {
     const codePointCount = [...thisObj.value].length;
     return makeIntObj(codePointCount, intTypeObj);
   });

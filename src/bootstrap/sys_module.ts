@@ -1,6 +1,6 @@
 import { makeIntTypeObj, registerIntMethods } from "../data_structures/int";
 import { makeListObj, makeListTypeObj, registerListMethods } from "../data_structures/list";
-import { getThisObj, makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../core_objects/methods";
+import { makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../core_objects/methods";
 import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../core_objects/module";
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
@@ -63,20 +63,18 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   // Native `type` method - returns the object's type. Registering
   // here because it's the same for every type.
   for (const typeName of typeNames) {
-    const method = nativeMethod(m, env, typeName, 'type', 0,
-      (method: MethodObj) => getThisObj(method, env).type
-    );
-    method.receiverType.methods.set(method.name, method);
+    const mType = nativeMethod(m, env, typeName, 'type', 0, thisObj =>
+      thisObj.type);
+    mType.receiverType.methods.set(mType.name, mType);
   }
 
   // Native `methods` method - returns a list of method names that can be called.
   for (const typeName of typeNames) {
-    const method = nativeMethod(m, env, typeName, 'methods', 0, (method: MethodObj) => {
-      const thisObj = getThisObj(method, env);
+    const mMethods = nativeMethod(m, env, typeName, 'methods', 0, thisObj => {
       const methods = thisObj.type.methods.values().toArray();
       return makeListObj(methods, listTypeObj);
     });
-    method.receiverType.methods.set(method.name, method);
+    mMethods.receiverType.methods.set(mMethods.name, mMethods);
   }
 
   registerIntMethods(m, env);
