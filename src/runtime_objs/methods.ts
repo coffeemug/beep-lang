@@ -1,5 +1,6 @@
 import type { TypeObj, RuntimeObj } from ".";
-import { intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import { findSymbolByName, intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import type { SymbolTypeObj } from "./symbol";
 import type { Frame } from "../frame";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
@@ -72,6 +73,8 @@ export function nativeMethod(
   nativeFn: NativeFn
 ): MethodObj {
   const receiverType = getBindingByName(receiverTypeName, m, env) as TypeObj;
+  const symbolTypeObj = getBindingByName<SymbolTypeObj>('symbol', m, env)!;
+  const methodTypeObj = getBindingByName<MethodTypeObj>('method', m, env)!;
   return makeNativeMethodObj(
     receiverType,
     intern_(name, env, symbolTypeObj),
@@ -87,11 +90,11 @@ export function registerMethodMethods(m: ModuleObj, env: SymbolEnv) {
 
   const method = nativeMethod(m, env, 'method', 'show', 0, (method) => {
     const thisObj = getThisObj<MethodObj>(method, env);
-    return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
+    return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, stringTypeObj);
   });
-  method.receiverType.methods.set(m.name, method);
+  method.receiverType.methods.set(method.name, method);
 }
 
 export function getThisObj<T extends RuntimeObj>(method: MethodObj, env: SymbolEnv): T {
-  return method.closureFrame.bindings.get(thisSymbol.id)! as T;
+  return method.closureFrame.bindings.get(findSymbolByName('this', env)!.id)! as T;
 }

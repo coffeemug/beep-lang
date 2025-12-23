@@ -6,8 +6,8 @@ import { makeStringObj, type StringTypeObj } from "./string";
 import type { SymbolObj } from "./symbol";
 import type { RuntimeObj } from ".";
 import { show } from "../interpreter";
-import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
-import { getBinding, type ModuleObj } from "./module";
+import { type SymbolEnv } from "../bootstrap/symbol_env";
+import { getBindingByName, type ModuleObj } from "./module";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -38,14 +38,14 @@ export function makeListObj(elements: RuntimeObj[], listTypeObj: ListTypeObj): L
 }
 
 export function registerListMethods(m: ModuleObj, env: SymbolEnv) {
-  const listTypeObj = getBinding(findSymbolByName('list', env)!, m) as ListTypeObj;
-  const stringTypeObj = getBinding(findSymbolByName('string', env)!, m) as StringTypeObj;
-  const intTypeObj = getBinding(findSymbolByName('int', env)!, m) as IntTypeObj;
+  const listTypeObj = getBindingByName<ListTypeObj>('list', m, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
+  const intTypeObj = getBindingByName<IntTypeObj>('int', m, env)!
 
   // show
   const mShow = nativeMethod(m, env, 'list', 'show', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
-    const elemStrs = thisObj.elements.map((e: RuntimeObj) => show(e, env));
+    const elemStrs = thisObj.elements.map((e: RuntimeObj) => show(e, m, env));
     return makeStringObj(`[${elemStrs.join(', ')}]`, stringTypeObj);
   });
   mShow.receiverType.methods.set(mShow.name, mShow);

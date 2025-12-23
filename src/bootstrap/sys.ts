@@ -1,11 +1,11 @@
 import { makeIntTypeObj, registerIntMethods } from "../runtime_objs/int";
 import { makeListObj, makeListTypeObj, registerListMethods } from "../runtime_objs/list";
 import { getThisObj, makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../runtime_objs/methods";
-import { defineBinding, getBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../runtime_objs/module";
+import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../runtime_objs/module";
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../runtime_objs/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../runtime_objs/string";
 import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../runtime_objs/symbol";
-import { findSymbolByName, intern_, type SymbolEnv } from "./symbol_env";
+import { intern_, type SymbolEnv } from "./symbol_env";
 
 export function initSysModule(env: SymbolEnv): ModuleObj {
   const sysModule = bootstrapSysModule(env);
@@ -42,6 +42,9 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
 function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   const rootTypeObj = getBindingByName<RootTypeObj>('type', m, env)!;
   const symbolTypeObj = getBindingByName<SymbolTypeObj>('symbol', m, env)!;
+
+  // Intern special symbols needed by the interpreter
+  intern_('this', env, symbolTypeObj);
 
   const intTypeObj = makeIntTypeObj(intern_('int', env, symbolTypeObj), rootTypeObj);
   const listTypeObj = makeListTypeObj(intern_('list', env, symbolTypeObj), rootTypeObj);
