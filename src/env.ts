@@ -1,4 +1,3 @@
-import { show } from './interpreter';
 import type { RuntimeObj } from './runtime_objs';
 import { makeIntTypeObj, registerIntMethods, type IntTypeObj } from './runtime_objs/int';
 import { makeListObj, makeListTypeObj, registerListMethods, type ListTypeObj } from './runtime_objs/list';
@@ -24,7 +23,6 @@ export type Env = BootstrapEnv & {
 export function createEnv(): Env {
   const bootstrapEnv = createBootstrapEnv();
   const rootTypeObj = bootstrapEnv.rootTypeObj.deref()!;
-  const symbolTypeObj = bootstrapEnv.symbolTypeObj.deref()!;
 
   const intTypeObj = makeIntTypeObj(intern(bootstrapEnv, 'int'), rootTypeObj);
   const listTypeObj = makeListTypeObj(intern(bootstrapEnv, 'list'), rootTypeObj);
