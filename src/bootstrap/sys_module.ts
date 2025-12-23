@@ -5,7 +5,7 @@ import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
 import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../core_objects/symbol";
-import { intern_, type SymbolEnv } from "./symbol_env";
+import { intern, intern_, type SymbolEnv } from "./symbol_env";
 
 export function initSysModule(env: SymbolEnv): ModuleObj {
   const sysModule = bootstrapSysModule(env);
@@ -23,12 +23,15 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
   rootTypeObj.name = intern_('type', env, symbolTypeObj);
   symbolTypeObj.name = intern_('symbol', env, symbolTypeObj);
 
+  // Now that symbolTypeObj is complete, set it on env so intern() works
+  env.symbolTypeObj = symbolTypeObj;
+
   const moduleTypeObj = makeModuleTypeObj(
-    intern_('module', env, symbolTypeObj), rootTypeObj);
+    intern('module', env), rootTypeObj);
 
   // Create 'sys' module
   const sysModule = makeModuleObj(
-    intern_('sys', env, symbolTypeObj),
+    intern('sys', env),
     moduleTypeObj);
 
   // Bind type names in the sys module
@@ -41,15 +44,14 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
 
 function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   const rootTypeObj = getBindingByName<RootTypeObj>('type', m, env)!;
-  const symbolTypeObj = getBindingByName<SymbolTypeObj>('symbol', m, env)!;
 
   // Intern special symbols needed by the interpreter
-  intern_('this', env, symbolTypeObj);
+  intern('this', env);
 
-  const intTypeObj = makeIntTypeObj(intern_('int', env, symbolTypeObj), rootTypeObj);
-  const listTypeObj = makeListTypeObj(intern_('list', env, symbolTypeObj), rootTypeObj);
-  const methodTypeObj = makeMethodTypeObj(intern_('method', env, symbolTypeObj), rootTypeObj);
-  const stringTypeObj = makeStringTypeObj(intern_('string', env, symbolTypeObj), rootTypeObj);
+  const intTypeObj = makeIntTypeObj(intern('int', env), rootTypeObj);
+  const listTypeObj = makeListTypeObj(intern('list', env), rootTypeObj);
+  const methodTypeObj = makeMethodTypeObj(intern('method', env), rootTypeObj);
+  const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj);
 
   defineBinding(intTypeObj.name, intTypeObj, m);
   defineBinding(listTypeObj.name, listTypeObj, m);

@@ -1,6 +1,5 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
-import { findSymbolByName, intern_, type SymbolEnv } from "../bootstrap/symbol_env";
-import type { SymbolTypeObj } from "./symbol";
+import { findSymbolByName, intern, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { Frame } from "../runtime/frame";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
@@ -73,11 +72,10 @@ export function nativeMethod(
   nativeFn: NativeFn
 ): MethodObj {
   const receiverType = getBindingByName(receiverTypeName, m, env) as TypeObj;
-  const symbolTypeObj = getBindingByName<SymbolTypeObj>('symbol', m, env)!;
   const methodTypeObj = getBindingByName<MethodTypeObj>('method', m, env)!;
   return makeNativeMethodObj(
     receiverType,
-    intern_(name, env, symbolTypeObj),
+    intern(name, env),
     argCount,
     nativeFn,
     methodTypeObj,

@@ -1,10 +1,7 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, maybe, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
-import { intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import { intern, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { SymbolObj } from "../core_objects/symbol";
-import type { SymbolTypeObj } from "../core_objects/symbol";
-import type { ModuleObj } from "../core_objects/module";
-import { getBindingByName } from "../core_objects/module";
 
 function postfix<B, S, R>(
   base: parserlike<B>,
@@ -29,22 +26,20 @@ type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
   | { type: "funcall"; args: Expr[] };
 
-export function parse(input: string, m: ModuleObj, env: SymbolEnv): Expr {
-  const symbolTypeObj = getBindingByName<SymbolTypeObj>('symbol', m, env)!;
-
+export function parse(input: string, env: SymbolEnv): Expr {
   // Identifier character: alphanumeric or underscore
   const identChar = either(alnum, "_");
 
   // Identifiers and symbols
   const identSym = lex(seq(alpha, many(identChar))).map(([first, rest]) => {
     const name = [first, ...rest].join("");
-    return intern_(name, env, symbolTypeObj);
+    return intern(name, env);
   });
 
   // Method names can have an optional ! at the end (e.g., push!)
   const methodNameSym = lex(seq(alpha, many(identChar), maybe("!"))).map(([first, rest, bang]) => {
     const name = [first, ...rest, bang ?? ""].join("");
-    return intern_(name, env, symbolTypeObj);
+    return intern(name, env);
   });
 
   const ident = identSym.map((sym) => ({ type: "ident" as const, sym }));
