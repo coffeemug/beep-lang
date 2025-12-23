@@ -1,7 +1,7 @@
 import { makeIntTypeObj, registerIntMethods } from "../data_structures/int";
 import { makeListObj, makeListTypeObj, registerListMethods } from "../data_structures/list";
 import { makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../core_objects/methods";
-import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../core_objects/module";
+import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj, type ModuleTypeObj } from "../core_objects/module";
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
 import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../core_objects/symbol";
@@ -15,7 +15,8 @@ export function initSysModule(env: SymbolEnv): ModuleObj {
 
 function bootstrapSysModule(env: SymbolEnv): ModuleObj {
   /*
-    Create core types ('type', 'symbol', 'module') and intern their names
+    Create core types ('type', 'symbol', 'module') and intern their names.
+    These are created before sysModule exists, so bindingModule is set retroactively.
   */
   const rootTypeObj = makeRootTypeObj() as RootTypeObj;
   const symbolTypeObj = makeSymbolTypeObj(rootTypeObj) as SymbolTypeObj;
@@ -27,12 +28,17 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
   env.symbolTypeObj = symbolTypeObj;
 
   const moduleTypeObj = makeModuleTypeObj(
-    intern('module', env), rootTypeObj);
+    intern('module', env), rootTypeObj) as ModuleTypeObj;
 
   // Create 'sys' module
   const sysModule = makeModuleObj(
     intern('sys', env),
     moduleTypeObj);
+
+  // Set bindingModule retroactively for bootstrap types
+  rootTypeObj.bindingModule = sysModule;
+  symbolTypeObj.bindingModule = sysModule;
+  moduleTypeObj.bindingModule = sysModule;
 
   // Bind type names in the sys module
   defineBinding(rootTypeObj.name, rootTypeObj, sysModule);
@@ -48,10 +54,10 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   // Intern special symbols needed by the interpreter
   intern('this', env);
 
-  const intTypeObj = makeIntTypeObj(intern('int', env), rootTypeObj);
-  const listTypeObj = makeListTypeObj(intern('list', env), rootTypeObj);
-  const methodTypeObj = makeMethodTypeObj(intern('method', env), rootTypeObj);
-  const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj);
+  const intTypeObj = makeIntTypeObj(intern('int', env), rootTypeObj, m);
+  const listTypeObj = makeListTypeObj(intern('list', env), rootTypeObj, m);
+  const methodTypeObj = makeMethodTypeObj(intern('method', env), rootTypeObj, m);
+  const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj, m);
 
   defineBinding(intTypeObj.name, intTypeObj, m);
   defineBinding(listTypeObj.name, listTypeObj, m);

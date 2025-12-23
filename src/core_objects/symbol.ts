@@ -17,7 +17,7 @@ export type SymbolObj =
     id: number,
   }
 
-export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj, 'name'> {
+export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj, 'name' | 'bindingModule'> {
   return {
     tag: 'SymbolTypeObj',
     type: rootTypeObj,

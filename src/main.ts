@@ -14,7 +14,7 @@ async function main(): Promise<void> {
   function run(input: string): string {
     const ast = parse(input, env);
     const result = evaluate(ast, sysModule);
-    return show(result, sysModule);
+    return show(result);
   }
 
   function complete(input: string): string[] {
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
 
       // Bind this and call the method
       const boundMethod = bindThis(methodsMethod, obj);
-      const result = callMethod(boundMethod, [], sysModule) as ListObj;
+      const result = callMethod(boundMethod, []) as ListObj;
 
       // Extract method names from the returned list
       return result.elements.map(m => (m as MethodObj).name.name);

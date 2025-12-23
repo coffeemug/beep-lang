@@ -17,12 +17,13 @@ export type StringObj =
     value: string,
   }
 
-export function makeStringTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): StringTypeObj {
+export function makeStringTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): StringTypeObj {
   return {
     tag: 'StringTypeObj',
     type: rootTypeObj,
     name,
     methods: new Map(),
+    bindingModule,
   };
 }
 

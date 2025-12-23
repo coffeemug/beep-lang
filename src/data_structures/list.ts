@@ -19,12 +19,13 @@ export type ListObj =
     elements: RuntimeObj[],
   }
 
-export function makeListTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): ListTypeObj {
+export function makeListTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): ListTypeObj {
   return {
     tag: 'ListTypeObj',
     type: rootTypeObj,
     name,
     methods: new Map(),
+    bindingModule,
   };
 }
 

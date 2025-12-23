@@ -28,12 +28,13 @@ export type MethodObj = MethodObjBase & (
   | { mode: 'native', argCount: number, nativeFn: NativeFn }
 )
 
-export function makeMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): MethodTypeObj {
+export function makeMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): MethodTypeObj {
   return {
     tag: 'MethodTypeObj',
     type: rootTypeObj,
     name,
     methods: new Map(),
+    bindingModule,
   };
 }
 

@@ -17,12 +17,13 @@ export type IntObj =
     value: number,
   }
 
-export function makeIntTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): IntTypeObj {
+export function makeIntTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): IntTypeObj {
   return {
     tag: 'IntTypeObj',
     type: rootTypeObj,
     name,
     methods: new Map(),
+    bindingModule,
   };
 }
 

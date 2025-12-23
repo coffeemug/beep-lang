@@ -12,7 +12,7 @@ export type RootTypeObj = TypeObjMixin & {
   /* Fields specific to RootTypeObj */
 }
 
-export function makeRootTypeObj(): Omit<RootTypeObj, 'name'> {
+export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
   const obj: Partial<RootTypeObj> = {
     tag: 'RootTypeObj',
     methods: new Map(),
@@ -20,7 +20,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name'> {
 
   // The type of RootTypeObj is itself
   obj.type = obj as RootTypeObj;
-  return obj as Omit<RootTypeObj, 'name'>;
+  return obj as Omit<RootTypeObj, 'name' | 'bindingModule'>;
 }
 
 export function registerRootTypeMethods(m: ModuleObj, env: SymbolEnv) {

@@ -17,7 +17,7 @@ export type ModuleObj =
     topFrame: Frame,
   }
 
-export function makeModuleTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): ModuleTypeObj {
+export function makeModuleTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): Omit<ModuleTypeObj, 'bindingModule'> {
   return {
     tag: 'ModuleTypeObj',
     type: rootTypeObj,

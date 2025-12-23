@@ -30,7 +30,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
       case 'ident': {
         const value = getBinding(expr.sym, m);
         if (!value) {
-          throw new Error(`Unbound symbol ${show(expr.sym, m)}`);
+          throw new Error(`Unbound symbol ${show(expr.sym)}`);
         }
         return value;
       }
@@ -56,7 +56,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
         const receiver = evaluate(expr.receiver, m);
         const method = receiver.type.methods.get(expr.fieldName);
         if (!method) {
-          throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type, m)}`);
+          throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type)}`);
         }
         return bindThis(method, receiver);
       }
@@ -64,18 +64,18 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
       case 'funcall': {
         const fn = evaluate(expr.fn, m) as MethodObj;
         if (fn.tag !== 'MethodObj') {
-          throw new Error(`Cannot call ${show(fn, m)}`);
+          throw new Error(`Cannot call ${show(fn)}`);
         }
 
         const args = expr.args.map(arg => evaluate(arg, m));
-        return callMethod(fn, args, m);
+        return callMethod(fn, args);
       }
     }
 
     const _exhaustive: never = expr;
   }
 
-  function show(obj: RuntimeObj, m: ModuleObj): string {
+  function show(obj: RuntimeObj): string {
     if (!showSym) {
       return `<${obj.tag}:noshow>`;
     }
@@ -85,11 +85,12 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     }
 
     const boundMethod = bindThis(showMethod, obj);
-    const result = callMethod(boundMethod, [], m) as StringObj;
+    const result = callMethod(boundMethod, []) as StringObj;
     return result.value;
   }
 
-  function callMethod(method: MethodObj, args: RuntimeObj[], m: ModuleObj): RuntimeObj {
+  function callMethod(method: MethodObj, args: RuntimeObj[]): RuntimeObj {
+    const m = method.receiverType.bindingModule;
     const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
     if (args.length !== expectedCount) {
       throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
