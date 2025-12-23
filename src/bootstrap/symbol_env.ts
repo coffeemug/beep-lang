@@ -1,4 +1,4 @@
-import { makeSymbolObj, type SymbolObj, type SymbolTypeObj } from "../runtime_objs/symbol";
+import { makeSymbolObj, type SymbolObj, type SymbolTypeObj } from "../core_objects/symbol";
 
 export type SymbolEnv = {
   symbolTable: Map<string, SymbolObj>,

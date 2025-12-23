@@ -1,10 +1,10 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, maybe, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
-import { intern_, type SymbolEnv } from "./bootstrap/symbol_env";
-import type { SymbolObj } from "./runtime_objs/symbol";
-import type { SymbolTypeObj } from "./runtime_objs/symbol";
-import type { ModuleObj } from "./runtime_objs/module";
-import { getBindingByName } from "./runtime_objs/module";
+import { intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import type { SymbolObj } from "../core_objects/symbol";
+import type { SymbolTypeObj } from "../core_objects/symbol";
+import type { ModuleObj } from "../core_objects/module";
+import { getBindingByName } from "../core_objects/module";
 
 function postfix<B, S, R>(
   base: parserlike<B>,

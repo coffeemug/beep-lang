@@ -1,11 +1,11 @@
 import { repl } from "./repl";
-import { parse } from "./parser";
-import { bindThis, callMethod, evaluate, show } from "./interpreter";
-import { initSysModule } from "./bootstrap/sys";
+import { parse } from "./runtime/parser";
+import { bindThis, callMethod, evaluate, show } from "./runtime/interpreter";
+import { initSysModule } from "./bootstrap/sys_module";
 import { findSymbolByName, type SymbolEnv } from "./bootstrap/symbol_env";
-import type { ListObj } from "./runtime_objs/list";
-import type { MethodObj } from "./runtime_objs/methods";
-import type { ModuleObj } from "./runtime_objs/module";
+import type { ListObj } from "./data_structures/list";
+import type { MethodObj } from "./core_objects/methods";
+import type { ModuleObj } from "./core_objects/module";
 
 async function main(): Promise<void> {
   const env: SymbolEnv = {

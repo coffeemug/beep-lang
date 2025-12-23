@@ -1,13 +1,13 @@
 import { makeIntObj, type IntTypeObj } from "./int";
-import { getThisObj, nativeMethod } from "./methods";
-import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
-import { type RootTypeObj } from "./root_type"
+import { getThisObj, nativeMethod } from "../core_objects/methods";
+import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
+import { type RootTypeObj } from "../core_objects/root_type"
 import { makeStringObj, type StringTypeObj } from "./string";
-import type { SymbolObj } from "./symbol";
-import type { RuntimeObj } from ".";
-import { show } from "../interpreter";
+import type { SymbolObj } from "../core_objects/symbol";
+import type { RuntimeObj } from "../runtime_objects";
+import { show } from "../runtime/interpreter";
 import { type SymbolEnv } from "../bootstrap/symbol_env";
-import { getBindingByName, type ModuleObj } from "./module";
+import { getBindingByName, type ModuleObj } from "../core_objects/module";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>

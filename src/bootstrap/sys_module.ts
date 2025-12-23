@@ -1,10 +1,10 @@
-import { makeIntTypeObj, registerIntMethods } from "../runtime_objs/int";
-import { makeListObj, makeListTypeObj, registerListMethods } from "../runtime_objs/list";
-import { getThisObj, makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../runtime_objs/methods";
-import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../runtime_objs/module";
-import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../runtime_objs/root_type";
-import { makeStringTypeObj, registerStringMethods } from "../runtime_objs/string";
-import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../runtime_objs/symbol";
+import { makeIntTypeObj, registerIntMethods } from "../data_structures/int";
+import { makeListObj, makeListTypeObj, registerListMethods } from "../data_structures/list";
+import { getThisObj, makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../core_objects/methods";
+import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj } from "../core_objects/module";
+import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
+import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
+import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../core_objects/symbol";
 import { intern_, type SymbolEnv } from "./symbol_env";
 
 export function initSysModule(env: SymbolEnv): ModuleObj {

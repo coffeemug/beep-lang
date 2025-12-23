@@ -1,10 +1,10 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
 import { makeIntObj, type IntTypeObj } from "./int";
-import { getThisObj, nativeMethod } from "./methods";
-import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
-import { getBindingByName, type ModuleObj } from "./module";
-import { type RootTypeObj } from "./root_type"
-import type { SymbolObj } from "./symbol";
+import { getThisObj, nativeMethod } from "../core_objects/methods";
+import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
+import { getBindingByName, type ModuleObj } from "../core_objects/module";
+import { type RootTypeObj } from "../core_objects/root_type"
+import type { SymbolObj } from "../core_objects/symbol";
 
 export type StringTypeObj =
   & RuntimeObjMixin<'StringTypeObj', RootTypeObj>

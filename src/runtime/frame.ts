@@ -1,6 +1,6 @@
-import type { SymbolId } from './bootstrap/symbol_env';
-import type { RuntimeObj } from './runtime_objs';
-import type { ModuleObj } from './runtime_objs/module';
+import type { SymbolId } from '../bootstrap/symbol_env';
+import type { RuntimeObj } from '../runtime_objects';
+import type { ModuleObj } from '../core_objects/module';
 
 export type Frame = {
   bindings: Map<SymbolId, RuntimeObj>,

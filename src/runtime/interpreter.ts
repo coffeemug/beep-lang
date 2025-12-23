@@ -1,12 +1,12 @@
-import { findSymbolByName, type SymbolEnv } from "./bootstrap/symbol_env";
+import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
 import { makeFrame, withFrame } from "./frame";
 import type { Expr } from "./parser";
-import type { RuntimeObj, TypeObj } from "./runtime_objs";
-import { makeIntObj, type IntTypeObj } from "./runtime_objs/int";
-import { makeListObj, type ListTypeObj } from "./runtime_objs/list";
-import { makeMethodObj, type MethodObj, type MethodTypeObj } from "./runtime_objs/methods";
-import { defineBinding, getBinding, getBindingByName, type ModuleObj } from "./runtime_objs/module";
-import { makeStringObj, type StringObj, type StringTypeObj } from "./runtime_objs/string";
+import type { RuntimeObj, TypeObj } from "../runtime_objects";
+import { makeIntObj, type IntTypeObj } from "../data_structures/int";
+import { makeListObj, type ListTypeObj } from "../data_structures/list";
+import { makeMethodObj, type MethodObj, type MethodTypeObj } from "../core_objects/methods";
+import { defineBinding, getBinding, getBindingByName, type ModuleObj } from "../core_objects/module";
+import { makeStringObj, type StringObj, type StringTypeObj } from "../data_structures/string";
 
 export function evaluate(expr: Expr, m: ModuleObj, env: SymbolEnv): RuntimeObj {
   switch (expr.type) {

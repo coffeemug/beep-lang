@@ -1,4 +1,4 @@
-import type { TypeObj } from ".";
+import type { TypeObj } from "../runtime_objects";
 import type { MethodObj } from "./methods";
 import type { SymbolObj } from "./symbol";
 

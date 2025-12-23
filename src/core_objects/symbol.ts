@@ -1,9 +1,9 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
 import { getThisObj, nativeMethod } from "./methods";
-import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
+import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { getBindingByName, type ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj, type StringTypeObj } from "./string";
+import { makeStringObj, type StringTypeObj } from "../data_structures/string";
 
 export type SymbolTypeObj =
   & RuntimeObjMixin<'SymbolTypeObj', RootTypeObj>

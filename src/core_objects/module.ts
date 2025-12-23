@@ -1,7 +1,7 @@
-import type { RuntimeObj } from ".";
+import type { RuntimeObj } from "../runtime_objects";
 import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
-import { makeFrame, type Frame } from "../frame";
-import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
+import { makeFrame, type Frame } from "../runtime/frame";
+import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
 

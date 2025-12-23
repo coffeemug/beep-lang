@@ -1,12 +1,12 @@
-import type { TypeObj, RuntimeObj } from ".";
+import type { TypeObj, RuntimeObj } from "../runtime_objects";
 import { findSymbolByName, intern_, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { SymbolTypeObj } from "./symbol";
-import type { Frame } from "../frame";
-import type { Expr } from "../parser";
-import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
+import type { Frame } from "../runtime/frame";
+import type { Expr } from "../runtime/parser";
+import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { getBindingByName, type ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj, type StringTypeObj } from "./string";
+import { makeStringObj, type StringTypeObj } from "../data_structures/string";
 import type { SymbolObj } from "./symbol";
 
 export type NativeFn = (method: MethodObj, args: RuntimeObj[]) => RuntimeObj;
