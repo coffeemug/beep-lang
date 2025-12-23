@@ -1,7 +1,8 @@
-import { getThisObj, type Env } from "../env";
-import { nativeMethod } from "./methods";
+import type { SymbolEnv } from "../bootstrap/symbol_env";
+import { getThisObj, nativeMethod } from "./methods";
 import type { TypeObjMixin } from "./mixins";
-import { makeStringObj } from "./string";
+import { getBindingByName, type ModuleObj } from "./module";
+import { makeStringObj, type StringTypeObj } from "./string";
 
 export type RootTypeObj = TypeObjMixin & {
   /* Fields common to every runtime object */
@@ -22,10 +23,12 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name'> {
   return obj as Omit<RootTypeObj, 'name'>;
 }
 
-export function registerRootTypeMethods(env: Env) {
-  const m = nativeMethod(env, 'type', 'show', 0, (method) => {
+export function registerRootTypeMethods(m: ModuleObj, env: SymbolEnv) {
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
+
+  const mShow = nativeMethod(m, env, 'type', 'show', 0, (method) => {
     const thisObj = getThisObj<RootTypeObj>(method, env);
-    return makeStringObj(`<type ${thisObj.name.name}>`, env.stringTypeObj.deref()!);
+    return makeStringObj(`<type ${thisObj.name.name}>`, stringTypeObj);
   });
-  m.receiverType.methods.set(m.name, m);
+  mShow.receiverType.methods.set(mShow.name, mShow);
 }

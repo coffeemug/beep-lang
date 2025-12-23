@@ -1,8 +1,9 @@
-import { getThisObj, type Env } from "../env";
-import { nativeMethod } from "./methods";
+import type { SymbolEnv } from "../bootstrap/symbol_env";
+import { getThisObj, nativeMethod } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
+import { getBindingByName, type ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj } from "./string";
+import { makeStringObj, type StringTypeObj } from "./string";
 import type { SymbolObj } from "./symbol";
 
 export type IntTypeObj =
@@ -33,10 +34,12 @@ export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
   };
 }
 
-export function registerIntMethods(env: Env) {
-  const m = nativeMethod(env, 'int', 'show', 0, (method) => {
+export function registerIntMethods(m: ModuleObj, env: SymbolEnv) {
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
+
+  const mShow = nativeMethod(m, env, 'int', 'show', 0, (method) => {
     const thisObj = getThisObj<IntObj>(method, env);
-    return makeStringObj(thisObj.value.toString(), env.stringTypeObj.deref()!);
+    return makeStringObj(thisObj.value.toString(), stringTypeObj);
   });
-  m.receiverType.methods.set(m.name, m);
+  mShow.receiverType.methods.set(mShow.name, mShow);
 }

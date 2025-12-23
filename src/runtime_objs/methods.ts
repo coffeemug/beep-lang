@@ -1,9 +1,11 @@
 import type { TypeObj, RuntimeObj } from ".";
-import { findBinding, getThisObj, intern, type Env, type Frame } from "../env";
+import { intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import type { Frame } from "../frame";
 import type { Expr } from "../parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
+import { getBindingByName, type ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj } from "./string";
+import { makeStringObj, type StringTypeObj } from "./string";
 import type { SymbolObj } from "./symbol";
 
 export type NativeFn = (method: MethodObj, args: RuntimeObj[]) => RuntimeObj;
@@ -62,27 +64,34 @@ export function makeNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argC
 }
 
 export function nativeMethod(
-  env: Env,
+  m: ModuleObj,
+  env: SymbolEnv,
   receiverTypeName: string,
   name: string,
   argCount: number,
   nativeFn: NativeFn
 ): MethodObj {
-  const receiverType = findBinding(env, intern(env, receiverTypeName)) as TypeObj;
+  const receiverType = getBindingByName(receiverTypeName, m, env) as TypeObj;
   return makeNativeMethodObj(
     receiverType,
-    intern(env, name),
+    intern_(name, env, symbolTypeObj),
     argCount,
     nativeFn,
-    env.methodTypeObj.deref()!,
-    env.currentFrame
+    methodTypeObj,
+    m.topFrame
   );
 }
 
-export function registerMethodMethods(env: Env) {
-  const m = nativeMethod(env, 'method', 'show', 0, (method) => {
+export function registerMethodMethods(m: ModuleObj, env: SymbolEnv) {
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
+
+  const method = nativeMethod(m, env, 'method', 'show', 0, (method) => {
     const thisObj = getThisObj<MethodObj>(method, env);
     return makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, env.stringTypeObj.deref()!);
   });
-  m.receiverType.methods.set(m.name, m);
+  method.receiverType.methods.set(m.name, method);
+}
+
+export function getThisObj<T extends RuntimeObj>(method: MethodObj, env: SymbolEnv): T {
+  return method.closureFrame.bindings.get(thisSymbol.id)! as T;
 }

@@ -1,24 +1,26 @@
+import type { SymbolEnv } from "./bootstrap/symbol_env";
+import { makeFrame, withFrame } from "./frame";
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "./runtime_objs";
 import { makeIntObj } from "./runtime_objs/int";
 import { makeListObj } from "./runtime_objs/list";
 import { makeMethodObj, type MethodObj } from "./runtime_objs/methods";
+import { defineBinding, type ModuleObj } from "./runtime_objs/module";
 import { makeStringObj, type StringObj } from "./runtime_objs/string";
-import { findBinding, makeFrame, bindSymbol, withFrame, type Env } from "./env";
 
-export function evaluate(expr: Expr, env: Env): RuntimeObj {
+export function evaluate(expr: Expr, m: ModuleObj, env: SymbolEnv): RuntimeObj {
   switch (expr.type) {
     case 'int': {
-      return makeIntObj(expr.value, env.intTypeObj.deref()!);
+      return makeIntObj(expr.value, intTypeObj);
     }
 
     case 'string': {
-      return makeStringObj(expr.value, env.stringTypeObj.deref()!);
+      return makeStringObj(expr.value, stringTypeObj);
     }
 
     case 'list': {
-      const elements = expr.elements.map(e => evaluate(e, env));
-      return makeListObj(elements, env.listTypeObj.deref()!);
+      const elements = expr.elements.map(e => evaluate(e, m, env));
+      return makeListObj(elements, listTypeObj);
     }
 
     case 'ident': {
@@ -39,15 +41,15 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
         expr.name,
         expr.params,
         expr.body,
-        env.methodTypeObj.deref()!,
-        env.currentFrame
+        methodTypeObj,
+        m.topFrame
       );
       receiverType.methods.set(expr.name, methodObj);
       return methodObj;
     }
 
     case 'fieldAccess': {
-      const receiver = evaluate(expr.receiver, env);
+      const receiver = evaluate(expr.receiver, m, env);
       const method = receiver.type.methods.get(expr.fieldName);
       if (!method) {
         throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type, env)}`);
@@ -56,12 +58,12 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
     }
 
     case 'funcall': {
-      const fn = evaluate(expr.fn, env) as MethodObj;
+      const fn = evaluate(expr.fn, m, env) as MethodObj;
       if (fn.tag !== 'MethodObj') {
         throw new Error(`Cannot call ${show(fn, env)}`);
       }
 
-      const args = expr.args.map(arg => evaluate(arg, env));
+      const args = expr.args.map(arg => evaluate(arg, m, env));
       return callMethod(fn, args, env);
     }
   }
@@ -69,8 +71,8 @@ export function evaluate(expr: Expr, env: Env): RuntimeObj {
   const _exhaustive: never = expr;
 }
 
-export function show(obj: RuntimeObj, env: Env): string {
-  const showMethod = obj.type.methods.get(env.showSym);
+export function show(obj: RuntimeObj, env: SymbolEnv): string {
+  const showMethod = obj.type.methods.get(showSym);
   if (!showMethod) {
     return `<${obj.tag}:noshow>`;
   }
@@ -80,7 +82,7 @@ export function show(obj: RuntimeObj, env: Env): string {
   return result.value;
 }
 
-export function callMethod(method: MethodObj, args: RuntimeObj[], env: Env): RuntimeObj {
+export function callMethod(method: MethodObj, args: RuntimeObj[], m: ModuleObj, env: SymbolEnv): RuntimeObj {
   const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
   if (args.length !== expectedCount) {
     throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
@@ -90,16 +92,16 @@ export function callMethod(method: MethodObj, args: RuntimeObj[], env: Env): Run
     return method.nativeFn(method, args);
   }
 
-  return withFrame(env, method.closureFrame, () => {
+  return withFrame(m, method.closureFrame, () => {
     for (let i = 0; i < method.argNames.length; i++) {
-      bindSymbol(env, method.argNames[i], args[i]);
+      defineBinding(method.argNames[i], args[i], m);
     }
-    return evaluate(method.body, env);
+    return evaluate(method.body, m, env);
   });
 }
 
-export function bindThis(method: MethodObj, receiver: RuntimeObj, env: Env): MethodObj {
+export function bindThis(method: MethodObj, receiver: RuntimeObj, env: SymbolEnv): MethodObj {
   const closureFrame = makeFrame(method.closureFrame);
-  closureFrame.bindings.set(env.thisSymbol.id, receiver);
+  closureFrame.bindings.set(thisSymbol.id, receiver);
   return { ...method, closureFrame };
 }

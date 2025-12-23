@@ -1,12 +1,13 @@
-import { getThisObj, type Env } from "../env";
-import { makeIntObj } from "./int";
-import { nativeMethod } from "./methods";
+import { makeIntObj, type IntTypeObj } from "./int";
+import { getThisObj, nativeMethod } from "./methods";
 import type { RuntimeObjMixin, TypeObjMixin } from "./mixins";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj } from "./string";
+import { makeStringObj, type StringTypeObj } from "./string";
 import type { SymbolObj } from "./symbol";
 import type { RuntimeObj } from ".";
 import { show } from "../interpreter";
+import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
+import { getBinding, type ModuleObj } from "./module";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -36,26 +37,28 @@ export function makeListObj(elements: RuntimeObj[], listTypeObj: ListTypeObj): L
   };
 }
 
-export function registerListMethods(env: Env) {
-  const listTypeObj = env.listTypeObj.deref()!;
+export function registerListMethods(m: ModuleObj, env: SymbolEnv) {
+  const listTypeObj = getBinding(findSymbolByName('list', env)!, m) as ListTypeObj;
+  const stringTypeObj = getBinding(findSymbolByName('string', env)!, m) as StringTypeObj;
+  const intTypeObj = getBinding(findSymbolByName('int', env)!, m) as IntTypeObj;
 
   // show
-  const mShow = nativeMethod(env, 'list', 'show', 0, (method) => {
+  const mShow = nativeMethod(m, env, 'list', 'show', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
     const elemStrs = thisObj.elements.map((e: RuntimeObj) => show(e, env));
-    return makeStringObj(`[${elemStrs.join(', ')}]`, env.stringTypeObj.deref()!);
+    return makeStringObj(`[${elemStrs.join(', ')}]`, stringTypeObj);
   });
   mShow.receiverType.methods.set(mShow.name, mShow);
 
   // push_back - returns new list with element added at end
-  const mPushBack = nativeMethod(env, 'list', 'push', 1, (method, args) => {
+  const mPushBack = nativeMethod(m, env, 'list', 'push', 1, (method, args) => {
     const thisObj = getThisObj<ListObj>(method, env);
     return makeListObj([...thisObj.elements, args[0]], listTypeObj);
   });
   mPushBack.receiverType.methods.set(mPushBack.name, mPushBack);
 
   // push_back! - mutates list, adds element at end
-  const mPushBackMut = nativeMethod(env, 'list', 'push!', 1, (method, args) => {
+  const mPushBackMut = nativeMethod(m, env, 'list', 'push!', 1, (method, args) => {
     const thisObj = getThisObj<ListObj>(method, env);
     thisObj.elements.push(args[0]);
     return thisObj;
@@ -63,14 +66,14 @@ export function registerListMethods(env: Env) {
   mPushBackMut.receiverType.methods.set(mPushBackMut.name, mPushBackMut);
 
   // pop_back - returns new list with last element removed
-  const mPopBack = nativeMethod(env, 'list', 'pop', 0, (method) => {
+  const mPopBack = nativeMethod(m, env, 'list', 'pop', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
     return makeListObj(thisObj.elements.slice(0, -1), listTypeObj);
   });
   mPopBack.receiverType.methods.set(mPopBack.name, mPopBack);
 
   // pop_back! - mutates list, removes last element
-  const mPopBackMut = nativeMethod(env, 'list', 'pop!', 0, (method) => {
+  const mPopBackMut = nativeMethod(m, env, 'list', 'pop!', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
     thisObj.elements.pop();
     return thisObj;
@@ -78,14 +81,14 @@ export function registerListMethods(env: Env) {
   mPopBackMut.receiverType.methods.set(mPopBackMut.name, mPopBackMut);
 
   // push_front - returns new list with element added at front
-  const mPushFront = nativeMethod(env, 'list', 'push_front', 1, (method, args) => {
+  const mPushFront = nativeMethod(m, env, 'list', 'push_front', 1, (method, args) => {
     const thisObj = getThisObj<ListObj>(method, env);
     return makeListObj([args[0], ...thisObj.elements], listTypeObj);
   });
   mPushFront.receiverType.methods.set(mPushFront.name, mPushFront);
 
   // push_front! - mutates list, adds element at front
-  const mPushFrontMut = nativeMethod(env, 'list', 'push_front!', 1, (method, args) => {
+  const mPushFrontMut = nativeMethod(m, env, 'list', 'push_front!', 1, (method, args) => {
     const thisObj = getThisObj<ListObj>(method, env);
     thisObj.elements.unshift(args[0]);
     return thisObj;
@@ -93,14 +96,14 @@ export function registerListMethods(env: Env) {
   mPushFrontMut.receiverType.methods.set(mPushFrontMut.name, mPushFrontMut);
 
   // pop_front - returns new list with first element removed
-  const mPopFront = nativeMethod(env, 'list', 'pop_front', 0, (method) => {
+  const mPopFront = nativeMethod(m, env, 'list', 'pop_front', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
     return makeListObj(thisObj.elements.slice(1), listTypeObj);
   });
   mPopFront.receiverType.methods.set(mPopFront.name, mPopFront);
 
   // pop_front! - mutates list, removes first element
-  const mPopFrontMut = nativeMethod(env, 'list', 'pop_front!', 0, (method) => {
+  const mPopFrontMut = nativeMethod(m, env, 'list', 'pop_front!', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
     thisObj.elements.shift();
     return thisObj;
@@ -108,9 +111,9 @@ export function registerListMethods(env: Env) {
   mPopFrontMut.receiverType.methods.set(mPopFrontMut.name, mPopFrontMut);
 
   // len - returns number of elements
-  const mLen = nativeMethod(env, 'list', 'len', 0, (method) => {
+  const mLen = nativeMethod(m, env, 'list', 'len', 0, (method) => {
     const thisObj = getThisObj<ListObj>(method, env);
-    return makeIntObj(thisObj.elements.length, env.intTypeObj.deref()!);
+    return makeIntObj(thisObj.elements.length, intTypeObj);
   });
   mLen.receiverType.methods.set(mLen.name, mLen);
 }
