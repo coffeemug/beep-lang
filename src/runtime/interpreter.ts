@@ -1,15 +1,19 @@
-import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
-import { makeFrame, withFrame } from "./frame";
+import { findSymbolByName, intern, intern_, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeIntObj, type IntTypeObj } from "../data_structures/int";
 import { makeListObj, type ListTypeObj } from "../data_structures/list";
-import { makeMethodObj, type MethodObj, type MethodTypeObj } from "../core_objects/methods";
+import { bindMethod, makeUnboundMethodObj, type UnboundMethodObj, type UnboundMethodTypeObj } from "../core_objects/unbound_method";
 import { defineBinding, getBinding, getBindingByName, type ModuleObj } from "../core_objects/module";
+import { withFrame } from "./frame";
 import { makeStringObj, type StringObj, type StringTypeObj } from "../data_structures/string";
+import type { BoundMethodObj, BoundMethodTypeObj } from "../core_objects/bound_method";
 
 export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
-  const { intTypeObj, stringTypeObj, listTypeObj, methodTypeObj } = getCoreTypes();
+  const {
+    intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,
+    boundMethodTypeObj
+   } = getCoreTypes();
   const { thisSym, showSym } = getCoreSymbols();
 
   function evaluate(expr: Expr, m: ModuleObj): RuntimeObj {
@@ -40,12 +44,12 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
         if (!receiverType) {
           throw new Error(`Unknown type ${expr.receiverType.name}`);
         }
-        const methodObj = makeMethodObj(
+        const methodObj = makeUnboundMethodObj(
           receiverType,
           expr.name,
           expr.params,
           expr.body,
-          methodTypeObj,
+          unboundMethodTypeObj,
           m.topFrame
         );
         receiverType.methods.set(expr.name, methodObj);
@@ -58,12 +62,12 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
         if (!method) {
           throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type)}`);
         }
-        return bindThis(method, receiver);
+        return bindMethod(method, receiver, boundMethodTypeObj);
       }
 
       case 'funcall': {
-        const fn = evaluate(expr.fn, m) as MethodObj;
-        if (fn.tag !== 'MethodObj') {
+        const fn = evaluate(expr.fn, m) as BoundMethodObj;
+        if (fn.tag !== 'BoundMethodObj') {
           throw new Error(`Cannot call ${show(fn)}`);
         }
 
@@ -76,64 +80,58 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
   }
 
   function show(obj: RuntimeObj): string {
-    if (!showSym) {
-      return `<${obj.tag}:noshow>`;
-    }
     const showMethod = obj.type.methods.get(showSym);
     if (!showMethod) {
       return `<${obj.tag}:noshow>`;
     }
 
-    const boundMethod = bindThis(showMethod, obj);
+    const boundMethod = bindMethod(showMethod, obj, boundMethodTypeObj);
     const result = callMethod(boundMethod, []) as StringObj;
     return result.value;
-  }
-
-  function callMethod(method: MethodObj, args: RuntimeObj[]): RuntimeObj {
-    const m = method.receiverType.bindingModule;
-    const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
-    if (args.length !== expectedCount) {
-      throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
-    }
-
-    if (method.mode === 'native') {
-      const thisObj = method.closureFrame.bindings.get(thisSym.id)!;
-      return method.nativeFn(thisObj, args, method);
-    }
-
-    return withFrame(m, method.closureFrame, () => {
-      for (let i = 0; i < method.argNames.length; i++) {
-        defineBinding(method.argNames[i], args[i], m);
-      }
-      return evaluate(method.body, m);
-    });
-  }
-
-  function bindThis(method: MethodObj, receiver: RuntimeObj): MethodObj {
-    const closureFrame = makeFrame(method.closureFrame);
-    closureFrame.bindings.set(thisSym.id, receiver);
-    return { ...method, closureFrame };
   }
 
   function getCoreTypes() {
     const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule, env)!;
     const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule, env)!;
     const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule, env)!;
-    const methodTypeObj = getBindingByName<MethodTypeObj>('method', sysModule, env)!;
+    const unboundMethodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', sysModule, env)!;
+    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('bound_method', sysModule, env)!;
 
     return {
-      intTypeObj, stringTypeObj, listTypeObj, methodTypeObj,    
+      intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,
+      boundMethodTypeObj,
     }
   }  
 
   function getCoreSymbols() {
-    const thisSym = findSymbolByName('this', env)!;
-    const showSym = findSymbolByName('show', env);
+    const thisSym = intern('this', env);
+    const showSym = intern('show', env);
     return { thisSym, showSym }
   }
 
+  function callMethod(method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj {
+    const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
+    if (args.length !== expectedCount) {
+      throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
+    }
+
+    if (method.mode === 'native') {
+      return method.nativeFn(method.receiverInstance, args);
+    }
+
+    const module = method.receiverType.bindingModule;
+    return withFrame(module, method.frameClosure, () => {
+      defineBinding(thisSym, method.receiverInstance, module);
+      for (let i = 0; i < method.argNames.length; i++) {
+        defineBinding(method.argNames[i], args[i], module);
+      }
+      return evaluate(method.body, module);
+    });
+  }
+
   return {
-    evaluate, show, callMethod, bindThis, getCoreTypes,
-    getCoreSymbols,
+    evaluate, show, getCoreTypes, getCoreSymbols, callMethod,
+    bindMethod: (method: UnboundMethodObj, receiver: RuntimeObj) =>
+      bindMethod(method, receiver, boundMethodTypeObj),
   };
 }

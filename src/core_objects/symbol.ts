@@ -1,5 +1,5 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
-import { nativeMethod } from "./methods";
+import { nativeUnboundMethod } from "./unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { getBindingByName, type ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
@@ -37,7 +37,7 @@ export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTyp
 export function registerSymbolMethods(m: ModuleObj, env: SymbolEnv) {
   const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
 
-  const mShow = nativeMethod<SymbolObj>(m, env, 'symbol', 'show', 0, thisObj =>
+  const mShow = nativeUnboundMethod<SymbolObj>(m, env, 'symbol', 'show', 0, thisObj =>
     makeStringObj(`${thisObj.name}:${thisObj.id}`, stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 }

@@ -1,5 +1,5 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
-import { nativeMethod } from "./methods";
+import { nativeUnboundMethod } from "./unbound_method";
 import type { TypeObjMixin } from "./object_mixins";
 import { getBindingByName, type ModuleObj } from "./module";
 import { makeStringObj, type StringTypeObj } from "../data_structures/string";
@@ -26,7 +26,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 export function registerRootTypeMethods(m: ModuleObj, env: SymbolEnv) {
   const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
 
-  const mShow = nativeMethod<RootTypeObj>(m, env, 'type', 'show', 0, thisObj =>
+  const mShow = nativeUnboundMethod<RootTypeObj>(m, env, 'type', 'show', 0, thisObj =>
     makeStringObj(`<type ${thisObj.name.name}>`, stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 }

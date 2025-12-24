@@ -1,11 +1,12 @@
 import { makeIntTypeObj, registerIntMethods } from "../data_structures/int";
 import { makeListObj, makeListTypeObj, registerListMethods } from "../data_structures/list";
-import { makeMethodTypeObj, nativeMethod, registerMethodMethods, type MethodObj } from "../core_objects/methods";
+import { makeUnboundMethodTypeObj, nativeUnboundMethod, registerUnboundMethodMethods } from "../core_objects/unbound_method";
 import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj, type ModuleTypeObj } from "../core_objects/module";
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
 import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../core_objects/symbol";
 import { intern, intern_, type SymbolEnv } from "./symbol_env";
+import { makeBoundMethodTypeObj, registerBoundMethodMethods } from "../core_objects/bound_method";
 
 export function initSysModule(env: SymbolEnv): ModuleObj {
   const sysModule = bootstrapSysModule(env);
@@ -56,27 +57,29 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
 
   const intTypeObj = makeIntTypeObj(intern('int', env), rootTypeObj, m);
   const listTypeObj = makeListTypeObj(intern('list', env), rootTypeObj, m);
-  const methodTypeObj = makeMethodTypeObj(intern('method', env), rootTypeObj, m);
+  const unboundMethodTypeObj = makeUnboundMethodTypeObj(intern('unbound_method', env), rootTypeObj, m);
+  const boundMethodTypeObj = makeBoundMethodTypeObj(intern('bound_method', env), rootTypeObj, m);
   const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj, m);
 
   defineBinding(intTypeObj.name, intTypeObj, m);
   defineBinding(listTypeObj.name, listTypeObj, m);
-  defineBinding(methodTypeObj.name, methodTypeObj, m);
+  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, m);
+  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m);
   defineBinding(stringTypeObj.name, stringTypeObj, m);
 
-  const typeNames = ['type', 'symbol', 'int', 'list', 'method', 'module', 'string'];
+  const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'bound_method', 'module', 'string'];
 
   // Native `type` method - returns the object's type. Registering
   // here because it's the same for every type.
   for (const typeName of typeNames) {
-    const mType = nativeMethod(m, env, typeName, 'type', 0, thisObj =>
+    const mType = nativeUnboundMethod(m, env, typeName, 'type', 0, thisObj =>
       thisObj.type);
     mType.receiverType.methods.set(mType.name, mType);
   }
 
   // Native `methods` method - returns a list of method names that can be called.
   for (const typeName of typeNames) {
-    const mMethods = nativeMethod(m, env, typeName, 'methods', 0, thisObj => {
+    const mMethods = nativeUnboundMethod(m, env, typeName, 'methods', 0, thisObj => {
       const methods = thisObj.type.methods.values().toArray();
       return makeListObj(methods, listTypeObj);
     });
@@ -87,6 +90,8 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   registerListMethods(m, env);
   registerStringMethods(m, env);
   registerSymbolMethods(m, env);
-  registerMethodMethods(m, env);
+  registerUnboundMethodMethods(m, env);
+  registerBoundMethodMethods(m, env);
   registerRootTypeMethods(m, env);
+  // TODO register bound/unbound method methods
 }
