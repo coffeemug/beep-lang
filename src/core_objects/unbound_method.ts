@@ -41,7 +41,6 @@ export function makeUnboundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeO
     type: rootTypeObj,
     name,
     methods: new Map(),
-    bindingModule,
   };
 }
 

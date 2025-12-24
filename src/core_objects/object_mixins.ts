@@ -13,7 +13,6 @@ export type TypeObjMixin = {
   /* Fields common to every type object */
   name: SymbolObj,
   methods: UnboundMethodsMap,
-  bindingModule: ModuleObj,
 }
 
 export type UnboundMethodsMap = Map<SymbolObj, UnboundMethodObj>;

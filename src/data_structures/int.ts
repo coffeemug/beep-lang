@@ -24,7 +24,6 @@ export function makeIntTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindin
     type: rootTypeObj,
     name,
     methods: new Map(),
-    bindingModule,
   };
 }
 

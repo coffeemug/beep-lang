@@ -24,7 +24,6 @@ export function makeStringTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bin
     type: rootTypeObj,
     name,
     methods: new Map(),
-    bindingModule,
   };
 }
 

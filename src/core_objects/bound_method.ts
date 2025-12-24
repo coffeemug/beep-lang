@@ -27,7 +27,6 @@ export function makeBoundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj
     type: rootTypeObj,
     name,
     methods: new Map(),
-    bindingModule,
   };
 }
 

@@ -1,14 +1,14 @@
 import { repl } from "./repl";
 import { parse } from "./runtime/parser";
 import { makeInterpreter } from "./runtime/interpreter";
-import { initSysModule } from "./bootstrap/sys_module";
-import { findSymbolByName, initSymbolEnv } from "./bootstrap/symbol_env";
+import { createKernel } from "./bootstrap/kernel";
+import { findSymbolByName } from "./bootstrap/symbol_env";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./core_objects/unbound_method";
 
 async function main(): Promise<void> {
-  const env = initSymbolEnv();
-  const sysModule = initSysModule(env);
+  const kernel = createKernel();
+  const { symbolEnv: env, sysModule } = kernel;
   const { evaluate, show, callMethod, bindMethod } = makeInterpreter(env, sysModule);
 
   function run(input: string): string {

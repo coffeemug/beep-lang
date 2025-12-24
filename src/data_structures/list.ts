@@ -26,7 +26,6 @@ export function makeListTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindi
     type: rootTypeObj,
     name,
     methods: new Map(),
-    bindingModule,
   };
 }
 
