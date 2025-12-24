@@ -79,21 +79,21 @@ export function nativeUnboundMethod<T extends RuntimeObj>(
   argCount: number,
   nativeFn: NativeFn<T>
 ): UnboundMethodObj {
-  const receiverType = getBindingByName(receiverTypeName, m.topScope, env) as TypeObj;
-  const methodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', m.topScope, env)!;
+  const receiverType = getBindingByName(receiverTypeName, m.toplevelScope, env) as TypeObj;
+  const methodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', m.toplevelScope, env)!;
   return makeUnboundNativeMethodObj(
     receiverType,
     intern(name, env),
     argCount,
     nativeFn as NativeFn,
     methodTypeObj,
-    m.topScope
+    m.toplevelScope
   );
 }
 
 export function registerUnboundMethodMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
-  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m.topScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
+  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m.toplevelScope, env)!;
 
   const mBind = nativeUnboundMethod<UnboundMethodObj>(m, env, 'unbound_method', 'bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0], boundMethodTypeObj));

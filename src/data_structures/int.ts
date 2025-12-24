@@ -37,7 +37,7 @@ export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
 }
 
 export function registerIntMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
 
   const mShow = nativeUnboundMethod<IntObj>(m, env, 'int', 'show', 0, thisObj =>
     makeStringObj(thisObj.value.toString(), stringTypeObj));

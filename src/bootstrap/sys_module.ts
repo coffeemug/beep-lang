@@ -43,15 +43,15 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
   moduleTypeObj.bindingModule = sysModule;
 
   // Bind type names in the sys module
-  defineBinding(rootTypeObj.name, rootTypeObj, sysModule.topScope);
-  defineBinding(symbolTypeObj.name, symbolTypeObj, sysModule.topScope);
-  defineBinding(moduleTypeObj.name, moduleTypeObj, sysModule.topScope);
+  defineBinding(rootTypeObj.name, rootTypeObj, sysModule.toplevelScope);
+  defineBinding(symbolTypeObj.name, symbolTypeObj, sysModule.toplevelScope);
+  defineBinding(moduleTypeObj.name, moduleTypeObj, sysModule.toplevelScope);
 
   return sysModule;
 }
 
 function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
-  const rootTypeObj = getBindingByName<RootTypeObj>('type', m.topScope, env)!;
+  const rootTypeObj = getBindingByName<RootTypeObj>('type', m.toplevelScope, env)!;
 
   // Intern special symbols needed by the interpreter
   intern('this', env);
@@ -62,11 +62,11 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   const boundMethodTypeObj = makeBoundMethodTypeObj(intern('method', env), rootTypeObj, m);
   const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj, m);
 
-  defineBinding(intTypeObj.name, intTypeObj, m.topScope);
-  defineBinding(listTypeObj.name, listTypeObj, m.topScope);
-  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, m.topScope);
-  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m.topScope);
-  defineBinding(stringTypeObj.name, stringTypeObj, m.topScope);
+  defineBinding(intTypeObj.name, intTypeObj, m.toplevelScope);
+  defineBinding(listTypeObj.name, listTypeObj, m.toplevelScope);
+  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, m.toplevelScope);
+  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m.toplevelScope);
+  defineBinding(stringTypeObj.name, stringTypeObj, m.toplevelScope);
 
   const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'module', 'string'];
 

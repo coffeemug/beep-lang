@@ -39,9 +39,9 @@ export function makeListObj(elements: RuntimeObj[], listTypeObj: ListTypeObj): L
 }
 
 export function registerListMethods(m: ModuleObj, env: SymbolEnv) {
-  const listTypeObj = getBindingByName<ListTypeObj>('list', m.topScope, env)!;
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
-  const intTypeObj = getBindingByName<IntTypeObj>('int', m.topScope, env)!
+  const listTypeObj = getBindingByName<ListTypeObj>('list', m.toplevelScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
+  const intTypeObj = getBindingByName<IntTypeObj>('int', m.toplevelScope, env)!
 
   // show
   const mShow = nativeUnboundMethod<ListObj>(m, env, 'list', 'show', 0, _thisObj => {

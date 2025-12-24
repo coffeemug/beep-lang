@@ -25,7 +25,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 }
 
 export function registerRootTypeMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
 
   const mShow = nativeUnboundMethod<RootTypeObj>(m, env, 'type', 'show', 0, thisObj =>
     makeStringObj(`<type ${thisObj.name.name}>`, stringTypeObj));

@@ -36,7 +36,7 @@ export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTyp
 }
 
 export function registerSymbolMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
 
   const mShow = nativeUnboundMethod<SymbolObj>(m, env, 'symbol', 'show', 0, thisObj =>
     makeStringObj(`${thisObj.name}:${thisObj.id}`, stringTypeObj));

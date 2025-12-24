@@ -13,14 +13,14 @@ async function main(): Promise<void> {
 
   function run(input: string): string {
     const ast = parse(input, env);
-    const result = evaluate(ast, sysModule);
+    const result = evaluate(ast, sysModule.toplevelScope);
     return show(result);
   }
 
   function complete(input: string): string[] {
     try {
       const ast = parse(input, env);
-      const obj = evaluate(ast, sysModule);
+      const obj = evaluate(ast, sysModule.toplevelScope);
 
       // Get the methods method from the object's type
       const methodsSym = findSymbolByName('methods', env);
