@@ -2,7 +2,8 @@ import type { SymbolEnv } from "../bootstrap/symbol_env";
 import { makeIntObj, type IntTypeObj } from "./int";
 import { nativeUnboundMethod } from "../core_objects/unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
-import { getBindingByName, type ModuleObj } from "../core_objects/module";
+import { getBindingByName } from "../runtime/scope";
+import type { ModuleObj } from "../core_objects/module";
 import { type RootTypeObj } from "../core_objects/root_type"
 import type { SymbolObj } from "../core_objects/symbol";
 
@@ -36,8 +37,8 @@ export function makeStringObj(value: string, stringTypeObj: StringTypeObj): Stri
 }
 
 export function registerStringMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
-  const intTypeObj = getBindingByName<IntTypeObj>('int', m, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const intTypeObj = getBindingByName<IntTypeObj>('int', m.topScope, env)!;
 
   const mShow = nativeUnboundMethod<StringObj>(m, env, 'string', 'show', 0, thisObj =>
     makeStringObj(`'${thisObj.value}'`, stringTypeObj));

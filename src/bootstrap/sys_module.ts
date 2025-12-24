@@ -1,7 +1,8 @@
 import { makeIntTypeObj, registerIntMethods } from "../data_structures/int";
 import { makeListObj, makeListTypeObj, registerListMethods } from "../data_structures/list";
 import { makeUnboundMethodTypeObj, nativeUnboundMethod, registerUnboundMethodMethods } from "../core_objects/unbound_method";
-import { defineBinding, getBindingByName, makeModuleObj, makeModuleTypeObj, type ModuleObj, type ModuleTypeObj } from "../core_objects/module";
+import { makeModuleObj, makeModuleTypeObj, type ModuleObj, type ModuleTypeObj } from "../core_objects/module";
+import { defineBinding, getBindingByName } from "../runtime/scope";
 import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { makeStringTypeObj, registerStringMethods } from "../data_structures/string";
 import { makeSymbolTypeObj, registerSymbolMethods, type SymbolTypeObj } from "../core_objects/symbol";
@@ -42,15 +43,15 @@ function bootstrapSysModule(env: SymbolEnv): ModuleObj {
   moduleTypeObj.bindingModule = sysModule;
 
   // Bind type names in the sys module
-  defineBinding(rootTypeObj.name, rootTypeObj, sysModule);
-  defineBinding(symbolTypeObj.name, symbolTypeObj, sysModule);
-  defineBinding(moduleTypeObj.name, moduleTypeObj, sysModule);
+  defineBinding(rootTypeObj.name, rootTypeObj, sysModule.topScope);
+  defineBinding(symbolTypeObj.name, symbolTypeObj, sysModule.topScope);
+  defineBinding(moduleTypeObj.name, moduleTypeObj, sysModule.topScope);
 
   return sysModule;
 }
 
 function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
-  const rootTypeObj = getBindingByName<RootTypeObj>('type', m, env)!;
+  const rootTypeObj = getBindingByName<RootTypeObj>('type', m.topScope, env)!;
 
   // Intern special symbols needed by the interpreter
   intern('this', env);
@@ -61,11 +62,11 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   const boundMethodTypeObj = makeBoundMethodTypeObj(intern('method', env), rootTypeObj, m);
   const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj, m);
 
-  defineBinding(intTypeObj.name, intTypeObj, m);
-  defineBinding(listTypeObj.name, listTypeObj, m);
-  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, m);
-  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m);
-  defineBinding(stringTypeObj.name, stringTypeObj, m);
+  defineBinding(intTypeObj.name, intTypeObj, m.topScope);
+  defineBinding(listTypeObj.name, listTypeObj, m.topScope);
+  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, m.topScope);
+  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m.topScope);
+  defineBinding(stringTypeObj.name, stringTypeObj, m.topScope);
 
   const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'module', 'string'];
 

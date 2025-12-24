@@ -1,9 +1,10 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
 import { intern, type SymbolEnv } from "../bootstrap/symbol_env";
-import type { Frame } from "../runtime/frame";
+import type { Scope } from "../runtime/scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { getBindingByName, type ModuleObj } from "./module";
+import { getBindingByName } from "../runtime/scope";
+import type { ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
 import { makeStringObj, type StringTypeObj } from "../data_structures/string";
 import type { SymbolObj } from "./symbol";
@@ -25,7 +26,7 @@ export type MethodObjBase =
   & {
     receiverType: TypeObj,
     name: SymbolObj,
-    frameClosure: Frame,
+    scopeClosure: Scope,
   }
 
 type Procedure =
@@ -44,7 +45,7 @@ export function makeUnboundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeO
   };
 }
 
-export function makeUnboundMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr, methodTypeObj: UnboundMethodTypeObj, closureFrame: Frame): UnboundMethodObj {
+export function makeUnboundMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr, methodTypeObj: UnboundMethodTypeObj, scopeClosure: Scope): UnboundMethodObj {
   return {
     tag: 'UnboundMethodObj',
     type: methodTypeObj,
@@ -53,11 +54,11 @@ export function makeUnboundMethodObj(receiverType: TypeObj, name: SymbolObj, arg
     mode: 'interpreted',
     argNames,
     body,
-    frameClosure: closureFrame,
+    scopeClosure,
   };
 }
 
-export function makeUnboundNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn, methodTypeObj: UnboundMethodTypeObj, closureFrame: Frame): UnboundMethodObj {
+export function makeUnboundNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn, methodTypeObj: UnboundMethodTypeObj, scopeClosure: Scope): UnboundMethodObj {
   return {
     tag: 'UnboundMethodObj',
     type: methodTypeObj,
@@ -66,7 +67,7 @@ export function makeUnboundNativeMethodObj(receiverType: TypeObj, name: SymbolOb
     mode: 'native',
     argCount,
     nativeFn,
-    frameClosure: closureFrame,
+    scopeClosure,
   };
 }
 
@@ -78,21 +79,21 @@ export function nativeUnboundMethod<T extends RuntimeObj>(
   argCount: number,
   nativeFn: NativeFn<T>
 ): UnboundMethodObj {
-  const receiverType = getBindingByName(receiverTypeName, m, env) as TypeObj;
-  const methodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', m, env)!;
+  const receiverType = getBindingByName(receiverTypeName, m.topScope, env) as TypeObj;
+  const methodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', m.topScope, env)!;
   return makeUnboundNativeMethodObj(
     receiverType,
     intern(name, env),
     argCount,
     nativeFn as NativeFn,
     methodTypeObj,
-    m.topFrame
+    m.topScope
   );
 }
 
 export function registerUnboundMethodMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
-  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m.topScope, env)!;
 
   const mBind = nativeUnboundMethod<UnboundMethodObj>(m, env, 'unbound_method', 'bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0], boundMethodTypeObj));

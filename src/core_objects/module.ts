@@ -1,6 +1,6 @@
 import type { RuntimeObj } from "../runtime_objects";
 import { findSymbolByName, type SymbolEnv } from "../bootstrap/symbol_env";
-import { makeFrame, type Frame } from "../runtime/frame";
+import { makeScope, type Scope } from "../runtime/scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
@@ -14,7 +14,7 @@ export type ModuleObj =
   & RuntimeObjMixin<'ModuleObj', ModuleTypeObj>
   & {
     name: SymbolObj,
-    topFrame: Frame,
+    topScope: Scope,
   }
 
 export function makeModuleTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): Omit<ModuleTypeObj, 'bindingModule'> {
@@ -31,28 +31,31 @@ export function makeModuleObj(moduleName: SymbolObj, moduleTypeObj: ModuleTypeOb
     tag: 'ModuleObj',
     type: moduleTypeObj,
     name: moduleName,
-    topFrame: makeFrame(),
+    topScope: makeScope(),
   };
 }
 
-export function defineBinding(name: SymbolObj, value: RuntimeObj, module: ModuleObj) {
-  module.topFrame.bindings.set(name.id, value);
+/*
+  Scope management
+*/
+export function pushScope(m: ModuleObj): Scope {
+  m.topScope = makeScope(m.topScope);
+  return m.topScope;
 }
 
-export function getBindingByName<T extends RuntimeObj>(name: string, m: ModuleObj, env: SymbolEnv): T | null {
-  const sym = findSymbolByName(name, env);
-  return sym && getBinding(sym, m) as T;
-}
-
-export function getBinding(symbol: SymbolObj, module: ModuleObj) {
-  return getBinding_(symbol, module.topFrame);
-}
-
-function getBinding_(symbol: SymbolObj, frame: Frame | null): RuntimeObj | null {
-  if (!frame) {
-    return null;
+export function popScope(m: ModuleObj) {
+  if (!m.topScope.parent) {
+    throw new Error("This should never happen!")
   }
+  m.topScope = m.topScope.parent;
+}
 
-  const binding = frame.bindings.get(symbol.id);
-  return binding ?? getBinding_(symbol, frame.parent);
+export function withScope<T>(m: ModuleObj, parent: Scope, fn: () => T): T {
+  const savedFrame = m.topScope;
+  m.topScope = makeScope(parent);
+  try {
+    return fn();
+  } finally {
+    m.topScope = savedFrame;
+  }
 }

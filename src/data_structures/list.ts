@@ -6,7 +6,8 @@ import { makeStringObj, type StringTypeObj } from "./string";
 import type { SymbolObj } from "../core_objects/symbol";
 import type { RuntimeObj } from "../runtime_objects";
 import { type SymbolEnv } from "../bootstrap/symbol_env";
-import { getBindingByName, type ModuleObj } from "../core_objects/module";
+import { getBindingByName } from "../runtime/scope";
+import type { ModuleObj } from "../core_objects/module";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -38,9 +39,9 @@ export function makeListObj(elements: RuntimeObj[], listTypeObj: ListTypeObj): L
 }
 
 export function registerListMethods(m: ModuleObj, env: SymbolEnv) {
-  const listTypeObj = getBindingByName<ListTypeObj>('list', m, env)!;
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
-  const intTypeObj = getBindingByName<IntTypeObj>('int', m, env)!
+  const listTypeObj = getBindingByName<ListTypeObj>('list', m.topScope, env)!;
+  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.topScope, env)!;
+  const intTypeObj = getBindingByName<IntTypeObj>('int', m.topScope, env)!
 
   // show
   const mShow = nativeUnboundMethod<ListObj>(m, env, 'list', 'show', 0, _thisObj => {

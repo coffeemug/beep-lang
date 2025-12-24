@@ -4,8 +4,8 @@ import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeIntObj, type IntTypeObj } from "../data_structures/int";
 import { makeListObj, type ListTypeObj } from "../data_structures/list";
 import { bindMethod, makeUnboundMethodObj, type UnboundMethodObj, type UnboundMethodTypeObj } from "../core_objects/unbound_method";
-import { defineBinding, getBinding, getBindingByName, type ModuleObj } from "../core_objects/module";
-import { withFrame } from "./frame";
+import { withScope, type ModuleObj } from "../core_objects/module";
+import { defineBinding, getBinding, getBindingByName } from "./scope";
 import { makeStringObj, type StringObj, type StringTypeObj } from "../data_structures/string";
 import type { BoundMethodObj, BoundMethodTypeObj } from "../core_objects/bound_method";
 
@@ -32,7 +32,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
       }
 
       case 'ident': {
-        const value = getBinding(expr.sym, m);
+        const value = getBinding(expr.sym, m.topScope);
         if (!value) {
           throw new Error(`Unbound symbol ${show(expr.sym)}`);
         }
@@ -40,7 +40,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
       }
 
       case 'methodDef': {
-        const receiverType = getBinding(expr.receiverType, m) as TypeObj;
+        const receiverType = getBinding(expr.receiverType, m.topScope) as TypeObj;
         if (!receiverType) {
           throw new Error(`Unknown type ${expr.receiverType.name}`);
         }
@@ -50,7 +50,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
           expr.params,
           expr.body,
           unboundMethodTypeObj,
-          m.topFrame
+          m.topScope
         );
         receiverType.methods.set(expr.name, methodObj);
         return methodObj;
@@ -91,11 +91,11 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
   }
 
   function getCoreTypes() {
-    const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule, env)!;
-    const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule, env)!;
-    const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule, env)!;
-    const unboundMethodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', sysModule, env)!;
-    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', sysModule, env)!;
+    const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule.topScope, env)!;
+    const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule.topScope, env)!;
+    const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule.topScope, env)!;
+    const unboundMethodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', sysModule.topScope, env)!;
+    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', sysModule.topScope, env)!;
 
     return {
       intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,
@@ -120,10 +120,10 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     }
 
     const module = method.receiverType.bindingModule;
-    return withFrame(module, method.frameClosure, () => {
-      defineBinding(thisSym, method.receiverInstance, module);
+    return withScope(module, method.scopeClosure, () => {
+      defineBinding(thisSym, method.receiverInstance, module.topScope);
       for (let i = 0; i < method.argNames.length; i++) {
-        defineBinding(method.argNames[i], args[i], module);
+        defineBinding(method.argNames[i], args[i], module.topScope);
       }
       return evaluate(method.body, module);
     });
