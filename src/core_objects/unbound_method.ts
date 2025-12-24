@@ -92,7 +92,7 @@ export function nativeUnboundMethod<T extends RuntimeObj>(
 
 export function registerUnboundMethodMethods(m: ModuleObj, env: SymbolEnv) {
   const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
-  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('bound_method', m, env)!;
+  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m, env)!;
 
   const mBind = nativeUnboundMethod<UnboundMethodObj>(m, env, 'unbound_method', 'bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0], boundMethodTypeObj));

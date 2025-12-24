@@ -1,4 +1,4 @@
-import { findSymbolByName, intern, intern_, type SymbolEnv } from "../bootstrap/symbol_env";
+import { intern, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeIntObj, type IntTypeObj } from "../data_structures/int";
@@ -95,7 +95,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule, env)!;
     const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule, env)!;
     const unboundMethodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', sysModule, env)!;
-    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('bound_method', sysModule, env)!;
+    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', sysModule, env)!;
 
     return {
       intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,

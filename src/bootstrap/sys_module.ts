@@ -58,7 +58,7 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   const intTypeObj = makeIntTypeObj(intern('int', env), rootTypeObj, m);
   const listTypeObj = makeListTypeObj(intern('list', env), rootTypeObj, m);
   const unboundMethodTypeObj = makeUnboundMethodTypeObj(intern('unbound_method', env), rootTypeObj, m);
-  const boundMethodTypeObj = makeBoundMethodTypeObj(intern('bound_method', env), rootTypeObj, m);
+  const boundMethodTypeObj = makeBoundMethodTypeObj(intern('method', env), rootTypeObj, m);
   const stringTypeObj = makeStringTypeObj(intern('string', env), rootTypeObj, m);
 
   defineBinding(intTypeObj.name, intTypeObj, m);
@@ -67,7 +67,7 @@ function initPreludeTypes(m: ModuleObj, env: SymbolEnv) {
   defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, m);
   defineBinding(stringTypeObj.name, stringTypeObj, m);
 
-  const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'bound_method', 'module', 'string'];
+  const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'module', 'string'];
 
   // Native `type` method - returns the object's type. Registering
   // here because it's the same for every type.

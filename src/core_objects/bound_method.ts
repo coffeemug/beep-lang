@@ -33,8 +33,8 @@ export function makeBoundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj
 export function registerBoundMethodMethods(m: ModuleObj, env: SymbolEnv) {
   const stringTypeObj = getBindingByName<StringTypeObj>('string', m, env)!;
 
-  const mShow = nativeUnboundMethod<UnboundMethodObj>(m, env, 'bound_method', 'show', 0, thisObj =>
-    makeStringObj(`<bound_method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, stringTypeObj));
+  const mShow = nativeUnboundMethod<UnboundMethodObj>(m, env, 'method', 'show', 0, thisObj =>
+    makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 
   // TODO: eventually add `funcall/apply` here.
