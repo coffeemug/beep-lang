@@ -93,5 +93,5 @@ export function initUnboundMethodMethods(k: BeepKernel) {
     bindMethod(thisObj, args[0]));
 
   makeUnboundNativeMethodObj<UnboundMethodObj>(scope, unboundMethodTypeObj, intern('show'), 0, thisObj =>
-    makeStringObj(`<unbound_method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
+    makeStringObj(`<unbound_method ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
 }
