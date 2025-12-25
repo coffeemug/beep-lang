@@ -1,7 +1,7 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeListObj } from "../data_structures/list";
-import { bindMethod, makeUnboundMethodObj, type UnboundMethodObj } from "../core_objects/unbound_method";
+import { type UnboundMethodObj } from "../core_objects/unbound_method";
 import { defineBinding, getBinding, makeScope, type Scope } from "./scope";
 import { makeStringObj, type StringObj } from "../data_structures/string";
 import type { BoundMethodObj } from "../core_objects/bound_method";
@@ -10,7 +10,8 @@ import type { BeepKernel } from "../bootstrap/kernel";
 export function makeInterpreter(k: BeepKernel) {
   const {
     stringTypeObj, listTypeObj, unboundMethodTypeObj,
-    boundMethodTypeObj, thisSymbol, showSymbol, makeIntObj
+    boundMethodTypeObj, thisSymbol, showSymbol, makeIntObj,
+    bindMethod, makeUnboundMethodObj,
    } = k;
 
   function evaluate(expr: Expr, scope: Scope): RuntimeObj {
@@ -42,14 +43,12 @@ export function makeInterpreter(k: BeepKernel) {
           throw new Error(`Unknown type ${expr.receiverType.name}`);
         }
         const methodObj = makeUnboundMethodObj(
+          scope,
           receiverType,
           expr.name,
           expr.params,
           expr.body,
-          unboundMethodTypeObj,
-          scope
         );
-        receiverType.methods.set(expr.name, methodObj);
         return methodObj;
       }
 
@@ -59,7 +58,7 @@ export function makeInterpreter(k: BeepKernel) {
         if (!method) {
           throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type)}`);
         }
-        return bindMethod(method, receiver, boundMethodTypeObj);
+        return bindMethod(method, receiver);
       }
 
       case 'funcall': {
@@ -82,7 +81,7 @@ export function makeInterpreter(k: BeepKernel) {
       return `<${obj.tag}:noshow>`;
     }
 
-    const boundMethod = bindMethod(showMethod, obj, boundMethodTypeObj);
+    const boundMethod = bindMethod(showMethod, obj);
     const result = callMethod(boundMethod, []) as StringObj;
     return result.value;
   }
@@ -108,6 +107,6 @@ export function makeInterpreter(k: BeepKernel) {
   return {
     evaluate, show, callMethod,
     bindMethod: (method: UnboundMethodObj, receiver: RuntimeObj) =>
-      bindMethod(method, receiver, boundMethodTypeObj),
+      bindMethod(method, receiver),
   };
 }

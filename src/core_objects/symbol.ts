@@ -1,5 +1,4 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
-import { nativeUnboundMethod } from "./unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { getBindingByName } from "../runtime/scope";
 import type { ModuleObj } from "./module";

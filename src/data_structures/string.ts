@@ -1,11 +1,10 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
 import { type IntTypeObj } from "./int";
-import { nativeUnboundMethod } from "../core_objects/unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
-import { getBindingByName } from "../runtime/scope";
+import { defineBinding, getBindingByName } from "../runtime/scope";
 import type { ModuleObj } from "../core_objects/module";
 import { type RootTypeObj } from "../core_objects/root_type"
-import type { SymbolObj } from "../core_objects/symbol";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type StringTypeObj =
   & RuntimeObjMixin<'StringTypeObj', RootTypeObj>
@@ -18,21 +17,40 @@ export type StringObj =
     value: string,
   }
 
-export function makeStringTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): StringTypeObj {
-  return {
-    tag: 'StringTypeObj',
+export function initInt(k: BeepKernel) {
+  const { rootTypeObj } = k;
+  const intTypeObj: IntTypeObj = {
+    tag: 'IntTypeObj',
     type: rootTypeObj,
-    name,
+    name: intern('int', k.symbolEnv),
     methods: new Map(),
   };
+  defineBinding(intTypeObj.name, intTypeObj, k.sysModule.toplevelScope);
+  
+  k.intTypeObj = intTypeObj
+  k.makeIntObj = (value: number) => ({
+      tag: 'IntObj',
+      type: intTypeObj,
+      value,
+    });
 }
 
-export function makeStringObj(value: string, stringTypeObj: StringTypeObj): StringObj {
-  return {
+export function initString(k: BeepKernel) {
+  const { rootTypeObj, intern } = k;
+  const stringTypeObj: StringTypeObj = {
+    tag: 'StringTypeObj',
+    type: rootTypeObj,
+    name: intern('string'),
+    methods: new Map(),
+  };
+  defineBinding(stringTypeObj.name, stringTypeObj, k.sysModule.toplevelScope);
+
+  k.stringTypeObj = stringTypeObj;
+  k.makeStringObj = (value: string): StringObj => ({
     tag: 'StringObj',
     type: stringTypeObj,
     value,
-  };
+  });
 }
 
 export function registerStringMethods(m: ModuleObj, env: SymbolEnv) {

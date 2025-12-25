@@ -4,11 +4,9 @@ import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { getBindingByName } from "../runtime/scope";
 import type { ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { nativeUnboundMethod, type MethodObjBase, type UnboundMethodObj } from "./unbound_method";
+import { type MethodObjBase, type UnboundMethodObj } from "./unbound_method";
 import { makeStringObj, type StringTypeObj } from "../data_structures/string";
 import type { SymbolObj } from "./symbol";
-
-export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>

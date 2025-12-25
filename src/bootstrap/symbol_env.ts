@@ -16,23 +16,15 @@ export function initSymbolEnv(): SymbolEnv {
   };
 }
 
-// Use during bootstrap before symbolTypeObj is set
-export function intern_(symbolName: string, env: SymbolEnv, symbolTypeObj: SymbolTypeObj): SymbolObj {
+// Use after bootstrap when symbolTypeObj is set
+export function intern(symbolName: string, env: SymbolEnv): SymbolObj {
   let symbolObj = findSymbolByName(symbolName, env);
   if (!symbolObj) {
-    symbolObj = makeSymbolObj(symbolName, env.nextSymbolId, symbolTypeObj);
+    symbolObj = makeSymbolObj(symbolName, env.nextSymbolId, env.symbolTypeObj!);
     env.symbolTable.set(symbolName, symbolObj);
     env.nextSymbolId++;
   }
   return symbolObj;
-}
-
-// Use after bootstrap when symbolTypeObj is set
-export function intern(symbolName: string, env: SymbolEnv): SymbolObj {
-  if (!env.symbolTypeObj) {
-    throw new Error('Cannot call intern() before bootstrap completes');
-  }
-  return intern_(symbolName, env, env.symbolTypeObj);
 }
 
 export function findSymbolByName(symbolName: string, env: SymbolEnv) {

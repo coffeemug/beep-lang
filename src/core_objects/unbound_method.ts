@@ -1,14 +1,12 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
-import { intern, type SymbolEnv } from "../bootstrap/symbol_env";
+import { intern } from "../bootstrap/symbol_env";
 import type { Scope } from "../runtime/scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "./module";
+import { defineBinding } from "../runtime/scope";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj, type StringTypeObj } from "../data_structures/string";
 import type { SymbolObj } from "./symbol";
-import type { BoundMethodObj, BoundMethodTypeObj } from "./bound_method";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
@@ -35,79 +33,66 @@ type Procedure =
 
 export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
-export function makeUnboundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): UnboundMethodTypeObj {
-  return {
+export function initUnboundMethod(k: BeepKernel) {
+  const { rootTypeObj, symbolEnv, sysModule, boundMethodTypeObj } = k;
+  
+  const unboundMethodTypeObj: UnboundMethodTypeObj = {
     tag: 'UnboundMethodTypeObj',
     type: rootTypeObj,
-    name,
+    name: intern('unbound_method', symbolEnv),
     methods: new Map(),
   };
-}
+  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, sysModule.toplevelScope);
+  k.unboundMethodTypeObj = unboundMethodTypeObj;
 
-export function makeUnboundMethodObj(receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr, methodTypeObj: UnboundMethodTypeObj, scopeClosure: Scope): UnboundMethodObj {
-  return {
-    tag: 'UnboundMethodObj',
-    type: methodTypeObj,
-    receiverType,
-    name,
-    mode: 'interpreted',
-    argNames,
-    body,
-    scopeClosure,
+  k.makeUnboundMethodObj = (scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {
+    const unboundMethod: UnboundMethodObj = {
+      tag: 'UnboundMethodObj',
+      type: unboundMethodTypeObj,
+      receiverType,
+      name,
+      mode: 'interpreted',
+      argNames,
+      body,
+      scopeClosure,
+    }
+    receiverType.methods.set(name, unboundMethod);
+    return unboundMethod;
   };
-}
 
-export function makeUnboundNativeMethodObj(receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn, methodTypeObj: UnboundMethodTypeObj, scopeClosure: Scope): UnboundMethodObj {
-  return {
-    tag: 'UnboundMethodObj',
-    type: methodTypeObj,
-    receiverType,
-    name,
-    mode: 'native',
-    argCount,
-    nativeFn,
-    scopeClosure,
-  };
-}
-
-export function nativeUnboundMethod<T extends RuntimeObj>(
-  m: ModuleObj,
-  env: SymbolEnv,
-  receiverTypeName: string,
-  name: string,
-  argCount: number,
-  nativeFn: NativeFn<T>
-): UnboundMethodObj {
-  const receiverType = getBindingByName(receiverTypeName, m.toplevelScope, env) as TypeObj;
-  const methodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', m.toplevelScope, env)!;
-  return makeUnboundNativeMethodObj(
-    receiverType,
-    intern(name, env),
-    argCount,
-    nativeFn as NativeFn,
-    methodTypeObj,
-    m.toplevelScope
-  );
-}
-
-export function registerUnboundMethodMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
-  const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', m.toplevelScope, env)!;
-
-  const mBind = nativeUnboundMethod<UnboundMethodObj>(m, env, 'unbound_method', 'bind', 1, (thisObj, args) =>
-    bindMethod(thisObj, args[0], boundMethodTypeObj));
-  mBind.receiverType.methods.set(mBind.name, mBind);
-
-  const mShow = nativeUnboundMethod<UnboundMethodObj>(m, env, 'unbound_method', 'show', 0, thisObj =>
-    makeStringObj(`<unbound_method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, stringTypeObj));
-  mShow.receiverType.methods.set(mShow.name, mShow);
-}
-
-export function bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj, boundMethodTypeObj: BoundMethodTypeObj): BoundMethodObj {
-  return {
+  k.bindMethod = (method: UnboundMethodObj, receiverInstance: RuntimeObj) => ({
     ...method,
     tag: 'BoundMethodObj',
     type: boundMethodTypeObj,
     receiverInstance,
+  });
+
+  k.makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
+    const unboundMethod: UnboundMethodObj = {
+      tag: 'UnboundMethodObj',
+      type: unboundMethodTypeObj,
+      receiverType,
+      name,
+      mode: 'native',
+      argCount,
+      nativeFn: nativeFn as NativeFn,
+      scopeClosure,
+    };
+    receiverType.methods.set(name, unboundMethod);
+    return unboundMethod;
   };
+}
+
+export function initUnboundMethodMethods(k: BeepKernel) {
+  const {
+    bindMethod, makeUnboundNativeMethodObj, makeStringObj,
+    unboundMethodTypeObj, intern,
+   } = k;
+  const scope = k.sysModule.toplevelScope;
+
+  makeUnboundNativeMethodObj<UnboundMethodObj>(scope, unboundMethodTypeObj, intern('bind'), 1, (thisObj, args) =>
+    bindMethod(thisObj, args[0]));
+
+  makeUnboundNativeMethodObj<UnboundMethodObj>(scope, unboundMethodTypeObj, intern('show'), 0, thisObj =>
+    makeStringObj(`<unbound_method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
 }
