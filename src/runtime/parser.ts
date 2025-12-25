@@ -19,10 +19,12 @@ export type Expr =
   | { type: "ident"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
+  | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
+  | { type: "indexAccess"; index: Expr }
   | { type: "funcall"; args: Expr[] };
 
 export function parse(input: string, intern: (name: string) => SymbolObj): Expr {
@@ -87,16 +89,25 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     name,
   }));
 
-  // Postfix operators: .name and (args)
+  // Suffix: [expr] for index access
+  const indexAccessSuffix = seq("[", expr, "]").map(([_lb, index, _rb]): Suffix => ({
+    type: "indexAccess",
+    index,
+  }));
+
+  // Postfix operators: .name, (args), and [index]
   const postfixExpr = postfix(
     either(methodDef, primary),
-    either(funcallSuffix, fieldAccessSuffix),
+    either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
     (acc, suf): Expr => {
       if (suf.type === "fieldAccess") {
         return { type: "fieldAccess", receiver: acc, fieldName: suf.name };
-      } else {
+      } else if (suf.type === "indexAccess") {
+        return { type: "indexAccess", receiver: acc, index: suf.index };
+      } else if (suf.type === "funcall") {
         return { type: "funcall", fn: acc, args: suf.args };
       }
+      throw new Error("unreachable");
     }
   );
 

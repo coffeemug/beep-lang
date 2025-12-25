@@ -6,7 +6,7 @@ import type { BeepKernel } from "../bootstrap/kernel";
 
 export function makeInterpreter(k: BeepKernel) {
   const {
-    thisSymbol, showSymbol, makeIntObj, makeStringObj, makeListObj,
+    thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj,
     bindMethod, makeUnboundMethodObj, show, callMethod
    } = k;
 
@@ -55,6 +55,17 @@ export function makeInterpreter(k: BeepKernel) {
           throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type)}`);
         }
         return bindMethod(method, receiver);
+      }
+
+      case 'indexAccess': {
+        const receiver = evaluate(expr.receiver, scope);
+        const index = evaluate(expr.index, scope);
+        const method = receiver.type.methods.get(atSymbol);
+        if (!method) {
+          throw new Error(`No method 'at' on ${show(receiver.type)}`);
+        }
+        const boundMethod = bindMethod(method, receiver);
+        return callMethod(boundMethod, [index]);
       }
 
       case 'funcall': {

@@ -29,6 +29,7 @@ export type BeepKernel = {
   // Well-known symbols
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
+  atSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: number) => IntObj,
@@ -126,6 +127,7 @@ function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
     ...k,
     thisSymbol: k.intern!('this'),
     showSymbol: k.intern!('show'),
+    atSymbol: k.intern!('at'),
   };
 }
 
