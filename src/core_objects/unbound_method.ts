@@ -80,6 +80,10 @@ export function initUnboundMethod(k: BeepKernel) {
     receiverType.methods.set(name, unboundMethod);
     return unboundMethod;
   };
+
+  k.makeDefNative = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj) =>
+    (name: string, argCount: number, nativeFn: NativeFn<T>) =>
+      k.makeUnboundNativeMethodObj(scopeClosure, receiverType, k.intern(name), argCount, nativeFn);
 }
 
 export function initUnboundMethodMethods(k: BeepKernel) {
