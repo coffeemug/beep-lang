@@ -1,11 +1,10 @@
-import type { SymbolEnv } from "../bootstrap/symbol_env";
+import { intern } from "../bootstrap/symbol_env";
 import { nativeUnboundMethod } from "../core_objects/unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
-import { getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "../core_objects/module";
+import { defineBinding } from "../runtime/scope";
 import { type RootTypeObj } from "../core_objects/root_type"
-import { makeStringObj, type StringTypeObj } from "./string";
-import type { SymbolObj } from "../core_objects/symbol";
+import { makeStringObj } from "./string";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type IntTypeObj =
   & RuntimeObjMixin<'IntTypeObj', RootTypeObj>
@@ -18,27 +17,29 @@ export type IntObj =
     value: number,
   }
 
-export function makeIntTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): IntTypeObj {
-  return {
+export function initInt(k: BeepKernel) {
+  const { rootTypeObj } = k;
+  const intTypeObj: IntTypeObj = {
     tag: 'IntTypeObj',
     type: rootTypeObj,
-    name,
+    name: intern('int', k.symbolEnv),
     methods: new Map(),
   };
+  defineBinding(intTypeObj.name, intTypeObj, k.sysModule.toplevelScope);
+
+  function makeIntObj(value: number): IntObj {
+    return {
+      tag: 'IntObj',
+      type: intTypeObj,
+      value,
+    }
+  }
+
+  return { intTypeObj, makeIntObj };
 }
 
-export function makeIntObj(value: number, intTypeObj: IntTypeObj): IntObj {
-  return {
-    tag: 'IntObj',
-    type: intTypeObj,
-    value,
-  };
-}
-
-export function registerIntMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
-
-  const mShow = nativeUnboundMethod<IntObj>(m, env, 'int', 'show', 0, thisObj =>
-    makeStringObj(thisObj.value.toString(), stringTypeObj));
+export function initIntMethods(k: BeepKernel) {
+  const mShow = nativeUnboundMethod<IntObj>(k.sysModule, k.symbolEnv, 'int', 'show', 0, thisObj =>
+    makeStringObj(thisObj.value.toString(), k.stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 }

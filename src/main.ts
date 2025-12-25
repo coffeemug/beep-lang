@@ -9,7 +9,7 @@ import type { UnboundMethodObj } from "./core_objects/unbound_method";
 async function main(): Promise<void> {
   const kernel = createKernel();
   const { symbolEnv: env, sysModule } = kernel;
-  const { evaluate, show, callMethod, bindMethod } = makeInterpreter(env, sysModule);
+  const { evaluate, show, callMethod, bindMethod } = makeInterpreter(kernel);
 
   function run(input: string): string {
     const ast = parse(input, env);

@@ -1,4 +1,4 @@
-import { makeIntObj, type IntTypeObj } from "./int";
+import { type IntTypeObj } from "./int";
 import { nativeUnboundMethod } from "../core_objects/unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
 import { type RootTypeObj } from "../core_objects/root_type"
@@ -97,8 +97,10 @@ export function registerListMethods(m: ModuleObj, env: SymbolEnv) {
   });
   mPopFrontMut.receiverType.methods.set(mPopFrontMut.name, mPopFrontMut);
 
-  // len - returns number of elements
+  // TODO: len - returns number of elements
+  /*
   const mLen = nativeUnboundMethod<ListObj>(m, env, 'list', 'len', 0, thisObj =>
     makeIntObj(thisObj.elements.length, intTypeObj));
   mLen.receiverType.methods.set(mLen.name, mLen);
+  */
 }

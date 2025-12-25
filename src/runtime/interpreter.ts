@@ -1,25 +1,22 @@
-import { intern, type SymbolEnv } from "../bootstrap/symbol_env";
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { makeIntObj, type IntTypeObj } from "../data_structures/int";
-import { makeListObj, type ListTypeObj } from "../data_structures/list";
-import { bindMethod, makeUnboundMethodObj, type UnboundMethodObj, type UnboundMethodTypeObj } from "../core_objects/unbound_method";
-import { type ModuleObj } from "../core_objects/module";
-import { defineBinding, getBinding, getBindingByName, makeScope, type Scope } from "./scope";
-import { makeStringObj, type StringObj, type StringTypeObj } from "../data_structures/string";
-import type { BoundMethodObj, BoundMethodTypeObj } from "../core_objects/bound_method";
+import { makeListObj } from "../data_structures/list";
+import { bindMethod, makeUnboundMethodObj, type UnboundMethodObj } from "../core_objects/unbound_method";
+import { defineBinding, getBinding, makeScope, type Scope } from "./scope";
+import { makeStringObj, type StringObj } from "../data_structures/string";
+import type { BoundMethodObj } from "../core_objects/bound_method";
+import type { BeepKernel } from "../bootstrap/kernel";
 
-export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
+export function makeInterpreter(k: BeepKernel) {
   const {
-    intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,
-    boundMethodTypeObj
-   } = getCoreTypes();
-  const { thisSym, showSym } = getCoreSymbols();
+    stringTypeObj, listTypeObj, unboundMethodTypeObj,
+    boundMethodTypeObj, thisSymbol, showSymbol, makeIntObj
+   } = k;
 
   function evaluate(expr: Expr, scope: Scope): RuntimeObj {
     switch (expr.type) {
       case 'int': {
-        return makeIntObj(expr.value, intTypeObj);
+        return makeIntObj(expr.value);
       }
 
       case 'string': {
@@ -80,7 +77,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
   }
 
   function show(obj: RuntimeObj): string {
-    const showMethod = obj.type.methods.get(showSym);
+    const showMethod = obj.type.methods.get(showSymbol);
     if (!showMethod) {
       return `<${obj.tag}:noshow>`;
     }
@@ -88,25 +85,6 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     const boundMethod = bindMethod(showMethod, obj, boundMethodTypeObj);
     const result = callMethod(boundMethod, []) as StringObj;
     return result.value;
-  }
-
-  function getCoreTypes() {
-    const intTypeObj = getBindingByName<IntTypeObj>('int', sysModule.toplevelScope, env)!;
-    const stringTypeObj = getBindingByName<StringTypeObj>('string', sysModule.toplevelScope, env)!;
-    const listTypeObj = getBindingByName<ListTypeObj>('list', sysModule.toplevelScope, env)!;
-    const unboundMethodTypeObj = getBindingByName<UnboundMethodTypeObj>('unbound_method', sysModule.toplevelScope, env)!;
-    const boundMethodTypeObj = getBindingByName<BoundMethodTypeObj>('method', sysModule.toplevelScope, env)!;
-
-    return {
-      intTypeObj, stringTypeObj, listTypeObj, unboundMethodTypeObj,
-      boundMethodTypeObj,
-    }
-  }  
-
-  function getCoreSymbols() {
-    const thisSym = intern('this', env);
-    const showSym = intern('show', env);
-    return { thisSym, showSym }
   }
 
   function callMethod(method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj {
@@ -120,7 +98,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
     }
 
     let callScope = makeScope(method.scopeClosure);
-    defineBinding(thisSym, method.receiverInstance, callScope);
+    defineBinding(thisSymbol, method.receiverInstance, callScope);
     for (let i = 0; i < method.argNames.length; i++) {
       defineBinding(method.argNames[i], args[i], callScope);
     }
@@ -128,7 +106,7 @@ export function makeInterpreter(env: SymbolEnv, sysModule: ModuleObj) {
   }
 
   return {
-    evaluate, show, getCoreTypes, getCoreSymbols, callMethod,
+    evaluate, show, callMethod,
     bindMethod: (method: UnboundMethodObj, receiver: RuntimeObj) =>
       bindMethod(method, receiver, boundMethodTypeObj),
   };

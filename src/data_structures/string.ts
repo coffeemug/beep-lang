@@ -1,5 +1,5 @@
 import type { SymbolEnv } from "../bootstrap/symbol_env";
-import { makeIntObj, type IntTypeObj } from "./int";
+import { type IntTypeObj } from "./int";
 import { nativeUnboundMethod } from "../core_objects/unbound_method";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
 import { getBindingByName } from "../runtime/scope";
@@ -43,10 +43,12 @@ export function registerStringMethods(m: ModuleObj, env: SymbolEnv) {
     makeStringObj(`'${thisObj.value}'`, stringTypeObj));
   mShow.receiverType.methods.set(mShow.name, mShow);
 
-  // len - returns number of code points
+  // TODO: len - returns number of code points
+  /*
   const mLen = nativeUnboundMethod<StringObj>(m, env, 'string', 'len', 0, thisObj => {
     const codePointCount = [...thisObj.value].length;
     return makeIntObj(codePointCount, intTypeObj);
   });
   mLen.receiverType.methods.set(mLen.name, mLen);
+  */
 }
