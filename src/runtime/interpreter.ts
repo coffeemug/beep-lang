@@ -1,17 +1,13 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { makeListObj } from "../data_structures/list";
-import { type UnboundMethodObj } from "../core_objects/unbound_method";
-import { defineBinding, getBinding, makeScope, type Scope } from "./scope";
-import { makeStringObj, type StringObj } from "../data_structures/string";
+import { getBinding, type Scope } from "./scope";
 import type { BoundMethodObj } from "../core_objects/bound_method";
 import type { BeepKernel } from "../bootstrap/kernel";
 
 export function makeInterpreter(k: BeepKernel) {
   const {
-    stringTypeObj, listTypeObj, unboundMethodTypeObj,
-    boundMethodTypeObj, thisSymbol, showSymbol, makeIntObj,
-    bindMethod, makeUnboundMethodObj,
+    thisSymbol, showSymbol, makeIntObj, makeStringObj, makeListObj,
+    bindMethod, makeUnboundMethodObj, show, callMethod
    } = k;
 
   function evaluate(expr: Expr, scope: Scope): RuntimeObj {
@@ -21,12 +17,12 @@ export function makeInterpreter(k: BeepKernel) {
       }
 
       case 'string': {
-        return makeStringObj(expr.value, stringTypeObj);
+        return makeStringObj(expr.value);
       }
 
       case 'list': {
         const elements = expr.elements.map(e => evaluate(e, scope));
-        return makeListObj(elements, listTypeObj);
+        return makeListObj(elements);
       }
 
       case 'ident': {
@@ -75,38 +71,7 @@ export function makeInterpreter(k: BeepKernel) {
     const _exhaustive: never = expr;
   }
 
-  function show(obj: RuntimeObj): string {
-    const showMethod = obj.type.methods.get(showSymbol);
-    if (!showMethod) {
-      return `<${obj.tag}:noshow>`;
-    }
-
-    const boundMethod = bindMethod(showMethod, obj);
-    const result = callMethod(boundMethod, []) as StringObj;
-    return result.value;
-  }
-
-  function callMethod(method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj {
-    const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
-    if (args.length !== expectedCount) {
-      throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
-    }
-
-    if (method.mode === 'native') {
-      return method.nativeFn(method.receiverInstance, args);
-    }
-
-    let callScope = makeScope(method.scopeClosure);
-    defineBinding(thisSymbol, method.receiverInstance, callScope);
-    for (let i = 0; i < method.argNames.length; i++) {
-      defineBinding(method.argNames[i], args[i], callScope);
-    }
-    return evaluate(method.body, callScope);
-  }
-
   return {
-    evaluate, show, callMethod,
-    bindMethod: (method: UnboundMethodObj, receiver: RuntimeObj) =>
-      bindMethod(method, receiver),
-  };
+    evaluate,
+  }
 }

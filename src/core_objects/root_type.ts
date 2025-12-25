@@ -1,7 +1,5 @@
-import type { SymbolEnv } from "../bootstrap/symbol_env";
 import type { TypeObjMixin } from "./object_mixins";
-import { getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "./module";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type RootTypeObj = TypeObjMixin & {
   /* Fields common to every runtime object */
@@ -22,8 +20,10 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
   return obj as Omit<RootTypeObj, 'name' | 'bindingModule'>;
 }
 
-export function registerRootTypeMethods(m: ModuleObj, env: SymbolEnv) {
-  const mShow = nativeUnboundMethod<RootTypeObj>(m, env, 'type', 'show', 0, thisObj =>
-    makeStringObj(`<type ${thisObj.name.name}>`, stringTypeObj));
-  mShow.receiverType.methods.set(mShow.name, mShow);
+export function initRootTypeMethods(k: BeepKernel) {
+  const { makeUnboundNativeMethodObj, makeStringObj, rootTypeObj, intern } = k;
+  const scope = k.sysModule.toplevelScope;
+
+  makeUnboundNativeMethodObj<RootTypeObj>(scope, rootTypeObj, intern('show'), 0, thisObj =>
+    makeStringObj(`<type ${thisObj.name.name}>`));
 }

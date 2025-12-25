@@ -1,8 +1,5 @@
-import type { SymbolEnv } from "../bootstrap/symbol_env";
-import { type IntTypeObj } from "./int";
 import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
-import { defineBinding, getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "../core_objects/module";
+import { defineBinding } from "../runtime/scope";
 import { type RootTypeObj } from "../core_objects/root_type"
 import type { BeepKernel } from "../bootstrap/kernel";
 
@@ -16,24 +13,6 @@ export type StringObj =
   & {
     value: string,
   }
-
-export function initInt(k: BeepKernel) {
-  const { rootTypeObj } = k;
-  const intTypeObj: IntTypeObj = {
-    tag: 'IntTypeObj',
-    type: rootTypeObj,
-    name: intern('int', k.symbolEnv),
-    methods: new Map(),
-  };
-  defineBinding(intTypeObj.name, intTypeObj, k.sysModule.toplevelScope);
-  
-  k.intTypeObj = intTypeObj
-  k.makeIntObj = (value: number) => ({
-      tag: 'IntObj',
-      type: intTypeObj,
-      value,
-    });
-}
 
 export function initString(k: BeepKernel) {
   const { rootTypeObj, intern } = k;
@@ -53,20 +32,15 @@ export function initString(k: BeepKernel) {
   });
 }
 
-export function registerStringMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
-  const intTypeObj = getBindingByName<IntTypeObj>('int', m.toplevelScope, env)!;
+export function initStringMethods(k: BeepKernel) {
+  const { makeUnboundNativeMethodObj, makeStringObj, stringTypeObj, intern,
+    makeIntObj,
+   } = k;
+  const scope = k.sysModule.toplevelScope;
 
-  const mShow = nativeUnboundMethod<StringObj>(m, env, 'string', 'show', 0, thisObj =>
-    makeStringObj(`'${thisObj.value}'`, stringTypeObj));
-  mShow.receiverType.methods.set(mShow.name, mShow);
+  makeUnboundNativeMethodObj<StringObj>(scope, stringTypeObj, intern('show'), 0, thisObj =>
+    makeStringObj(`'${thisObj.value}'`));
 
-  // TODO: len - returns number of code points
-  /*
-  const mLen = nativeUnboundMethod<StringObj>(m, env, 'string', 'len', 0, thisObj => {
-    const codePointCount = [...thisObj.value].length;
-    return makeIntObj(codePointCount, intTypeObj);
-  });
-  mLen.receiverType.methods.set(mLen.name, mLen);
-  */
+  makeUnboundNativeMethodObj<StringObj>(scope, stringTypeObj, intern('len'), 0, thisObj =>
+    makeIntObj([...thisObj.value].length));
 }

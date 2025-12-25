@@ -1,9 +1,6 @@
-import type { SymbolEnv } from "../bootstrap/symbol_env";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "./module";
 import { type RootTypeObj } from "./root_type"
-import { makeStringObj, type StringTypeObj } from "../data_structures/string";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type SymbolTypeObj =
   & RuntimeObjMixin<'SymbolTypeObj', RootTypeObj>
@@ -34,10 +31,10 @@ export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTyp
   };
 }
 
-export function registerSymbolMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
+export function initSymbolMethods(k: BeepKernel) {
+  const { makeUnboundNativeMethodObj, makeStringObj, symbolTypeObj, intern } = k;
+  const scope = k.sysModule.toplevelScope;
 
-  const mShow = nativeUnboundMethod<SymbolObj>(m, env, 'symbol', 'show', 0, thisObj =>
-    makeStringObj(`${thisObj.name}:${thisObj.id}`, stringTypeObj));
-  mShow.receiverType.methods.set(mShow.name, mShow);
+  makeUnboundNativeMethodObj<SymbolObj>(scope, symbolTypeObj, intern('show'), 0, thisObj =>
+    makeStringObj(`${thisObj.name}:${thisObj.id}`));
 }

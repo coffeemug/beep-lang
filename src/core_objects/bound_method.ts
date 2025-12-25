@@ -1,12 +1,9 @@
 import type { RuntimeObj } from "../runtime_objects";
-import { type SymbolEnv } from "../bootstrap/symbol_env";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { getBindingByName } from "../runtime/scope";
-import type { ModuleObj } from "./module";
+import { defineBinding } from "../runtime/scope";
 import { type RootTypeObj } from "./root_type"
-import { type MethodObjBase, type UnboundMethodObj } from "./unbound_method";
-import { makeStringObj, type StringTypeObj } from "../data_structures/string";
-import type { SymbolObj } from "./symbol";
+import { type MethodObjBase } from "./unbound_method";
+import type { BeepKernel } from "../bootstrap/kernel";
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>
@@ -19,21 +16,23 @@ export type BoundMethodObj = MethodObjBase & {
   receiverInstance: RuntimeObj,
 }
 
-export function makeBoundMethodTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj, bindingModule: ModuleObj): BoundMethodTypeObj {
-  return {
+export function initBoundMethod(k: BeepKernel) {
+  const { rootTypeObj, intern } = k;
+  const boundMethodTypeObj: BoundMethodTypeObj = {
     tag: 'BoundMethodTypeObj',
     type: rootTypeObj,
-    name,
+    name: intern('method'),
     methods: new Map(),
   };
+  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, k.sysModule.toplevelScope);
+
+  k.boundMethodTypeObj = boundMethodTypeObj;
 }
 
-export function registerBoundMethodMethods(m: ModuleObj, env: SymbolEnv) {
-  const stringTypeObj = getBindingByName<StringTypeObj>('string', m.toplevelScope, env)!;
+export function initBoundMethodMethods(k: BeepKernel) {
+  const { makeUnboundNativeMethodObj, makeStringObj, boundMethodTypeObj, intern } = k;
+  const scope = k.sysModule.toplevelScope;
 
-  const mShow = nativeUnboundMethod<UnboundMethodObj>(m, env, 'method', 'show', 0, thisObj =>
-    makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`, stringTypeObj));
-  mShow.receiverType.methods.set(mShow.name, mShow);
-
-  // TODO: eventually add `funcall/apply` here.
+  makeUnboundNativeMethodObj<BoundMethodObj>(scope, boundMethodTypeObj, intern('show'), 0, thisObj =>
+    makeStringObj(`<method:${thisObj.mode} ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
 }

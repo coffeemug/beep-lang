@@ -1,15 +1,16 @@
 import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_structures/int";
-import { makeListObj, makeListTypeObj, registerListMethods, type ListTypeObj } from "../data_structures/list";
+import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "../core_objects/unbound_method";
 import { makeModuleObj, makeModuleTypeObj, type ModuleObj, type ModuleTypeObj } from "../core_objects/module";
-import { defineBinding, type Scope } from "../runtime/scope";
-import { makeRootTypeObj, registerRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
-import { makeStringTypeObj, registerStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
-import { makeSymbolTypeObj, registerSymbolMethods, type SymbolObj, type SymbolTypeObj } from "../core_objects/symbol";
-import { initSymbolEnv, intern, intern_, type SymbolEnv } from "./symbol_env";
-import { makeBoundMethodTypeObj, registerBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "../core_objects/bound_method";
+import { defineBinding, getBindingByName, makeScope, type Scope } from "../runtime/scope";
+import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
+import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
+import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "../core_objects/symbol";
+import { initSymbolEnv, intern, type SymbolEnv } from "./symbol_env";
+import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "../core_objects/bound_method";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
+import { makeInterpreter } from "../runtime/interpreter";
 
 export type BeepKernel = {
   symbolEnv: SymbolEnv,
@@ -24,7 +25,7 @@ export type BeepKernel = {
   listTypeObj: ListTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
-  
+
   // Well-known symbols
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
@@ -32,23 +33,28 @@ export type BeepKernel = {
   // Well-known functions
   makeIntObj: (value: number) => IntObj,
   makeStringObj: (value: string) => StringObj,
+  makeListObj: (elements: RuntimeObj[]) => ListObj,
+  intern: (name: string) => SymbolObj,
 
   makeUnboundMethodObj: (scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeUnboundNativeMethodObj: <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>) => UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
-  intern(name: String): SymbolObj,
+  // More well-known functions
+  evaluate(expr: Expr, scope: Scope): RuntimeObj,
+  show: (obj: RuntimeObj) => string,
+  callMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
 }
 
 export function createKernel(): BeepKernel {
   let kernel: Partial<BeepKernel> = {
     symbolEnv: initSymbolEnv(),
   };
-  kernel.intern = (name: string) => intern(name, kernel.symbolEnv!);
 
   kernel = bootstrapSysModule(kernel);
   kernel = initPreludeTypes(kernel);
-  initPreludeTypeMethods(kernel);
+  initWellKnownFunctions(kernel as BeepKernel);
+  initPreludeTypeMethods(kernel as BeepKernel);
 
   return kernel as BeepKernel;
 }
@@ -61,18 +67,17 @@ function bootstrapSysModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
   const rootTypeObj = makeRootTypeObj() as RootTypeObj;
   const symbolTypeObj = makeSymbolTypeObj(rootTypeObj) as SymbolTypeObj;
 
-  rootTypeObj.name = k.intern!('type');
-  symbolTypeObj.name = k.intern!('symbol');
+  k.intern = (name: string) => intern(name, k.symbolEnv!, symbolTypeObj);
 
-  // Now that symbolTypeObj is complete, set it on env so intern() works
-  k.symbolEnv!.symbolTypeObj = symbolTypeObj;
+  rootTypeObj.name = k.intern('type');
+  symbolTypeObj.name = k.intern('symbol');
 
   const moduleTypeObj = makeModuleTypeObj(
-    intern('module', k.symbolEnv!), rootTypeObj) as ModuleTypeObj;
+    k.intern('module'), rootTypeObj) as ModuleTypeObj;
 
   // Create 'sys' module
   const sysModule = makeModuleObj(
-    intern('sys', k.symbolEnv!),
+    k.intern('sys'),
     moduleTypeObj);
 
   // Bind type names in the sys module
@@ -90,57 +95,81 @@ function bootstrapSysModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
 }
 
 function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
-  const { rootTypeObj, symbolEnv, sysModule } = k;
-
-  // Init core types
+  // Init types that can use the standard pattern
   initInt(k as BeepKernel);
+  initString(k as BeepKernel);
+  initList(k as BeepKernel);
   initUnboundMethod(k as BeepKernel);
-  const stringTypeObj = makeStringTypeObj(intern('string', symbolEnv!), rootTypeObj!, sysModule!);
-  const listTypeObj = makeListTypeObj(intern('list', symbolEnv!), rootTypeObj!, sysModule!);
-  const boundMethodTypeObj = makeBoundMethodTypeObj(intern('method', symbolEnv!), rootTypeObj!, sysModule!);
+  initBoundMethod(k as BeepKernel);
 
-  defineBinding(listTypeObj.name, listTypeObj, sysModule!.toplevelScope);
-  defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, sysModule!.toplevelScope);
-  defineBinding(stringTypeObj.name, stringTypeObj, sysModule!.toplevelScope);
-
+  // Register `type` and `methods` methods for all types
   const typeNames = ['type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'module', 'string'];
+  const scope = k.sysModule!.toplevelScope;
 
-  // Native `type` method - returns the object's type. Registering
-  // here because it's the same for every type.
   for (const typeName of typeNames) {
-    const mType = nativeUnboundMethod(sysModule!, symbolEnv!, typeName, 'type', 0, thisObj =>
+    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
+    k.makeUnboundNativeMethodObj!(scope, receiverType, k.intern!('type'), 0, thisObj =>
       thisObj.type);
-    mType.receiverType.methods.set(mType.name, mType);
   }
 
-  // Native `methods` method - returns a list of method names that can be called.
   for (const typeName of typeNames) {
-    const mMethods = nativeUnboundMethod(sysModule!, symbolEnv!, typeName, 'methods', 0, thisObj => {
+    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
+    k.makeUnboundNativeMethodObj!(scope, receiverType, k.intern!('methods'), 0, thisObj => {
       const methods = thisObj.type.methods.values().toArray();
-      return makeListObj(methods, listTypeObj);
+      return k.makeListObj!(methods);
     });
-    mMethods.receiverType.methods.set(mMethods.name, mMethods);
   }
 
   return {
     ...k,
-    stringTypeObj,
-    listTypeObj,
-    boundMethodTypeObj,
-    thisSymbol: intern('this', symbolEnv!),
-    showSymbol: intern('show', symbolEnv!),
+    thisSymbol: k.intern!('this'),
+    showSymbol: k.intern!('show'),
   };
 }
 
-function initPreludeTypeMethods(k: Partial<BeepKernel>) {
-  const { symbolEnv, sysModule } = k;
+function initPreludeTypeMethods(k: BeepKernel) {
+  initIntMethods(k);
+  initStringMethods(k);
+  initListMethods(k);
+  initUnboundMethodMethods(k);
+  initBoundMethodMethods(k);
+  initSymbolMethods(k);
+  initRootTypeMethods(k);
+}
 
-  initIntMethods(k as BeepKernel);
-  initUnboundMethodMethods(k as BeepKernel);
-  registerStringMethods(sysModule!, symbolEnv!);
-  registerListMethods(sysModule!, symbolEnv!);
-  registerSymbolMethods(sysModule!, symbolEnv!);
-  registerBoundMethodMethods(sysModule!, symbolEnv!);
-  registerRootTypeMethods(sysModule!, symbolEnv!);
+function initWellKnownFunctions(k: BeepKernel) {
+  const { bindMethod, showSymbol, thisSymbol } = k;
 
+  k.callMethod = (method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
+    const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
+    if (args.length !== expectedCount) {
+      throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
+    }
+
+    if (method.mode === 'native') {
+      return method.nativeFn(method.receiverInstance, args);
+    }
+
+    let callScope = makeScope(method.scopeClosure);
+    defineBinding(thisSymbol, method.receiverInstance, callScope);
+    for (let i = 0; i < method.argNames.length; i++) {
+      defineBinding(method.argNames[i], args[i], callScope);
+    }
+    return k.evaluate(method.body, callScope);
+  }
+
+  k.show = (obj: RuntimeObj): string  => {
+    const showMethod = obj.type.methods.get(showSymbol);
+    if (!showMethod) {
+      return `<${obj.tag}:noshow>`;
+    }
+
+    const boundMethod = bindMethod(showMethod, obj);
+    const result = k.callMethod(boundMethod, []) as StringObj;
+    return result.value;
+  }
+
+  // Has to be last as `makeInterpreter` expects `callMethod` and `show`
+  // to be defined in `k`. We can fix that later.  
+  k.evaluate = makeInterpreter(k).evaluate;
 }

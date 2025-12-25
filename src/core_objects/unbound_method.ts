@@ -1,5 +1,4 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
-import { intern } from "../bootstrap/symbol_env";
 import type { Scope } from "../runtime/scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
@@ -34,12 +33,12 @@ type Procedure =
 export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
 export function initUnboundMethod(k: BeepKernel) {
-  const { rootTypeObj, symbolEnv, sysModule, boundMethodTypeObj } = k;
+  const { rootTypeObj, sysModule, intern } = k;
   
   const unboundMethodTypeObj: UnboundMethodTypeObj = {
     tag: 'UnboundMethodTypeObj',
     type: rootTypeObj,
-    name: intern('unbound_method', symbolEnv),
+    name: intern('unbound_method'),
     methods: new Map(),
   };
   defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, sysModule.toplevelScope);
@@ -63,7 +62,7 @@ export function initUnboundMethod(k: BeepKernel) {
   k.bindMethod = (method: UnboundMethodObj, receiverInstance: RuntimeObj) => ({
     ...method,
     tag: 'BoundMethodObj',
-    type: boundMethodTypeObj,
+    type: k.boundMethodTypeObj,
     receiverInstance,
   });
 
