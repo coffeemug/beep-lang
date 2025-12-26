@@ -18,6 +18,7 @@ export type Expr =
   | { type: "list"; elements: Expr[] }
   | { type: "ident"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
+  | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] };
@@ -62,18 +63,28 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   // Primary expressions (atoms)
   const primary = either(listLit, strLit, intLit, ident);
 
+  // Shared: (params) body end
+  const defBody = seq("(", sepBy(identSym, ","), ")", expr, "end")
+    .map(([_lp, params, _rp, body, _end]) => ({ params, body }));
+
   // Method definition: def type/name(params) body end
-  const methodDef = seq(
-    "def", identSym, "/", methodNameSym, "(", sepBy(identSym, ","), ")",
-    expr,
-    "end"
-  ).map(([_def, receiverType, _slash, name, _lp, params, _rp, body, _end]): Expr => ({
-    type: "methodDef" as const,
-    receiverType,
-    name,
-    params,
-    body,
-  }));
+  const methodDef = seq("def", identSym, "/", methodNameSym, defBody)
+    .map(([_def, receiverType, _slash, name, { params, body }]): Expr => ({
+      type: "methodDef" as const,
+      receiverType,
+      name,
+      params,
+      body,
+    }));
+
+  // Function definition: def name(params) body end
+  const functionDef = seq("def", methodNameSym, defBody)
+    .map(([_def, name, { params, body }]): Expr => ({
+      type: "functionDef" as const,
+      name,
+      params,
+      body,
+    }));
 
   // Suffix: (args) for funcall
   const funcallSuffix = seq(
@@ -97,7 +108,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   // Postfix operators: .name, (args), and [index]
   const postfixExpr = postfix(
-    either(methodDef, primary),
+    either(methodDef, functionDef, primary),
     either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
     (acc, suf): Expr => {
       if (suf.type === "fieldAccess") {

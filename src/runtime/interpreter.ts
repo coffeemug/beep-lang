@@ -1,6 +1,6 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { getBinding, type Scope } from "./scope";
+import { defineBinding, getBinding, type Scope } from "./scope";
 import type { BoundMethodObj } from "../core_objects/bound_method";
 import type { BeepKernel } from "../bootstrap/kernel";
 
@@ -45,6 +45,19 @@ export function makeInterpreter(k: BeepKernel) {
           expr.params,
           expr.body,
         );
+        return methodObj;
+      }
+
+      case 'functionDef': {
+        const methodObj_ = makeUnboundMethodObj(
+          scope,
+          k.activeModule.type,
+          expr.name,
+          expr.params,
+          expr.body,
+        );
+        const methodObj = bindMethod(methodObj_, k.activeModule);
+        defineBinding(methodObj.name, methodObj, scope);
         return methodObj;
       }
 

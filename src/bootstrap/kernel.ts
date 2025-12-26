@@ -16,6 +16,8 @@ export type BeepKernel = {
   symbolEnv: SymbolEnv,
   sysModule: NamedModuleObj,
 
+  activeModule: NamedModuleObj,
+
   // Well-known type objects
   rootTypeObj: RootTypeObj,
   symbolTypeObj: SymbolTypeObj,
@@ -87,6 +89,7 @@ function bootstrapSysModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
     rootTypeObj,
     symbolTypeObj,
     sysModule,
+    activeModule: sysModule,
   };
 }
 
