@@ -63,8 +63,6 @@ export async function repl(
       return;
     }
 
-    history.push(trimmed);
-
     try {
       const result = run(trimmed);
       console.log(result);
@@ -80,7 +78,10 @@ export async function repl(
   });
 
   rl.on("close", () => {
-    saveHistory(history.slice(-MAX_HISTORY));
+    const currentHistory = (rl as any).history as string[] | undefined;
+    if (currentHistory) {
+      saveHistory([...currentHistory].slice(-MAX_HISTORY));
+    }
     console.log();
     process.exit(0);
   });
