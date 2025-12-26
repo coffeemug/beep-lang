@@ -33,9 +33,9 @@ export function initInt(k: BeepKernel) {
 }
 
 export function initIntMethods(k: BeepKernel) {
-  const { makeStringObj, makeUnboundNativeMethodObj, intTypeObj, intern } = k;
+  const { makeStringObj, makeDefNative, intTypeObj } = k;
 
-  const mShow = makeUnboundNativeMethodObj<IntObj>(k.sysModule.toplevelScope, intTypeObj, intern('show'), 0, thisObj =>
-    makeStringObj(thisObj.value.toString()));
-  mShow.receiverType.methods.set(mShow.name, mShow);
+  const defMethod = makeDefNative<IntObj>(k.sysModule.toplevelScope, intTypeObj);
+
+  defMethod('show', 0, thisObj => makeStringObj(thisObj.value.toString()));
 }

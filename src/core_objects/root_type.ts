@@ -21,9 +21,9 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 }
 
 export function initRootTypeMethods(k: BeepKernel) {
-  const { makeUnboundNativeMethodObj, makeStringObj, rootTypeObj, intern } = k;
-  const scope = k.sysModule.toplevelScope;
+  const { makeDefNative, makeStringObj, rootTypeObj } = k;
 
-  makeUnboundNativeMethodObj<RootTypeObj>(scope, rootTypeObj, intern('show'), 0, thisObj =>
-    makeStringObj(`<type ${thisObj.name.name}>`));
+  const defMethod = makeDefNative<RootTypeObj>(k.sysModule.toplevelScope, rootTypeObj);
+
+  defMethod('show', 0, thisObj => makeStringObj(`<type ${thisObj.name.name}>`));
 }

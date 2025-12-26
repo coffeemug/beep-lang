@@ -32,9 +32,9 @@ export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTyp
 }
 
 export function initSymbolMethods(k: BeepKernel) {
-  const { makeUnboundNativeMethodObj, makeStringObj, symbolTypeObj, intern } = k;
-  const scope = k.sysModule.toplevelScope;
+  const { makeDefNative, makeStringObj, symbolTypeObj } = k;
 
-  makeUnboundNativeMethodObj<SymbolObj>(scope, symbolTypeObj, intern('show'), 0, thisObj =>
-    makeStringObj(`${thisObj.name}:${thisObj.id}`));
+  const defMethod = makeDefNative<SymbolObj>(k.sysModule.toplevelScope, symbolTypeObj);
+
+  defMethod('show', 0, thisObj => makeStringObj(`${thisObj.name}:${thisObj.id}`));
 }

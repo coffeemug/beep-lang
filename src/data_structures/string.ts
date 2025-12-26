@@ -33,14 +33,12 @@ export function initString(k: BeepKernel) {
 }
 
 export function initStringMethods(k: BeepKernel) {
-  const { makeUnboundNativeMethodObj, makeStringObj, stringTypeObj, intern,
-    makeIntObj,
-   } = k;
-  const scope = k.sysModule.toplevelScope;
+  const { makeStringObj, makeIntObj, stringTypeObj, makeDefNative } = k;
+  const defMethod = makeDefNative<StringObj>(k.sysModule.toplevelScope, stringTypeObj);
 
-  makeUnboundNativeMethodObj<StringObj>(scope, stringTypeObj, intern('show'), 0, thisObj =>
+  defMethod('show', 0, thisObj =>
     makeStringObj(`'${thisObj.value}'`));
 
-  makeUnboundNativeMethodObj<StringObj>(scope, stringTypeObj, intern('len'), 0, thisObj =>
+  defMethod('len', 0, thisObj =>
     makeIntObj([...thisObj.value].length));
 }

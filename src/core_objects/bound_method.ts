@@ -30,9 +30,10 @@ export function initBoundMethod(k: BeepKernel) {
 }
 
 export function initBoundMethodMethods(k: BeepKernel) {
-  const { makeUnboundNativeMethodObj, makeStringObj, boundMethodTypeObj, intern } = k;
-  const scope = k.sysModule.toplevelScope;
+  const { makeDefNative, makeStringObj, boundMethodTypeObj } = k;
 
-  makeUnboundNativeMethodObj<BoundMethodObj>(scope, boundMethodTypeObj, intern('show'), 0, thisObj =>
+  const defMethod = makeDefNative<BoundMethodObj>(k.sysModule.toplevelScope, boundMethodTypeObj);
+
+  defMethod('show', 0, thisObj =>
     makeStringObj(`<method ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
 }

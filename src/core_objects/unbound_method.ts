@@ -66,7 +66,7 @@ export function initUnboundMethod(k: BeepKernel) {
     receiverInstance,
   });
 
-  k.makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
+  const makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
     const unboundMethod: UnboundMethodObj = {
       tag: 'UnboundMethodObj',
       type: unboundMethodTypeObj,
@@ -83,19 +83,18 @@ export function initUnboundMethod(k: BeepKernel) {
 
   k.makeDefNative = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) =>
-      k.makeUnboundNativeMethodObj(scopeClosure, receiverType, k.intern(name), argCount, nativeFn);
+      makeUnboundNativeMethodObj(scopeClosure, receiverType, k.intern(name), argCount, nativeFn);
 }
 
 export function initUnboundMethodMethods(k: BeepKernel) {
   const {
-    bindMethod, makeUnboundNativeMethodObj, makeStringObj,
-    unboundMethodTypeObj, intern,
+    bindMethod, makeStringObj, unboundMethodTypeObj, makeDefNative,
    } = k;
-  const scope = k.sysModule.toplevelScope;
+  const defMethod = makeDefNative<UnboundMethodObj>(k.sysModule.toplevelScope, unboundMethodTypeObj);
 
-  makeUnboundNativeMethodObj<UnboundMethodObj>(scope, unboundMethodTypeObj, intern('bind'), 1, (thisObj, args) =>
+  defMethod('bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0]));
 
-  makeUnboundNativeMethodObj<UnboundMethodObj>(scope, unboundMethodTypeObj, intern('show'), 0, thisObj =>
+  defMethod('show', 0, thisObj =>
     makeStringObj(`<unbound_method ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
 }

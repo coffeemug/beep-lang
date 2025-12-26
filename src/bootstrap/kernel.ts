@@ -40,7 +40,6 @@ export type BeepKernel = {
   makeNamedModuleObj: (name: SymbolObj) => NamedModuleObj,
 
   makeUnboundMethodObj: (scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
-  makeUnboundNativeMethodObj: <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>) => UnboundMethodObj,
   makeDefNative: <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj) => 
     (name: string, argCount: number, nativeFn: NativeFn<T>) => UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
@@ -109,13 +108,10 @@ function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
 
   for (const typeName of typeNames) {
     const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
-    k.makeUnboundNativeMethodObj!(scope, receiverType, k.intern!('type'), 0, thisObj =>
-      thisObj.type);
-
-    k.makeUnboundNativeMethodObj!(scope, receiverType, k.intern!('methods'), 0, thisObj => {
-      const methods = thisObj.type.methods.values().toArray();
-      return k.makeListObj!(methods);
-    });
+    const defMethod = k.makeDefNative!(scope, receiverType);
+    defMethod('type', 0, thisObj => thisObj.type);
+    defMethod('methods', 0, thisObj =>
+      k.makeListObj!(thisObj.type.methods.values().toArray()));
   }
 
   return {
