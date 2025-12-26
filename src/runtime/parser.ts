@@ -1,6 +1,6 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, maybe, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
-import type { SymbolObj } from "../core_objects/symbol";
+import type { SymbolObj } from "../bootstrap/symbol";
 
 function postfix<B, S, R>(
   base: parserlike<B>,

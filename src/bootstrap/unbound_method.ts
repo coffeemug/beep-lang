@@ -1,11 +1,11 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
-import type { ScopeObj } from "../runtime/scope";
+import type { ScopeObj } from "./scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { defineBinding } from "../runtime/scope";
+import { defineBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "./kernel";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>

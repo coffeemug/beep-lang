@@ -1,9 +1,9 @@
 import type { RuntimeObj } from "../runtime_objects";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { defineBinding } from "../runtime/scope";
+import { defineBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import { type MethodObjBase } from "./unbound_method";
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "./kernel";
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>

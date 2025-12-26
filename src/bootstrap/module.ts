@@ -1,6 +1,6 @@
-import type { BeepKernel } from "../bootstrap/kernel";
-import { findSymbolById } from "../bootstrap/symbol_env";
-import { defineBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "../runtime/scope";
+import type { BeepKernel } from "./kernel";
+import { findSymbolById } from "./symbol_env";
+import { defineBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";

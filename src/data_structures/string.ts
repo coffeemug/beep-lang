@@ -1,6 +1,6 @@
-import type { RuntimeObjMixin, TypeObjMixin } from "../core_objects/object_mixins";
-import { defineBinding } from "../runtime/scope";
-import { type RootTypeObj } from "../core_objects/root_type"
+import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
+import { defineBinding } from "../bootstrap/scope";
+import { type RootTypeObj } from "../bootstrap/root_type"
 import type { BeepKernel } from "../bootstrap/kernel";
 
 export type StringTypeObj =

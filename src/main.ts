@@ -3,7 +3,7 @@ import { parse } from "./runtime/parser";
 import { createKernel } from "./bootstrap/kernel";
 import { findSymbolByName } from "./bootstrap/symbol_env";
 import type { ListObj } from "./data_structures/list";
-import type { UnboundMethodObj } from "./core_objects/unbound_method";
+import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 
 async function main(): Promise<void> {
   const kernel = createKernel();

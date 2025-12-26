@@ -1,9 +1,9 @@
-import { findSymbolByName, type SymbolEnv, type SymbolId } from '../bootstrap/symbol_env';
+import { findSymbolByName, type SymbolEnv, type SymbolId } from './symbol_env';
 import type { RuntimeObj } from '../runtime_objects';
-import type { SymbolObj } from '../core_objects/symbol';
-import type { RuntimeObjMixin, TypeObjMixin } from '../core_objects/object_mixins';
-import type { RootTypeObj } from '../core_objects/root_type';
-import type { BeepKernel } from '../bootstrap/kernel';
+import type { SymbolObj } from './symbol';
+import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
+import type { RootTypeObj } from './root_type';
+import type { BeepKernel } from './kernel';
 
 /*
   Type definitions
