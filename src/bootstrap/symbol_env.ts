@@ -1,7 +1,8 @@
 import { makeSymbolObj, type SymbolObj, type SymbolTypeObj } from "../core_objects/symbol";
 
 export type SymbolEnv = {
-  symbolTable: Map<string, SymbolObj>,
+  namedTable: Map<string, SymbolObj>,
+  indexedTable: Map<SymbolId, SymbolObj>,
   nextSymbolId: SymbolId,
 }
 
@@ -9,7 +10,8 @@ export type SymbolId = number;
 
 export function initSymbolEnv(): SymbolEnv {
   return {
-    symbolTable: new Map(),
+    namedTable: new Map(),
+    indexedTable: new Map(),
     nextSymbolId: 0,
   };
 }
@@ -19,12 +21,20 @@ export function intern(symbolName: string, env: SymbolEnv, symbolTypeObj: Symbol
   let symbolObj = findSymbolByName(symbolName, env);
   if (!symbolObj) {
     symbolObj = makeSymbolObj(symbolName, env.nextSymbolId, symbolTypeObj!);
-    env.symbolTable.set(symbolName, symbolObj);
+
+    // Add symbol to both tables
+    env.namedTable.set(symbolName, symbolObj);
+    env.indexedTable.set(symbolObj.id, symbolObj);
+
     env.nextSymbolId++;
   }
   return symbolObj;
 }
 
 export function findSymbolByName(symbolName: string, env: SymbolEnv) {
-  return env.symbolTable.get(symbolName) ?? null;
+  return env.namedTable.get(symbolName) ?? null;
+}
+
+export function findSymbolById(symbolId: SymbolId, env: SymbolEnv) {
+  return env.indexedTable.get(symbolId) ?? null;
 }

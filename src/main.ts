@@ -7,20 +7,24 @@ import type { UnboundMethodObj } from "./core_objects/unbound_method";
 
 async function main(): Promise<void> {
   const kernel = createKernel();
-  const { symbolEnv: env, sysModule, show, callMethod, bindMethod,
-    evaluate, intern,
-   } = kernel;
+  const {
+    symbolEnv: env, sysModule, show, callMethod, bindMethod,
+    evaluate, intern, makeNamedModuleObj,
+  } = kernel;
+
+  const replModule = makeNamedModuleObj(intern("repl"));
+  kernel.activeModule = replModule;
 
   function run(input: string): string {
     const ast = parse(input, intern);
-    const result = evaluate(ast, sysModule.toplevelScope);
+    const result = evaluate(ast);
     return show(result);
   }
 
   function complete(input: string): string[] {
     try {
       const ast = parse(input, intern);
-      const obj = evaluate(ast, sysModule.toplevelScope);
+      const obj = evaluate(ast);
 
       // Get the methods method from the object's type
       const methodsSym = findSymbolByName('methods', env);

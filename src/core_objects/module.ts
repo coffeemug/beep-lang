@@ -1,5 +1,6 @@
 import type { BeepKernel } from "../bootstrap/kernel";
-import { defineBinding, makeScope, type Scope } from "../runtime/scope";
+import { findSymbolById } from "../bootstrap/symbol_env";
+import { defineBinding, getBinding, getBindings, makeScope, type Scope } from "../runtime/scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
@@ -63,6 +64,12 @@ export function initModule(k: BeepKernel) {
       type: namedModuleTypeObj,
       toplevelScope: makeScope(),
     }
+
+    // Copy bindings from sys module as it always gets star imported by default
+    getBindings(k.sysModule.toplevelScope).forEach(binding => {
+      const [symId, value] = binding;
+      defineBinding(findSymbolById(symId, k.symbolEnv)!, value, namedModuleObj.toplevelScope);
+    });
 
     // TODO: we just made a named module type. We should define appropriate
     // methods on it.

@@ -38,3 +38,7 @@ function getBinding_(symbol: SymbolObj, scope: Scope | null): RuntimeObj | null 
   const binding = scope.bindings.get(symbol.id);
   return binding ?? getBinding_(symbol, scope.parent);
 }
+
+export function getBindings(scope: Scope | null): [number, RuntimeObj][] {
+  return scope ? [...getBindings(scope.parent), ...scope.bindings.entries()] : [];
+}
