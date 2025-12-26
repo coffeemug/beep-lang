@@ -2,7 +2,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { RuntimeObj } from "../runtime_objects";
 import { defineBinding } from "../bootstrap/scope";
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "../bootstrap/bootload";
 import type { IntObj } from "./int";
 
 export type ListTypeObj =
@@ -24,7 +24,7 @@ export function initList(k: BeepKernel) {
     name: intern('list'),
     methods: new Map(),
   };
-  defineBinding(listTypeObj.name, listTypeObj, k.sysModule.toplevelScope);
+  defineBinding(listTypeObj.name, listTypeObj, k.kernelModule.toplevelScope);
 
   k.listTypeObj = listTypeObj;
   k.makeListObj = (elements: RuntimeObj[]): ListObj => ({
@@ -40,7 +40,7 @@ export function initListMethods(k: BeepKernel) {
     show, makeDefNative
   } = k;
 
-  const defMethod = makeDefNative<ListObj>(k.sysModule.toplevelScope, listTypeObj)
+  const defMethod = makeDefNative<ListObj>(k.kernelModule.toplevelScope, listTypeObj)
 
   defMethod('show', 0, thisObj => {
     const items = thisObj.elements.map(e => show(e)).join(', ');

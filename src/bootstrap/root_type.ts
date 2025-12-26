@@ -1,5 +1,5 @@
 import type { TypeObjMixin } from "./object_mixins";
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "./bootload";
 
 export type RootTypeObj = TypeObjMixin & {
   /* Fields common to every runtime object */
@@ -23,7 +23,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 export function initRootTypeMethods(k: BeepKernel) {
   const { makeDefNative, makeStringObj, rootTypeObj } = k;
 
-  const defMethod = makeDefNative<RootTypeObj>(k.sysModule.toplevelScope, rootTypeObj);
+  const defMethod = makeDefNative<RootTypeObj>(k.kernelModule.toplevelScope, rootTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(`<type ${thisObj.name.name}>`));
 }

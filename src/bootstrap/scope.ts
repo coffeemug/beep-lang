@@ -3,7 +3,7 @@ import type { RuntimeObj } from '../runtime_objects';
 import type { SymbolObj } from './symbol';
 import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
 import type { RootTypeObj } from './root_type';
-import type { BeepKernel } from './kernel';
+import type { BeepKernel } from './bootload';
 
 /*
   Type definitions
@@ -35,9 +35,9 @@ export function makeBootstrapScope(scopeTypeObj: ScopeTypeObj, parent?: ScopeObj
   Initialization
 */
 export function initScope(k: BeepKernel) {
-  const { sysModule, scopeTypeObj } = k;
+  const { kernelModule, scopeTypeObj } = k;
 
-  defineBinding(scopeTypeObj.name, scopeTypeObj, sysModule.toplevelScope);
+  defineBinding(scopeTypeObj.name, scopeTypeObj, kernelModule.toplevelScope);
 
   k.makeScopeObj = (parent?: ScopeObj): ScopeObj => ({
     tag: 'ScopeObj',
@@ -49,7 +49,7 @@ export function initScope(k: BeepKernel) {
 
 export function initScopeMethods(k: BeepKernel) {
   const { makeDefNative, scopeTypeObj, makeStringObj } = k;
-  const defMethod = makeDefNative<ScopeObj>(k.sysModule.toplevelScope, scopeTypeObj);
+  const defMethod = makeDefNative<ScopeObj>(k.kernelModule.toplevelScope, scopeTypeObj);
 
   defMethod('show', 0, _thisObj => makeStringObj('<scope>'));
 }

@@ -5,7 +5,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { defineBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
-import type { BeepKernel } from "./kernel";
+import type { BeepKernel } from "./bootload";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
@@ -33,15 +33,15 @@ type Procedure =
 export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
 export function initUnboundMethod(k: BeepKernel) {
-  const { rootTypeObj, sysModule, intern } = k;
-  
+  const { rootTypeObj, kernelModule, intern } = k;
+
   const unboundMethodTypeObj: UnboundMethodTypeObj = {
     tag: 'UnboundMethodTypeObj',
     type: rootTypeObj,
     name: intern('unbound_method'),
     methods: new Map(),
   };
-  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, sysModule.toplevelScope);
+  defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, kernelModule.toplevelScope);
   k.unboundMethodTypeObj = unboundMethodTypeObj;
 
   k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {
@@ -92,7 +92,7 @@ export function initUnboundMethodMethods(k: BeepKernel) {
   const {
     bindMethod, makeStringObj, unboundMethodTypeObj, makeDefNative,
    } = k;
-  const defMethod = makeDefNative<UnboundMethodObj>(k.sysModule.toplevelScope, unboundMethodTypeObj);
+  const defMethod = makeDefNative<UnboundMethodObj>(k.kernelModule.toplevelScope, unboundMethodTypeObj);
 
   defMethod('bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0]));

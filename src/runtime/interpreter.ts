@@ -2,7 +2,7 @@ import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "../bootstrap/bootload";
 
 export function makeInterpreter(k: BeepKernel) {
   const {

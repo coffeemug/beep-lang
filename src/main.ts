@@ -1,6 +1,6 @@
 import { repl } from "./repl";
 import { parse } from "./runtime/parser";
-import { createKernel } from "./bootstrap/kernel";
+import { createKernel } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_env";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";

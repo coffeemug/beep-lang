@@ -1,7 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
-import type { BeepKernel } from "../bootstrap/kernel";
+import type { BeepKernel } from "../bootstrap/bootload";
 
 export type IntTypeObj =
   & RuntimeObjMixin<'IntTypeObj', RootTypeObj>
@@ -22,7 +22,7 @@ export function initInt(k: BeepKernel) {
     name: intern('int'),
     methods: new Map(),
   };
-  defineBinding(intTypeObj.name, intTypeObj, k.sysModule.toplevelScope);
+  defineBinding(intTypeObj.name, intTypeObj, k.kernelModule.toplevelScope);
   
   k.intTypeObj = intTypeObj
   k.makeIntObj = (value: number) => ({
@@ -35,7 +35,7 @@ export function initInt(k: BeepKernel) {
 export function initIntMethods(k: BeepKernel) {
   const { makeStringObj, makeDefNative, intTypeObj } = k;
 
-  const defMethod = makeDefNative<IntObj>(k.sysModule.toplevelScope, intTypeObj);
+  const defMethod = makeDefNative<IntObj>(k.kernelModule.toplevelScope, intTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(thisObj.value.toString()));
 }
