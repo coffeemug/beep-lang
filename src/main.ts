@@ -9,12 +9,12 @@ async function main(): Promise<void> {
   const kernel = createKernel();
   const {
     symbolEnv, show, callMethod, bindMethod,
-    evaluate, intern, makeNamedModuleObj,
+    evaluate, intern, makeModuleObj,
   } = kernel;
 
   const methodsSym = findSymbolByName('methods', symbolEnv)!;
 
-  const replModule = makeNamedModuleObj(intern("repl"));
+  const replModule = makeModuleObj(intern("repl"));
 
   function run(input: string): string {
     const ast = parse(input, intern);

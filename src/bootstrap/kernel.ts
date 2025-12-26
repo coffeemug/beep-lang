@@ -1,7 +1,7 @@
 import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_structures/int";
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "../core_objects/unbound_method";
-import { initModule, initModuleMethods, initSysModule, type ModuleTypeObj, type NamedModuleObj } from "../core_objects/module";
+import { initModule, initModuleMethods, initSysModule, type ModuleTypeObj, type ModuleObj } from "../core_objects/module";
 import { defineBinding, getBindingByName, initScope, initScopeMethods, type ScopeObj, type ScopeTypeObj } from "../runtime/scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "../core_objects/root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
@@ -14,7 +14,7 @@ import { makeInterpreter } from "../runtime/interpreter";
 
 export type BeepKernel = {
   symbolEnv: SymbolEnv,
-  sysModule: NamedModuleObj,
+  sysModule: ModuleObj,
 
   // Well-known type objects
   rootTypeObj: RootTypeObj,
@@ -39,7 +39,7 @@ export type BeepKernel = {
   makeScopeObj: (parent?: ScopeObj) => ScopeObj,
   intern: (name: string) => SymbolObj,
 
-  makeNamedModuleObj: (name: SymbolObj) => NamedModuleObj,
+  makeModuleObj: (name: SymbolObj) => ModuleObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj) =>
