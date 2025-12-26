@@ -19,14 +19,14 @@ async function main(): Promise<void> {
 
   function run(input: string): string {
     const ast = parse(input, intern);
-    const result = evaluate(ast);
+    const result = evaluate(ast, replModule.toplevelScope);
     return show(result);
   }
 
   function complete(input: string): string[] {
     try {
       const ast = parse(input, intern);
-      const obj = evaluate(ast);
+      const obj = evaluate(ast, replModule.toplevelScope);
 
       // Get the methods method from the object's type
       const methodsMethod = obj.type.methods.get(methodsSym);

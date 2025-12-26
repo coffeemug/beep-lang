@@ -47,7 +47,7 @@ export type BeepKernel = {
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
   // More well-known functions
-  evaluate(expr: Expr, scope?: Scope): RuntimeObj,
+  evaluate(expr: Expr, scope: Scope): RuntimeObj,
   show: (obj: RuntimeObj) => string,
   callMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
 }

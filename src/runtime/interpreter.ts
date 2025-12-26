@@ -10,7 +10,7 @@ export function makeInterpreter(k: BeepKernel) {
     bindMethod, makeUnboundMethodObj, show, callMethod
    } = k;
 
-  function evaluate(expr: Expr, scope: Scope = k.activeModule.toplevelScope): RuntimeObj {
+  function evaluate(expr: Expr, scope: Scope): RuntimeObj {
     switch (expr.type) {
       case 'int': {
         return makeIntObj(expr.value);
