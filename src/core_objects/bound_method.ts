@@ -35,5 +35,5 @@ export function initBoundMethodMethods(k: BeepKernel) {
   const defMethod = makeDefNative<BoundMethodObj>(k.sysModule.toplevelScope, boundMethodTypeObj);
 
   defMethod('show', 0, thisObj =>
-    makeStringObj(`<method ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
+    makeStringObj(`<method [${thisObj.receiverType.name.name}].${thisObj.name.name}>`));
 }
