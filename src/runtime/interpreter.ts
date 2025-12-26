@@ -1,6 +1,6 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { defineBinding, getBinding, type Scope } from "./scope";
+import { defineBinding, getBinding, type ScopeObj } from "./scope";
 import type { BoundMethodObj } from "../core_objects/bound_method";
 import type { BeepKernel } from "../bootstrap/kernel";
 
@@ -10,7 +10,7 @@ export function makeInterpreter(k: BeepKernel) {
     bindMethod, makeUnboundMethodObj, show, callMethod
    } = k;
 
-  function evaluate(expr: Expr, scope: Scope): RuntimeObj {
+  function evaluate(expr: Expr, scope: ScopeObj): RuntimeObj {
     switch (expr.type) {
       case 'int': {
         return makeIntObj(expr.value);

@@ -1,5 +1,5 @@
 import type { TypeObj, RuntimeObj } from "../runtime_objects";
-import type { Scope } from "../runtime/scope";
+import type { ScopeObj } from "../runtime/scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { defineBinding } from "../runtime/scope";
@@ -23,7 +23,7 @@ export type MethodObjBase =
   & {
     receiverType: TypeObj,
     name: SymbolObj,
-    scopeClosure: Scope,
+    scopeClosure: ScopeObj,
   }
 
 type Procedure =
@@ -44,7 +44,7 @@ export function initUnboundMethod(k: BeepKernel) {
   defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, sysModule.toplevelScope);
   k.unboundMethodTypeObj = unboundMethodTypeObj;
 
-  k.makeUnboundMethodObj = (scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {
+  k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {
     const unboundMethod: UnboundMethodObj = {
       tag: 'UnboundMethodObj',
       type: unboundMethodTypeObj,
@@ -65,7 +65,7 @@ export function initUnboundMethod(k: BeepKernel) {
     receiverInstance,
   });
 
-  const makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
+  const makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
     const unboundMethod: UnboundMethodObj = {
       tag: 'UnboundMethodObj',
       type: unboundMethodTypeObj,
@@ -79,7 +79,7 @@ export function initUnboundMethod(k: BeepKernel) {
     return unboundMethod;
   };
 
-  k.makeDefNative = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj) =>
+  k.makeDefNative = <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => {
       const internedName = k.intern(name);
       const method = makeUnboundNativeMethodObj(scopeClosure, receiverType, internedName, argCount, nativeFn);

@@ -6,11 +6,12 @@ import type { RootTypeObj } from "./core_objects/root_type";
 import type { StringTypeObj, StringObj } from "./data_structures/string";
 import type { SymbolTypeObj, SymbolObj } from "./core_objects/symbol";
 import type { BoundMethodObj, BoundMethodTypeObj } from "./core_objects/bound_method";
+import type { ScopeTypeObj, ScopeObj } from "./runtime/scope";
 
 export type TypeObj =
   IntTypeObj | ListTypeObj | ModuleTypeObj | NamedModuleTypeObj | RootTypeObj | SymbolTypeObj
-  | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj;
+  | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj | ScopeTypeObj;
 
 export type RuntimeObj =
   IntObj | ListObj | NamedModuleObj | SymbolObj | UnboundMethodObj
-  | BoundMethodObj | StringObj | TypeObj;
+  | BoundMethodObj | StringObj | ScopeObj | TypeObj;
