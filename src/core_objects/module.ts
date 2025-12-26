@@ -64,11 +64,15 @@ export function initModule(k: BeepKernel) {
       toplevelScope: makeScope(),
     }
 
+    // TODO: we just made a named module type. We should define appropriate
+    // methods on it.
+
     return namedModuleObj;
   }
 }
 
 export function initModuleMethods(k: BeepKernel) {
-  const {} = k;
+  // TODO: define methods on ModuleTypeObj (that would be applicable to
+  // NamedModuleTypeObj).
 }
 
