@@ -15,7 +15,6 @@ async function main(): Promise<void> {
   const methodsSym = findSymbolByName('methods', symbolEnv)!;
 
   const replModule = makeNamedModuleObj(intern("repl"));
-  kernel.activeModule = replModule;
 
   function run(input: string): string {
     const ast = parse(input, intern);

@@ -57,13 +57,12 @@ export function makeInterpreter(k: BeepKernel) {
       case 'functionDef': {
         const methodObj_ = makeUnboundMethodObj(
           scope,
-          k.activeModule.type,
+          scope.type,
           expr.name,
           expr.params,
           expr.body,
         );
-        k.activeModule.type.methods.set(methodObj_.name, methodObj_);
-        const methodObj = bindMethod(methodObj_, k.activeModule);
+        const methodObj = bindMethod(methodObj_, scope);
         defineBinding(methodObj.name, methodObj, scope);
         return methodObj;
       }
