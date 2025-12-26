@@ -55,7 +55,6 @@ export function initUnboundMethod(k: BeepKernel) {
       body,
       scopeClosure,
     }
-    receiverType.methods.set(name, unboundMethod);
     return unboundMethod;
   };
 
@@ -77,13 +76,16 @@ export function initUnboundMethod(k: BeepKernel) {
       nativeFn: nativeFn as NativeFn,
       scopeClosure,
     };
-    receiverType.methods.set(name, unboundMethod);
     return unboundMethod;
   };
 
   k.makeDefNative = <T extends RuntimeObj>(scopeClosure: Scope, receiverType: TypeObj) =>
-    (name: string, argCount: number, nativeFn: NativeFn<T>) =>
-      makeUnboundNativeMethodObj(scopeClosure, receiverType, k.intern(name), argCount, nativeFn);
+    (name: string, argCount: number, nativeFn: NativeFn<T>) => {
+      const internedName = k.intern(name);
+      const method = makeUnboundNativeMethodObj(scopeClosure, receiverType, internedName, argCount, nativeFn);
+      receiverType.methods.set(internedName, method);
+      return method;
+    }
 }
 
 export function initUnboundMethodMethods(k: BeepKernel) {

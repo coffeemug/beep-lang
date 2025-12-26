@@ -49,6 +49,8 @@ export function makeInterpreter(k: BeepKernel) {
           expr.params,
           expr.body,
         );
+        receiverType.methods.set(methodObj.name, methodObj);
+
         return methodObj;
       }
 
@@ -60,6 +62,7 @@ export function makeInterpreter(k: BeepKernel) {
           expr.params,
           expr.body,
         );
+        k.activeModule.type.methods.set(methodObj_.name, methodObj_);
         const methodObj = bindMethod(methodObj_, k.activeModule);
         defineBinding(methodObj.name, methodObj, scope);
         return methodObj;
