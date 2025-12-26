@@ -1,6 +1,5 @@
 import type { TypeObj } from "../runtime_objects";
 import type { UnboundMethodObj } from "./unbound_method";
-import type { ModuleObj } from "./module";
 import type { SymbolObj } from "./symbol";
 
 export type RuntimeObjMixin<Tag extends string, T extends TypeObj> = {

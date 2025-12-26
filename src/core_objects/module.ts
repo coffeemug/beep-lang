@@ -1,4 +1,5 @@
-import { makeScope, type Scope } from "../runtime/scope";
+import type { BeepKernel } from "../bootstrap/kernel";
+import { defineBinding, makeScope, type Scope } from "../runtime/scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
@@ -8,27 +9,66 @@ export type ModuleTypeObj =
   & TypeObjMixin
   & {}
 
-export type ModuleObj =
-  & RuntimeObjMixin<'ModuleObj', ModuleTypeObj>
+export type NamedModuleTypeObj =
+  & RuntimeObjMixin<'NamedModuleTypeObj', ModuleTypeObj>
+  & TypeObjMixin
   & {
     name: SymbolObj,
+  }
+export type NamedModuleObj =
+  & RuntimeObjMixin<'NamedModuleObj', NamedModuleTypeObj>
+  & {
     toplevelScope: Scope,
   }
 
-export function makeModuleTypeObj(name: SymbolObj, rootTypeObj: RootTypeObj): Omit<ModuleTypeObj, 'bindingModule'> {
-  return {
+export function initSysModule(k: BeepKernel, rootTypeObj: RootTypeObj): NamedModuleObj {
+  const { intern } = k;
+  const moduleTypeObj: ModuleTypeObj = {
     tag: 'ModuleTypeObj',
     type: rootTypeObj,
-    name,
+    name: intern('module'),
     methods: new Map(),
   };
-}
+  k.moduleTypeObj = moduleTypeObj;
 
-export function makeModuleObj(moduleName: SymbolObj, moduleTypeObj: ModuleTypeObj): ModuleObj {
-  return {
-    tag: 'ModuleObj',
-    type: moduleTypeObj,
-    name: moduleName,
+  const sysModuleType: NamedModuleTypeObj = {
+      tag: 'NamedModuleTypeObj',
+      type: moduleTypeObj,
+      name: intern('sys'),
+      methods: new Map(),
+  };
+  k.sysModule = {
+    tag: 'NamedModuleObj',
+    type: sysModuleType,
     toplevelScope: makeScope(),
   };
+  defineBinding(moduleTypeObj.name, moduleTypeObj, k.sysModule.toplevelScope);
+
+  return k.sysModule;
 }
+
+export function initModule(k: BeepKernel) {
+  k.makeNamedModuleObj = (name: SymbolObj): NamedModuleObj => {
+    // make a named type
+    const namedModuleTypeObj: NamedModuleTypeObj = {
+      tag: 'NamedModuleTypeObj',
+      type: k.moduleTypeObj,
+      name,
+      methods: new Map(),
+    };
+
+    // instantiate the named type
+    const namedModuleObj: NamedModuleObj = {
+      tag: 'NamedModuleObj',
+      type: namedModuleTypeObj,
+      toplevelScope: makeScope(),
+    }
+
+    return namedModuleObj;
+  }
+}
+
+export function initModuleMethods(k: BeepKernel) {
+  const {} = k;
+}
+
