@@ -15,6 +15,7 @@ function postfix<B, S, R>(
 export type Expr =
   | { type: "int"; value: number }
   | { type: "string"; value: string }
+  | { type: "symbol"; sym: SymbolObj }
   | { type: "list"; elements: Expr[] }
   | { type: "ident"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
@@ -53,6 +54,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const strLit = lex(seq("'", many(anych({ but: "'" })), "'"))
     .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
 
+  // Symbol literals: :foo
+  const symLit = seq(":", identSym)
+    .map(([_colon, sym]) => ({ type: "symbol" as const, sym }));
+
   // Forward reference for full expressions (needed for list elements, method bodies, and args)
   const expr: parser<Expr> = fwd(() => postfixExpr);
 
@@ -61,7 +66,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
   // Primary expressions (atoms)
-  const primary = either(listLit, strLit, intLit, ident);
+  const primary = either(listLit, symLit, strLit, intLit, ident);
 
   // Shared: (params) body end
   const defBody = seq("(", sepBy(identSym, ","), ")", expr, "end")

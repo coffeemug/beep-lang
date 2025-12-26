@@ -20,6 +20,10 @@ export function makeInterpreter(k: BeepKernel) {
         return makeStringObj(expr.value);
       }
 
+      case 'symbol': {
+        return expr.sym;
+      }
+
       case 'list': {
         const elements = expr.elements.map(e => evaluate(e, scope));
         return makeListObj(elements);
