@@ -43,8 +43,8 @@ export type BeepKernel = {
   makeModuleObj: (name: SymbolObj) => ModuleObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
-  makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj) =>
-    (name: string, argCount: number, nativeFn: NativeFn<T>) => UnboundMethodObj,
+  makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding?: 'instance' | 'own') =>
+    (name: string, argCount: number, nativeFn: NativeFn<T>) => void,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
   // More well-known functions
