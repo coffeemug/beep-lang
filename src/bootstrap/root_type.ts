@@ -22,9 +22,10 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 }
 
 export function initRootTypeMethods(k: BeepKernel) {
-  const { makeDefNative, makeStringObj, rootTypeObj } = k;
+  const { makeDefNative, makeStringObj, rootTypeObj, makeListObj } = k;
 
   const defMethod = makeDefNative<RootTypeObj>(k.kernelModule.toplevelScope, rootTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(`<type ${thisObj.name.name}>`));
+  defMethod('own_methods', 0, thisObj => makeListObj(thisObj.ownMethods.values().toArray()));
 }
