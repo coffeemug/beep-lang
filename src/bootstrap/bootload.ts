@@ -2,7 +2,7 @@ import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_s
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
 import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj } from "./module";
-import { defineBinding, getBindingByName, initScope, initScopeMethods, type ScopeObj, type ScopeTypeObj } from "./scope";
+import { defineBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
 import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "./symbol";
@@ -31,6 +31,7 @@ export type BeepKernel = {
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
   atSymbol: SymbolObj,
+  getFieldSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: number) => IntObj,
@@ -79,15 +80,8 @@ function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
   symbolTypeObj.name = k.intern('symbol');
 
   // Create scopeTypeObj early so we can create scopes during bootstrap
-  const scopeTypeObj: ScopeTypeObj = {
-    tag: 'ScopeTypeObj',
-    type: rootTypeObj,
-    name: k.intern('scope'),
-    methods: new Map(),
-  };
-  k.scopeTypeObj = scopeTypeObj;
-
-  const kernelModule = initKernelModule(k as BeepKernel, rootTypeObj, scopeTypeObj);
+  k.scopeTypeObj = makeScopeTypeObj(k as BeepKernel);
+  const kernelModule = initKernelModule(k as BeepKernel, rootTypeObj, k.scopeTypeObj);
 
   // Bind type names in the kernel module
   defineBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
@@ -97,7 +91,6 @@ function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
     ...k,
     rootTypeObj,
     symbolTypeObj,
-    scopeTypeObj,
     kernelModule,
   };
 }
@@ -112,39 +105,13 @@ function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
   initModule(k as BeepKernel);
   initScope(k as BeepKernel);
 
-  // Register `type` and `methods` methods for all types
-  const typeNames = [
-    'type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope',
-  ];
-  const scope = k.kernelModule!.toplevelScope;
-
-  for (const typeName of typeNames) {
-    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
-    const defMethod = k.makeDefNative!(scope, receiverType);
-    defMethod('type', 0, thisObj => thisObj.type);
-    defMethod('methods', 0, thisObj =>
-      k.makeListObj!(thisObj.type.methods.values().toArray()));
-  }
-
   return {
     ...k,
     thisSymbol: k.intern!('this'),
     showSymbol: k.intern!('show'),
     atSymbol: k.intern!('at'),
+    getFieldSymbol: k.intern!('get_field'),
   };
-}
-
-function initPreludeTypeMethods(k: BeepKernel) {
-  initIntMethods(k);
-  initStringMethods(k);
-  initListMethods(k);
-  initUnboundMethodMethods(k);
-  initBoundMethodMethods(k);
-  initSymbolMethods(k);
-  initRootTypeMethods(k);
-  initModuleMethods(k as BeepKernel);
-  initScopeMethods(k);
 }
 
 function initWellKnownFunctions(k: BeepKernel) {
@@ -182,4 +149,49 @@ function initWellKnownFunctions(k: BeepKernel) {
   // Has to be last as `makeInterpreter` expects `callMethod` and `show`
   // to be defined in `k`. We can fix that later.  
   k.evaluate = makeInterpreter(k).evaluate;
+}
+
+function initPreludeTypeMethods(k: BeepKernel) {
+  initIntMethods(k);
+  initStringMethods(k);
+  initListMethods(k);
+  initUnboundMethodMethods(k);
+  initBoundMethodMethods(k);
+  initSymbolMethods(k);
+  initRootTypeMethods(k);
+  initModuleMethods(k as BeepKernel);
+  initScopeMethods(k);
+
+  // Register `type` and `methods` methods for all types
+  const typeNames = [
+    'type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'string',
+    'module', 'scope',
+  ];
+  const scope = k.kernelModule!.toplevelScope;
+
+  for (const typeName of typeNames) {
+    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
+    const defMethod = k.makeDefNative!(scope, receiverType);
+    defMethod('type', 0, thisObj => thisObj.type);
+    defMethod('methods', 0, thisObj =>
+      k.makeListObj!(thisObj.type.methods.values().toArray()));
+    defMethod('get_field', 1, (thisObj, args) => {
+      const fieldName = args[0] as SymbolObj;
+
+      const field = thisObj.type.methods.get(fieldName);
+      if (field) {
+        return k.bindMethod!(field, thisObj);
+      }
+
+      if ("ownMethods" in thisObj) {
+        thisObj = thisObj as TypeObj;
+        const ownField = thisObj.ownMethods.get(fieldName);
+        if (ownField) {
+          return ownField;
+        }
+      }
+
+      throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);        
+    });
+  }
 }

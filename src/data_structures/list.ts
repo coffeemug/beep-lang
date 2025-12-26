@@ -23,6 +23,7 @@ export function initList(k: BeepKernel) {
     type: rootTypeObj,
     name: intern('list'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   defineBinding(listTypeObj.name, listTypeObj, k.kernelModule.toplevelScope);
 

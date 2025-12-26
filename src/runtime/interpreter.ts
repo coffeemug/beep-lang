@@ -7,7 +7,7 @@ import type { BeepKernel } from "../bootstrap/bootload";
 export function makeInterpreter(k: BeepKernel) {
   const {
     thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj,
-    bindMethod, makeUnboundMethodObj, show, callMethod
+    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol
    } = k;
 
   function evaluate(expr: Expr, scope: ScopeObj): RuntimeObj {
@@ -69,11 +69,12 @@ export function makeInterpreter(k: BeepKernel) {
 
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope);
-        const method = receiver.type.methods.get(expr.fieldName);
+        const method = receiver.type.methods.get(getFieldSymbol);
         if (!method) {
-          throw new Error(`No method ${expr.fieldName.name} on ${show(receiver.type)}`);
+          throw new Error(`No method 'get_field' on ${show(receiver.type)}`);
         }
-        return bindMethod(method, receiver);
+        const boundMethod = bindMethod(method, receiver);
+        return callMethod(boundMethod, [expr.fieldName]);
       }
 
       case 'indexAccess': {

@@ -22,6 +22,16 @@ export type ScopeObj =
 /*
   Bootstrap scope creation (used before type system is initialized)
 */
+export function makeScopeTypeObj(k: BeepKernel): ScopeTypeObj {
+  return {
+    tag: 'ScopeTypeObj',
+    type: k.rootTypeObj,
+    name: k.intern('scope'),
+    methods: new Map(),
+    ownMethods: new Map(),
+  };
+}
+
 export function makeBootstrapScope(scopeTypeObj: ScopeTypeObj, parent?: ScopeObj): ScopeObj {
   return {
     tag: 'ScopeObj',

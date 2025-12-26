@@ -40,6 +40,7 @@ export function initUnboundMethod(k: BeepKernel) {
     type: rootTypeObj,
     name: intern('unbound_method'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   defineBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, kernelModule.toplevelScope);
   k.unboundMethodTypeObj = unboundMethodTypeObj;

@@ -23,6 +23,7 @@ export function initKernelModule(k: BeepKernel, rootTypeObj: RootTypeObj, scopeT
     type: rootTypeObj,
     name: intern('module'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   k.moduleTypeObj = moduleTypeObj;
 

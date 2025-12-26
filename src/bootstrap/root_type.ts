@@ -13,6 +13,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
   const obj: Partial<RootTypeObj> = {
     tag: 'RootTypeObj',
     methods: new Map(),
+    ownMethods: new Map(),
   };
 
   // The type of RootTypeObj is itself

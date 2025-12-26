@@ -19,6 +19,7 @@ export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj,
     tag: 'SymbolTypeObj',
     type: rootTypeObj,
     methods: new Map(),
+    ownMethods: new Map(),
   };
 }
 

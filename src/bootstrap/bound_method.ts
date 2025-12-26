@@ -23,6 +23,7 @@ export function initBoundMethod(k: BeepKernel) {
     type: rootTypeObj,
     name: intern('method'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   defineBinding(boundMethodTypeObj.name, boundMethodTypeObj, k.kernelModule.toplevelScope);
 

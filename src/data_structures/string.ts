@@ -21,6 +21,7 @@ export function initString(k: BeepKernel) {
     type: rootTypeObj,
     name: intern('string'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   defineBinding(stringTypeObj.name, stringTypeObj, k.kernelModule.toplevelScope);
 

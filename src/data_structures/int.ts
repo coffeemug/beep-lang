@@ -21,6 +21,7 @@ export function initInt(k: BeepKernel) {
     type: rootTypeObj,
     name: intern('int'),
     methods: new Map(),
+    ownMethods: new Map(),
   };
   defineBinding(intTypeObj.name, intTypeObj, k.kernelModule.toplevelScope);
   
