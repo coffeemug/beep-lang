@@ -48,28 +48,28 @@ async function main(): Promise<void> {
     return `${activeModule.name.name}> `;
   }
 
-  function handleCommand(cmd: string, arg_: string): string | null {
-    if (cmd === "in") {
-      const ast = parse(arg_, intern);
-      const arg = evaluate(ast, activeModule.toplevelScope);
-      if (arg.tag == 'ModuleObj') {
-        activeModule = arg as ModuleObj;
-      } else if (arg.tag == 'SymbolObj') {
-        const modules = getBinding(kernel.modulesSymbol, kernel.dynamicScope) as MapObj;
-        const module = modules.kv.get(arg);
-        if (!module) {
-          throw new Error("Module must exist");
-        }
-        activeModule = module as ModuleObj;
-      } else {
-        throw new Error("Must be module or symbol");
+  function inCmdHandler(arg_: string) {
+    const ast = parse(arg_, intern);
+    const arg = evaluate(ast, activeModule.toplevelScope);
+    if (arg.tag == 'ModuleObj') {
+      activeModule = arg as ModuleObj;
+    } else if (arg.tag == 'SymbolObj') {
+      const modules = getBinding(kernel.modulesSymbol, kernel.dynamicScope) as MapObj;
+      const module = modules.kv.get(arg);
+      if (!module) {
+        throw new Error("Module must exist");
       }
-      return null;
+      activeModule = module as ModuleObj;
+    } else {
+      throw new Error("Must be module or symbol");
     }
-    return null;
   }
 
-  await repl(run, complete, getPrompt, handleCommand);
+  const commands = {
+    in: inCmdHandler,
+  };
+
+  await repl(run, complete, getPrompt, commands);
 }
 
 main();

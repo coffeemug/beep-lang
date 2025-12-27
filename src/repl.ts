@@ -26,7 +26,7 @@ export async function repl(
   run: (input: string) => string,
   complete: (expr: string) => string[],
   getPrompt: () => string,
-  handleCommand: (cmd: string, arg: string) => string | null
+  commands: Record<string, (arg: string) => string | void>
 ): Promise<void> {
   const history = loadHistory().slice(-MAX_HISTORY);
 
@@ -66,18 +66,25 @@ export async function repl(
       return;
     }
 
-    // Handle /in command
-    if (trimmed.startsWith("/in ")) {
-      const arg = trimmed.slice(4).trim();
-      try {
-        const result = handleCommand("in", arg);
-        if (result) console.log(result);
-      } catch (e) {
-        if (e instanceof Error) {
-          console.log(`Error: ${e.message}`);
-        } else {
-          console.log("Unknown error");
+    // Handle commands
+    if (trimmed.startsWith("/")) {
+      const spaceIdx = trimmed.indexOf(" ");
+      const cmd = spaceIdx === -1 ? trimmed.slice(1) : trimmed.slice(1, spaceIdx);
+      const arg = spaceIdx === -1 ? "" : trimmed.slice(spaceIdx + 1).trim();
+      const handler = commands[cmd];
+      if (handler) {
+        try {
+          const result = handler(arg);
+          if (result) console.log(result);
+        } catch (e) {
+          if (e instanceof Error) {
+            console.log(`Error: ${e.message}`);
+          } else {
+            console.log("Unknown error");
+          }
         }
+      } else {
+        console.log(`Unknown command: ${cmd}`);
       }
       rl.setPrompt(getPrompt());
       rl.prompt();
