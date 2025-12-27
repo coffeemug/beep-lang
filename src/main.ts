@@ -4,6 +4,9 @@ import { createKernel } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
+import type { ModuleObj } from "./bootstrap/module";
+import { getBinding } from "./bootstrap/scope";
+import type { MapObj } from "./data_structures/map";
 
 async function main(): Promise<void> {
   const kernel = createKernel();
@@ -13,19 +16,18 @@ async function main(): Promise<void> {
   } = kernel;
 
   const methodsSym = findSymbolByName('methods', symbolSpace)!;
-
-  const replModule = makeModuleObj(intern("repl"));
+  let activeModule = makeModuleObj(intern("repl"));
 
   function run(input: string): string {
     const ast = parse(input, intern);
-    const result = evaluate(ast, replModule.toplevelScope);
+    const result = evaluate(ast, activeModule.toplevelScope);
     return show(result);
   }
 
   function complete(input: string): string[] {
     try {
       const ast = parse(input, intern);
-      const obj = evaluate(ast, replModule.toplevelScope);
+      const obj = evaluate(ast, activeModule.toplevelScope);
 
       // Get the methods method from the object's type
       const methodsMethod = obj.type.methods.get(methodsSym);
@@ -42,7 +44,32 @@ async function main(): Promise<void> {
     }
   }
 
-  await repl(run, complete);
+  function getPrompt(): string {
+    return `${activeModule.name.name}> `;
+  }
+
+  function handleCommand(cmd: string, arg_: string): string | null {
+    if (cmd === "in") {
+      const ast = parse(arg_, intern);
+      const arg = evaluate(ast, activeModule.toplevelScope);
+      if (arg.tag == 'ModuleObj') {
+        activeModule = arg as ModuleObj;
+      } else if (arg.tag == 'SymbolObj') {
+        const modules = getBinding(kernel.modulesSymbol, kernel.dynamicScope) as MapObj;
+        const module = modules.kv.get(arg);
+        if (!module) {
+          throw new Error("Module must exist");
+        }
+        activeModule = module as ModuleObj;
+      } else {
+        throw new Error("Must be module or symbol");
+      }
+      return null;
+    }
+    return null;
+  }
+
+  await repl(run, complete, getPrompt, handleCommand);
 }
 
 main();

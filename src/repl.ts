@@ -24,14 +24,16 @@ function saveHistory(history: string[]): void {
 
 export async function repl(
   run: (input: string) => string,
-  complete: (expr: string) => string[]
+  complete: (expr: string) => string[],
+  getPrompt: () => string,
+  handleCommand: (cmd: string, arg: string) => string | null
 ): Promise<void> {
   const history = loadHistory().slice(-MAX_HISTORY);
 
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "> ",
+    prompt: getPrompt(),
     history: history,
     historySize: MAX_HISTORY,
     completer: (line: string): [string[], string] => {
@@ -59,6 +61,25 @@ export async function repl(
   rl.on("line", (line) => {
     const trimmed = line.trim();
     if (trimmed.length === 0) {
+      rl.setPrompt(getPrompt());
+      rl.prompt();
+      return;
+    }
+
+    // Handle /in command
+    if (trimmed.startsWith("/in ")) {
+      const arg = trimmed.slice(4).trim();
+      try {
+        const result = handleCommand("in", arg);
+        if (result) console.log(result);
+      } catch (e) {
+        if (e instanceof Error) {
+          console.log(`Error: ${e.message}`);
+        } else {
+          console.log("Unknown error");
+        }
+      }
+      rl.setPrompt(getPrompt());
       rl.prompt();
       return;
     }
@@ -74,6 +95,7 @@ export async function repl(
       }
     }
 
+    rl.setPrompt(getPrompt());
     rl.prompt();
   });
 
