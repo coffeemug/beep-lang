@@ -170,7 +170,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope',
+    'module', 'scope', 'map',
   ];
   const scope = k.kernelModule!.toplevelScope;
 
