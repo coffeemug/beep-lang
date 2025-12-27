@@ -1,4 +1,4 @@
-import { findSymbolByName, type SymbolEnv, type SymbolId } from './symbol_env';
+import { findSymbolByName, type SymbolSpace, type SymbolId } from './symbol_space';
 import type { RuntimeObj } from '../runtime_objects';
 import type { SymbolObj } from './symbol';
 import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
@@ -71,8 +71,8 @@ export function defineBinding(name: SymbolObj, value: RuntimeObj, scope: ScopeOb
   scope.bindings.set(name.id, value);
 }
 
-export function getBindingByName<T extends RuntimeObj>(name: string, scope: ScopeObj, env: SymbolEnv): T | null {
-  const sym = findSymbolByName(name, env);
+export function getBindingByName<T extends RuntimeObj>(name: string, scope: ScopeObj, space: SymbolSpace): T | null {
+  const sym = findSymbolByName(name, space);
   return sym && getBinding(sym, scope) as T;
 }
 

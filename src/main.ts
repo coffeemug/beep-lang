@@ -1,18 +1,18 @@
 import { repl } from "./repl";
 import { parse } from "./runtime/parser";
 import { createKernel } from "./bootstrap/bootload";
-import { findSymbolByName } from "./bootstrap/symbol_env";
+import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 
 async function main(): Promise<void> {
   const kernel = createKernel();
   const {
-    symbolEnv, show, callMethod, bindMethod,
+    symbolSpace, show, callMethod, bindMethod,
     evaluate, intern, makeModuleObj,
   } = kernel;
 
-  const methodsSym = findSymbolByName('methods', symbolEnv)!;
+  const methodsSym = findSymbolByName('methods', symbolSpace)!;
 
   const replModule = makeModuleObj(intern("repl"));
 

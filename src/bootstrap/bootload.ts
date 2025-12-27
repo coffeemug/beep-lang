@@ -6,14 +6,14 @@ import { defineBinding, getBindingByName, initScope, initScopeMethods, makeScope
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
 import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "./symbol";
-import { initSymbolEnv, intern, type SymbolEnv } from "./symbol_env";
+import { initSymbolSpace, intern, type SymbolSpace } from "./symbol_space";
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter } from "../runtime/interpreter";
 
 export type BeepKernel = {
-  symbolEnv: SymbolEnv,
+  symbolSpace: SymbolSpace,
   kernelModule: ModuleObj,
 
   // Well-known type objects
@@ -55,7 +55,7 @@ export type BeepKernel = {
 
 export function createKernel(): BeepKernel {
   let kernel: Partial<BeepKernel> = {
-    symbolEnv: initSymbolEnv(),
+    symbolSpace: initSymbolSpace(),
   };
 
   kernel = bootstrapKernelModule(kernel);
@@ -74,10 +74,13 @@ function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
   const rootTypeObj = makeRootTypeObj() as RootTypeObj;
   const symbolTypeObj = makeSymbolTypeObj(rootTypeObj) as SymbolTypeObj;
 
-  k.intern = (name: string) => intern(name, k.symbolEnv!, symbolTypeObj);
+  k.intern = (name: string) => intern(name, k.symbolSpace!, symbolTypeObj);
 
   rootTypeObj.name = k.intern('type');
   symbolTypeObj.name = k.intern('symbol');
+
+  // Assign rootTypeObj before creating scopeTypeObj (which needs it)
+  k.rootTypeObj = rootTypeObj;
 
   // Create scopeTypeObj early so we can create scopes during bootstrap
   k.scopeTypeObj = makeScopeTypeObj(k as BeepKernel);
@@ -89,7 +92,6 @@ function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
 
   return {
     ...k,
-    rootTypeObj,
     symbolTypeObj,
     kernelModule,
   };
@@ -170,7 +172,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   const scope = k.kernelModule!.toplevelScope;
 
   for (const typeName of typeNames) {
-    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolEnv!)!;
+    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolSpace)!;
     const defMethod = k.makeDefNative!(scope, receiverType);
     defMethod('type', 0, thisObj => thisObj.type);
     defMethod('methods', 0, thisObj =>
