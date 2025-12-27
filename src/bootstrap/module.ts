@@ -1,9 +1,10 @@
 import type { BeepKernel } from "./bootload";
 import { findSymbolById } from "./symbol_space";
-import { defineBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
+import { defineBinding, getBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
+import type { MapObj } from "../data_structures/map";
 
 export type ModuleTypeObj =
   & RuntimeObjMixin<'ModuleTypeObj', RootTypeObj>
@@ -40,6 +41,11 @@ export function initKernelModule(k: BeepKernel, rootTypeObj: RootTypeObj, scopeT
 
 export function initModule(k: BeepKernel) {
   k.makeModuleObj = (name: SymbolObj): ModuleObj => {
+    const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
+    if (modules.kv.has(name)) {
+      return modules.kv.get(name) as ModuleObj;
+    }
+
     const moduleObj: ModuleObj = {
       tag: 'ModuleObj',
       type: k.moduleTypeObj,
@@ -52,6 +58,8 @@ export function initModule(k: BeepKernel) {
       const [symId, value] = binding;
       defineBinding(findSymbolById(symId, k.symbolSpace)!, value, moduleObj.toplevelScope);
     });
+
+    modules.kv.set(name, moduleObj);
 
     return moduleObj;
   }

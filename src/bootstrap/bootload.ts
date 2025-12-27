@@ -35,6 +35,7 @@ export type BeepKernel = {
   showSymbol: SymbolObj,
   atSymbol: SymbolObj,
   getFieldSymbol: SymbolObj,
+  modulesSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: number) => IntObj,
@@ -58,12 +59,12 @@ export type BeepKernel = {
 }
 
 export function createKernel(): BeepKernel {
-  let kernel: Partial<BeepKernel> = {
+  const kernel: Partial<BeepKernel> = {
     symbolSpace: initSymbolSpace(),
   };
 
-  kernel = bootstrapKernelModule(kernel);
-  kernel = initPreludeTypes(kernel);
+  bootstrapKernelModule(kernel);
+  initPreludeTypes(kernel);
   initWellKnownFunctions(kernel as BeepKernel);
   initPreludeTypeMethods(kernel as BeepKernel);
   initDynamicScope(kernel as BeepKernel);
@@ -71,7 +72,7 @@ export function createKernel(): BeepKernel {
   return kernel as BeepKernel;
 }
 
-function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
+function bootstrapKernelModule(k: Partial<BeepKernel>) {
   /*
     Create core types ('type', 'symbol', 'module', 'scope') and intern their names.
     These are created before kernelModule exists, so bindingModule is set retroactively.
@@ -95,14 +96,11 @@ function bootstrapKernelModule(k: Partial<BeepKernel>): Partial<BeepKernel> {
   defineBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
   defineBinding(symbolTypeObj.name, symbolTypeObj, kernelModule.toplevelScope);
 
-  return {
-    ...k,
-    symbolTypeObj,
-    kernelModule,
-  };
+  k.symbolTypeObj = symbolTypeObj;
+  k.kernelModule = kernelModule;
 }
 
-function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
+function initPreludeTypes(k: Partial<BeepKernel>) {
   // Init types that can use the standard pattern
   initInt(k as BeepKernel);
   initString(k as BeepKernel);
@@ -113,13 +111,11 @@ function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
   initModule(k as BeepKernel);
   initScope(k as BeepKernel);
 
-  return {
-    ...k,
-    thisSymbol: k.intern!('this'),
-    showSymbol: k.intern!('show'),
-    atSymbol: k.intern!('at'),
-    getFieldSymbol: k.intern!('get_field'),
-  };
+  k.thisSymbol = k.intern!('this');
+  k.showSymbol = k.intern!('show');
+  k.atSymbol = k.intern!('at');
+  k.modulesSymbol = k.intern!('modules');
+  k.getFieldSymbol = k.intern!('get_field');
 }
 
 function initWellKnownFunctions(k: BeepKernel) {
@@ -207,7 +203,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
 
 function initDynamicScope(k: BeepKernel) {
   k.dynamicScope = k.makeScopeObj();
-  defineBinding(k.intern("modules"), k.makeMapObj([
+  defineBinding(k.modulesSymbol, k.makeMapObj([
     [k.intern("kernel"), k.kernelModule],
   ]), k.dynamicScope);
 }
