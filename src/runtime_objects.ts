@@ -7,11 +7,13 @@ import type { StringTypeObj, StringObj } from "./data_structures/string";
 import type { SymbolTypeObj, SymbolObj } from "./bootstrap/symbol";
 import type { BoundMethodObj, BoundMethodTypeObj } from "./bootstrap/bound_method";
 import type { ScopeTypeObj, ScopeObj } from "./bootstrap/scope";
+import type { MapObj, MapTypeObj } from "./data_structures/map";
 
 export type TypeObj =
   IntTypeObj | ListTypeObj | ModuleTypeObj | RootTypeObj | SymbolTypeObj
-  | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj | ScopeTypeObj;
+  | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj | ScopeTypeObj
+  | MapTypeObj;
 
 export type RuntimeObj =
   IntObj | ListObj | ModuleObj | SymbolObj | UnboundMethodObj
-  | BoundMethodObj | StringObj | ScopeObj | TypeObj;
+  | BoundMethodObj | StringObj | ScopeObj | MapObj | TypeObj;

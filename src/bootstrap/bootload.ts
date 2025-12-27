@@ -11,6 +11,7 @@ import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type Boun
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter } from "../runtime/interpreter";
+import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 
 export type BeepKernel = {
   symbolSpace: SymbolSpace,
@@ -24,6 +25,7 @@ export type BeepKernel = {
   intTypeObj: IntTypeObj,
   stringTypeObj: StringTypeObj,
   listTypeObj: ListTypeObj,
+  mapTypeObj: MapTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
   scopeTypeObj: ScopeTypeObj,
@@ -38,6 +40,7 @@ export type BeepKernel = {
   makeIntObj: (value: number) => IntObj,
   makeStringObj: (value: string) => StringObj,
   makeListObj: (elements: RuntimeObj[]) => ListObj,
+  makeMapObj: (pairs: [SymbolObj, RuntimeObj][]) => MapObj,
   makeScopeObj: (parent?: ScopeObj) => ScopeObj,
   intern: (name: string) => SymbolObj,
 
@@ -104,6 +107,7 @@ function initPreludeTypes(k: Partial<BeepKernel>): Partial<BeepKernel> {
   initInt(k as BeepKernel);
   initString(k as BeepKernel);
   initList(k as BeepKernel);
+  initMap(k as BeepKernel);
   initUnboundMethod(k as BeepKernel);
   initBoundMethod(k as BeepKernel);
   initModule(k as BeepKernel);
@@ -159,6 +163,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   initIntMethods(k);
   initStringMethods(k);
   initListMethods(k);
+  initMapMethods(k);
   initUnboundMethodMethods(k);
   initBoundMethodMethods(k);
   initSymbolMethods(k);
@@ -202,4 +207,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
 
 function initDynamicScope(k: BeepKernel) {
   k.dynamicScope = k.makeScopeObj();
+  defineBinding(k.intern("modules"), k.makeMapObj([
+    [k.intern("kernel"), k.kernelModule],
+  ]), k.dynamicScope);
 }
