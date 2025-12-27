@@ -37,6 +37,14 @@ export function makeInterpreter(k: BeepKernel) {
         return value;
       }
 
+      case 'dynamicIdent': {
+        const value = getBinding(expr.sym, k.dynamicScope);
+        if (!value) {
+          throw new Error(`Unbound dynamic variable $${expr.sym.name}`);
+        }
+        return value;
+      }
+
       case 'methodDef': {
         const receiverType = getBinding(expr.receiverType, scope) as TypeObj;
         if (!receiverType) {

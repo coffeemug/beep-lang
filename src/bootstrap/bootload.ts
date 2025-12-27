@@ -15,6 +15,7 @@ import { makeInterpreter } from "../runtime/interpreter";
 export type BeepKernel = {
   symbolSpace: SymbolSpace,
   kernelModule: ModuleObj,
+  dynamicScope: ScopeObj,
 
   // Well-known type objects
   rootTypeObj: RootTypeObj,
@@ -62,6 +63,7 @@ export function createKernel(): BeepKernel {
   kernel = initPreludeTypes(kernel);
   initWellKnownFunctions(kernel as BeepKernel);
   initPreludeTypeMethods(kernel as BeepKernel);
+  initDynamicScope(kernel as BeepKernel);
 
   return kernel as BeepKernel;
 }
@@ -196,4 +198,8 @@ function initPreludeTypeMethods(k: BeepKernel) {
       throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);        
     });
   }
+}
+
+function initDynamicScope(k: BeepKernel) {
+  k.dynamicScope = k.makeScopeObj();
 }

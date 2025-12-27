@@ -18,6 +18,7 @@ export type Expr =
   | { type: "symbol"; sym: SymbolObj }
   | { type: "list"; elements: Expr[] }
   | { type: "ident"; sym: SymbolObj }
+  | { type: "dynamicIdent"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
@@ -47,6 +48,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   const ident = identSym.map((sym) => ({ type: "ident" as const, sym }));
 
+  // Dynamic identifier: $foo (lookup in dynamic scope)
+  const dynamicIdent = seq("$", identSym)
+    .map(([_dollar, sym]) => ({ type: "dynamicIdent" as const, sym }));
+
   // Integer literals
   const intLit = int.map((n) => ({ type: "int" as const, value: n }));
 
@@ -66,7 +71,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
   // Primary expressions (atoms)
-  const primary = either(listLit, symLit, strLit, intLit, ident);
+  const primary = either(listLit, symLit, strLit, intLit, dynamicIdent, ident);
 
   // Shared: (params) body end
   const defBody = seq("(", sepBy(identSym, ","), ")", expr, "end")
