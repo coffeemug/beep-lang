@@ -56,7 +56,7 @@ export function initModule(k: BeepKernel) {
     // Copy bindings from kernel module as it always gets star imported by default
     getBindings(k.kernelModule.toplevelScope).forEach(binding => {
       const [symId, value] = binding;
-      defineBinding(findSymbolById(symId, k.symbolSpace)!, value, moduleObj.toplevelScope);
+      defineBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, moduleObj.toplevelScope);
     });
 
     modules.kv.set(name, moduleObj);

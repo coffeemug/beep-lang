@@ -11,7 +11,7 @@ import type { MapObj } from "./data_structures/map";
 async function main(): Promise<void> {
   const kernel = createKernel();
   const {
-    symbolSpace, show, callMethod, bindMethod,
+    symbolSpaceObj: symbolSpace, show, callMethod, bindMethod,
     evaluate, intern, makeModuleObj,
   } = kernel;
 
