@@ -35,6 +35,7 @@ export function initKernelModule(k: BeepKernel, rootTypeObj: RootTypeObj, scopeT
     toplevelScope: makeBootstrapScope(scopeTypeObj),
   };
   defineBinding(moduleTypeObj.name, moduleTypeObj, k.kernelModule.toplevelScope);
+  defineBinding(intern("this"), k.kernelModule, k.kernelModule.toplevelScope);
 
   return k.kernelModule;
 }
@@ -58,6 +59,7 @@ export function initModule(k: BeepKernel) {
       const [symId, value] = binding;
       defineBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, moduleObj.toplevelScope);
     });
+    defineBinding(k.thisSymbol, moduleObj, moduleObj.toplevelScope);
 
     modules.kv.set(name, moduleObj);
 

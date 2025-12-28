@@ -161,18 +161,6 @@ function initWellKnownFunctions(k: BeepKernel) {
 }
 
 function initPreludeTypeMethods(k: BeepKernel) {
-  initIntMethods(k);
-  initStringMethods(k);
-  initListMethods(k);
-  initMapMethods(k);
-  initUnboundMethodMethods(k);
-  initBoundMethodMethods(k);
-  initSymbolMethods(k);
-  initSymbolSpaceMethods(k);
-  initRootTypeMethods(k);
-  initModuleMethods(k as BeepKernel);
-  initScopeMethods(k);
-
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
@@ -205,6 +193,18 @@ function initPreludeTypeMethods(k: BeepKernel) {
       throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);        
     });
   }
+
+  initIntMethods(k);
+  initStringMethods(k);
+  initListMethods(k);
+  initMapMethods(k);
+  initUnboundMethodMethods(k);
+  initBoundMethodMethods(k);
+  initSymbolMethods(k);
+  initSymbolSpaceMethods(k);
+  initRootTypeMethods(k);
+  initModuleMethods(k as BeepKernel);
+  initScopeMethods(k);
 }
 
 function initDynamicScope(k: BeepKernel) {
