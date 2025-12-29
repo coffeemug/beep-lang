@@ -85,4 +85,18 @@ export function initListMethods(k: BeepKernel) {
 
   defMethod('at', 1, (thisObj, args) =>
     thisObj.elements[(args[0] as IntObj).value]);
+
+  const deepFlatten = (elements: RuntimeObj[]): RuntimeObj[] => {
+    const result: RuntimeObj[] = [];
+    for (const el of elements) {
+      if (el.tag === 'ListObj') {
+        result.push(...deepFlatten((el as ListObj).elements));
+      } else {
+        result.push(el);
+      }
+    }
+    return result;
+  };
+
+  defMethod('flatten', 0, thisObj => makeListObj(deepFlatten(thisObj.elements)));
 }
