@@ -1,4 +1,4 @@
-import { findSymbolByName, type SymbolSpaceObj, type SymbolId } from './symbol_space';
+import { findSymbolByName, findSymbolById, type SymbolSpaceObj, type SymbolId } from './symbol_space';
 import type { RuntimeObj } from '../runtime_objects';
 import type { SymbolObj } from './symbol';
 import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
@@ -58,10 +58,21 @@ export function initScope(k: BeepKernel) {
 }
 
 export function initScopeMethods(k: BeepKernel) {
-  const { makeDefNative, scopeTypeObj, makeStringObj } = k;
+  const { makeDefNative, scopeTypeObj, makeStringObj, makeListObj, symbolSpaceObj } = k;
   const defMethod = makeDefNative<ScopeObj>(k.kernelModule.toplevelScope, scopeTypeObj);
 
   defMethod('show', 0, _thisObj => makeStringObj('<scope>'));
+
+  defMethod('list', 0, thisObj => {
+    const result: RuntimeObj[] = [];
+    let current: ScopeObj | null = thisObj;
+    while (current) {
+      const symbols = [...current.bindings.keys()].map(id => findSymbolById(id, symbolSpaceObj)!);
+      result.push(makeListObj(symbols));
+      current = current.parent;
+    }
+    return makeListObj(result);
+  });
 }
 
 /*
