@@ -1,6 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
 import type { BeepKernel } from "./bootload";
+import type { SymbolId } from "./symbol_space";
 
 export type SymbolTypeObj =
   & RuntimeObjMixin<'SymbolTypeObj', RootTypeObj>
@@ -11,7 +12,7 @@ export type SymbolObj =
   & RuntimeObjMixin<'SymbolObj', SymbolTypeObj>
   & {
     name: string,
-    id: number,
+    id: SymbolId,
   }
 
 export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj, 'name' | 'bindingModule'> {
@@ -23,7 +24,7 @@ export function makeSymbolTypeObj(rootTypeObj: RootTypeObj): Omit<SymbolTypeObj,
   };
 }
 
-export function makeSymbolObj(name: string, id: number, symbolTypeObj: SymbolTypeObj): SymbolObj {
+export function makeSymbolObj(name: string, id: SymbolId, symbolTypeObj: SymbolTypeObj): SymbolObj {
   return {
     tag: 'SymbolObj',
     type: symbolTypeObj,

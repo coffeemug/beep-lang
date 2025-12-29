@@ -100,6 +100,6 @@ function getBinding_(symbol: SymbolObj, scope: ScopeObj | null): RuntimeObj | nu
   return binding ?? getBinding_(symbol, scope.parent);
 }
 
-export function getBindings(scope: ScopeObj | null): [number, RuntimeObj][] {
+export function getBindings(scope: ScopeObj | null): [SymbolId, RuntimeObj][] {
   return scope ? [...getBindings(scope.parent), ...scope.bindings.entries()] : [];
 }

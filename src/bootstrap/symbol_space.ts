@@ -18,7 +18,7 @@ export type SymbolSpaceObj =
     nextSymbolId: SymbolId,
   }
 
-export type SymbolId = number;
+export type SymbolId = bigint;
 
 export function makeSymbolSpaceTypeObj(rootTypeObj: RootTypeObj): SymbolSpaceTypeObj {
   return {
@@ -36,7 +36,7 @@ export function makeSymbolSpaceObj(typeObj: SymbolSpaceTypeObj): SymbolSpaceObj 
     type: typeObj,
     namedTable: new Map(),
     indexedTable: new Map(),
-    nextSymbolId: 0,
+    nextSymbolId: 0n,
   };
 }
 

@@ -41,5 +41,5 @@ export function initStringMethods(k: BeepKernel) {
     makeStringObj(`'${thisObj.value}'`));
 
   defMethod('len', 0, thisObj =>
-    makeIntObj([...thisObj.value].length));
+    makeIntObj(BigInt([...thisObj.value].length)));
 }

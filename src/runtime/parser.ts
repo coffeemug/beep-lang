@@ -13,7 +13,7 @@ function postfix<B, S, R>(
 }
 
 export type Expr =
-  | { type: "int"; value: number }
+  | { type: "int"; value: bigint }
   | { type: "string"; value: string }
   | { type: "symbol"; sym: SymbolObj }
   | { type: "list"; elements: Expr[] }

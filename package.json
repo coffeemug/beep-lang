@@ -9,6 +9,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@spakhm/ts-parsec": "^0.2.0"
+    "@spakhm/ts-parsec": "^0.3.0"
   }
 }

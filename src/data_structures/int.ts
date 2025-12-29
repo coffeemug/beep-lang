@@ -11,7 +11,7 @@ export type IntTypeObj =
 export type IntObj =
   & RuntimeObjMixin<'IntObj', IntTypeObj>
   & {
-    value: number,
+    value: bigint,
   }
 
 export function initInt(k: BeepKernel) {
@@ -26,7 +26,7 @@ export function initInt(k: BeepKernel) {
   defineBinding(intTypeObj.name, intTypeObj, k.kernelModule.toplevelScope);
   
   k.intTypeObj = intTypeObj
-  k.makeIntObj = (value: number) => ({
+  k.makeIntObj = (value: bigint) => ({
       tag: 'IntObj',
       type: intTypeObj,
       value,

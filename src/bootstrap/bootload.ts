@@ -39,7 +39,7 @@ export type BeepKernel = {
   modulesSymbol: SymbolObj,
 
   // Well-known functions
-  makeIntObj: (value: number) => IntObj,
+  makeIntObj: (value: bigint) => IntObj,
   makeStringObj: (value: string) => StringObj,
   makeListObj: (elements: RuntimeObj[]) => ListObj,
   makeMapObj: (pairs: [SymbolObj, RuntimeObj][]) => MapObj,

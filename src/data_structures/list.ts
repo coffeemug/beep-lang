@@ -81,10 +81,10 @@ export function initListMethods(k: BeepKernel) {
   });
 
   defMethod('len', 0, thisObj =>
-    makeIntObj(thisObj.elements.length));
+    makeIntObj(BigInt(thisObj.elements.length)));
 
   defMethod('at', 1, (thisObj, args) =>
-    thisObj.elements[(args[0] as IntObj).value]);
+    thisObj.elements[Number((args[0] as IntObj).value)]);
 
   const deepFlatten = (elements: RuntimeObj[]): RuntimeObj[] => {
     const result: RuntimeObj[] = [];
