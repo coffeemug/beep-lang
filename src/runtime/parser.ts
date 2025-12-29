@@ -17,6 +17,7 @@ export type Expr =
   | { type: "string"; value: string }
   | { type: "symbol"; sym: SymbolObj }
   | { type: "list"; elements: Expr[] }
+  | { type: "map"; pairs: { key: SymbolObj; value: Expr }[] }
   | { type: "ident"; sym: SymbolObj }
   | { type: "dynamicIdent"; sym: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
@@ -70,8 +71,14 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const listLit = seq("[", sepBy(expr, ","), "]")
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
+  // Map literals: { key: value, ... }
+  const mapPair = seq(identSym, ":", expr)
+    .map(([key, _colon, value]) => ({ key, value }));
+  const mapLit = seq("{", sepBy(mapPair, ","), "}")
+    .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
+
   // Primary expressions (atoms)
-  const primary = either(listLit, symLit, strLit, intLit, dynamicIdent, ident);
+  const primary = either(mapLit, listLit, symLit, strLit, intLit, dynamicIdent, ident);
 
   // Shared: (params) body end
   const defBody = seq("(", sepBy(identSym, ","), ")", expr, "end")

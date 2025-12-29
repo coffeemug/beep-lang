@@ -37,5 +37,5 @@ export function initSymbolMethods(k: BeepKernel) {
 
   const defMethod = makeDefNative<SymbolObj>(k.kernelModule.toplevelScope, symbolTypeObj);
 
-  defMethod('show', 0, thisObj => makeStringObj(`${thisObj.name}:${thisObj.id}`));
+  defMethod('show', 0, thisObj => makeStringObj(`${thisObj.name}`));
 }

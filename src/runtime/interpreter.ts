@@ -6,7 +6,7 @@ import type { BeepKernel } from "../bootstrap/bootload";
 
 export function makeInterpreter(k: BeepKernel) {
   const {
-    thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj,
+    thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
     bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol
    } = k;
 
@@ -27,6 +27,12 @@ export function makeInterpreter(k: BeepKernel) {
       case 'list': {
         const elements = expr.elements.map(e => evaluate(e, scope));
         return makeListObj(elements);
+      }
+
+      case 'map': {
+        const pairs: [typeof expr.pairs[0]['key'], RuntimeObj][] =
+          expr.pairs.map(p => [p.key, evaluate(p.value, scope)]);
+        return makeMapObj(pairs);
       }
 
       case 'ident': {
