@@ -44,7 +44,7 @@ export function initMapMethods(k: BeepKernel) {
 
   defMethod('show', 0, thisObj => {
     const items = thisObj.kv.entries().map(e =>
-      `${show(e[0])}:${show(e[1])}`).toArray().join(', ');
+      `${show(e[0])}: ${show(e[1])}`).toArray().join(', ');
     return makeStringObj(`{ ${items} }`);
   });
 }
