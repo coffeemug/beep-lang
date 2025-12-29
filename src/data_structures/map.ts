@@ -37,7 +37,7 @@ export function initMap(k: BeepKernel) {
 
 export function initMapMethods(k: BeepKernel) {
   const {
-    makeStringObj, mapTypeObj, show, makeDefNative,
+    makeStringObj, mapTypeObj, show, makeDefNative, bindMethod, callMethod, getFieldSymbol,
   } = k;
 
   const defMethod = makeDefNative<MapObj>(k.kernelModule.toplevelScope, mapTypeObj)
@@ -46,5 +46,15 @@ export function initMapMethods(k: BeepKernel) {
     const items = thisObj.kv.entries().map(e =>
       `${show(e[0])}: ${show(e[1])}`).toArray().join(', ');
     return makeStringObj(`{ ${items} }`);
+  });
+
+  // Save the default get_field before overriding
+  const defaultGetField = mapTypeObj.methods.get(getFieldSymbol)!;
+
+  defMethod('get_field', 1, (thisObj, args) => {
+    const fieldName = args[0] as SymbolObj;
+
+    const kvValue = thisObj.kv.get(fieldName);
+    return kvValue ?? callMethod(bindMethod(defaultGetField, thisObj), [fieldName]);
   });
 }
