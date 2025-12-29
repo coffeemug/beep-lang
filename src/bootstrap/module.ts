@@ -72,6 +72,7 @@ export function initModuleMethods(k: BeepKernel) {
 
   const defMethod = makeDefNative<ModuleObj>(k.kernelModule.toplevelScope, moduleTypeObj);
   defMethod('show', 0, thisObj => makeStringObj(`<module ${show(thisObj.name)}>`));
+  defMethod('scope', 0, thisObj => thisObj.toplevelScope);
 
   const defOwnMethod = makeDefNative<ModuleObj>(k.kernelModule.toplevelScope, moduleTypeObj, 'own');
   defOwnMethod('new', 1, (_, args) => makeModuleObj(args[0] as SymbolObj));
