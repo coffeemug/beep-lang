@@ -113,9 +113,9 @@ export function makeInterpreter(k: BeepKernel) {
       }
 
       case 'progn': {
-        let result: RuntimeObj = evaluate(expr.exprs[0], scope);
-        for (let i = 1; i < expr.exprs.length; i++) {
-          result = evaluate(expr.exprs[i], scope);
+        let result: RuntimeObj = makeIntObj(0n);
+        for (const e of expr.exprs) {
+          result = evaluate(e, scope);
         }
         return result;
       }

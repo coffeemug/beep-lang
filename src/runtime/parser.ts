@@ -149,17 +149,13 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   // Progn: multiple expressions separated by newlines or semicolons
   // - \n+ or ; separates expressions (but ; cannot be followed by \n)
-  // - trailing \n* is allowed
   // Note: expressions are parsed in drop_all mode (whitespace insensitive),
   // but separators are parsed in keep_newlines mode to distinguish \n from space
   const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
   const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
-  const trailingNewlines = lexMode("keep_newlines", many("\n"));
 
-  const progn = seq(expr, many(seq(separator, expr).map(([_, e]) => e)), trailingNewlines)
-    .map(([first, rest, _]): Expr =>
-      rest.length === 0 ? first : { type: "progn", exprs: [first, ...rest] }
-    );
+  const progn = sepBy(expr, separator)
+    .map((exprs): Expr => ({ type: "progn", exprs }));
 
   const topLevel = seq(progn, eof).map(([e, _]) => e);
 
