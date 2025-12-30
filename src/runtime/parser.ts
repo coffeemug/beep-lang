@@ -154,8 +154,12 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
   const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
 
-  const progn = sepBy(expr, separator)
-    .map((exprs): Expr => ({ type: "progn", exprs }));
+  const progn = maybe(seq(expr, many(seq(separator, expr).map(([_, e]) => e))))
+    .map((result): Expr => {
+      if (!result) return { type: "progn", exprs: [] };
+      const [first, rest] = result;
+      return { type: "progn", exprs: [first, ...rest] };
+    });
 
   const topLevel = seq(progn, eof).map(([e, _]) => e);
 
