@@ -22,6 +22,14 @@ function saveHistory(history: string[]): void {
   writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
 }
 
+// Check if input has unmatched def (more defs than ends)
+function isInsideDef(input: string): boolean {
+  const defCount = (input.match(/\bdef\b/g) || []).length;
+  // Match 'end' as a word, but also after digits (e.g., "3end")
+  const endCount = (input.match(/(?<=^|[^a-zA-Z_])end(?=$|[^a-zA-Z0-9_])/g) || []).length;
+  return defCount > endCount;
+}
+
 export async function repl(
   run: (input: string) => string,
   complete: (expr: string) => string[],
@@ -29,6 +37,7 @@ export async function repl(
   commands: Record<string, (arg: string) => string | void>
 ): Promise<void> {
   const history = loadHistory().slice(-MAX_HISTORY);
+  let buffer = "";
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -59,7 +68,18 @@ export async function repl(
   rl.prompt();
 
   rl.on("line", (line) => {
-    const trimmed = line.trim();
+    buffer += (buffer ? "\n" : "") + line;
+
+    // If inside a def block, continue accumulating
+    if (isInsideDef(buffer)) {
+      rl.setPrompt("... ");
+      rl.prompt();
+      return;
+    }
+
+    const trimmed = buffer.trim();
+    buffer = "";
+
     if (trimmed.length === 0) {
       rl.setPrompt(getPrompt());
       rl.prompt();
