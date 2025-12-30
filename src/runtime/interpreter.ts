@@ -111,6 +111,14 @@ export function makeInterpreter(k: BeepKernel) {
         const args = expr.args.map(arg => evaluate(arg, scope));
         return callMethod(fn, args);
       }
+
+      case 'progn': {
+        let result: RuntimeObj = evaluate(expr.exprs[0], scope);
+        for (let i = 1; i < expr.exprs.length; i++) {
+          result = evaluate(expr.exprs[i], scope);
+        }
+        return result;
+      }
     }
 
     const _exhaustive: never = expr;

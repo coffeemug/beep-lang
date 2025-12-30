@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, fwd, sepBy, anych, maybe, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, anych, maybe, some, not, peek, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
@@ -24,7 +24,8 @@ export type Expr =
   | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
   | { type: "indexAccess"; receiver: Expr; index: Expr }
-  | { type: "funcall"; fn: Expr; args: Expr[] };
+  | { type: "funcall"; fn: Expr; args: Expr[] }
+  | { type: "progn"; exprs: Expr[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -47,7 +48,11 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     return intern(name);
   });
 
-  const ident = identSym.map((sym) => ({ type: "ident" as const, sym }));
+  // Reserved keywords that cannot be used as identifiers
+  const reserved = either("def", "end");
+
+  const ident = seq(peek(not(reserved)), identSym)
+    .map(([_, sym]) => ({ type: "ident" as const, sym }));
 
   // Dynamic identifier: $foo (lookup in dynamic scope)
   const dynamicIdent = seq("$", identSym)
@@ -67,6 +72,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   // Forward reference for full expressions (needed for list elements, method bodies, and args)
   const expr: parser<Expr> = fwd(() => postfixExpr);
 
+  // Forward reference for progn (needed for function/method bodies)
+  const body: parser<Expr> = fwd(() => progn);
+
   // List literals: [elem, elem, ...]
   const listLit = seq("[", sepBy(expr, ","), "]")
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
@@ -81,8 +89,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const primary = either(mapLit, listLit, symLit, strLit, intLit, dynamicIdent, ident);
 
   // Shared: (params) body end
-  const defBody = seq("(", sepBy(identSym, ","), ")", expr, "end")
-    .map(([_lp, params, _rp, body, _end]) => ({ params, body }));
+  const defBody = seq("(", sepBy(identSym, ","), ")", body, "end")
+    .map(([_lp, params, _rp, b, _end]) => ({ params, body: b }));
 
   // Method definition: def type/name(params) body end
   const methodDef = seq("def", identSym, "/", methodNameSym, defBody)
@@ -139,7 +147,21 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
-  const topLevel = seq(expr, eof).map(([e, _]) => e);
+  // Progn: multiple expressions separated by newlines or semicolons
+  // - \n+ or ; separates expressions (but ; cannot be followed by \n)
+  // - trailing \n* is allowed
+  // Note: expressions are parsed in drop_all mode (whitespace insensitive),
+  // but separators are parsed in keep_newlines mode to distinguish \n from space
+  const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
+  const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
+  const trailingNewlines = lexMode("keep_newlines", many("\n"));
+
+  const progn = seq(expr, many(seq(separator, expr).map(([_, e]) => e)), trailingNewlines)
+    .map(([first, rest, _]): Expr =>
+      rest.length === 0 ? first : { type: "progn", exprs: [first, ...rest] }
+    );
+
+  const topLevel = seq(progn, eof).map(([e, _]) => e);
 
   const stream = fromString(input);
   const result = topLevel(stream);

@@ -5,6 +5,7 @@ end
 
 def int/other(x)
   x
+  y
 end
 
 1.id
