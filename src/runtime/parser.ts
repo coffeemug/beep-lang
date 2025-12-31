@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, anych, maybe, some, not, peek, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
@@ -25,7 +25,8 @@ export type Expr =
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
-  | { type: "progn"; exprs: Expr[] };
+  | { type: "block"; exprs: Expr[] }
+  | { type: "let"; bindings: { name: SymbolObj; value: Expr }[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -49,7 +50,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   });
 
   // Reserved keywords that cannot be used as identifiers
-  const reserved = either("def", "end");
+  const reserved = either("def", "end", "let");
 
   const ident = seq(peek(not(reserved)), identSym)
     .map(([_, sym]) => ({ type: "ident" as const, sym }));
@@ -72,8 +73,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   // Forward reference for full expressions (needed for list elements, method bodies, and args)
   const expr: parser<Expr> = fwd(() => postfixExpr);
 
-  // Forward reference for progn (needed for function/method bodies)
-  const body: parser<Expr> = fwd(() => progn);
+  // Forward reference for block (needed for function/method bodies)
+  const body: parser<Expr> = fwd(() => block);
 
   // List literals: [elem, elem, ...]
   const listLit = seq("[", sepBy(expr, ","), "]")
@@ -147,21 +148,31 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
-  // Progn: multiple expressions separated by newlines or semicolons
+  // Let expression: let x = 1 or let x = 1, y = 2
+  const letBinding = seq(identSym, "=", expr).map(([name, _, value]) => ({ name, value }));
+  const letExpr = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
+    type: "let",
+    bindings,
+  }));
+
+  // A block item is either a let or a regular expression
+  const blockItem: parser<Expr> = either(letExpr, expr);
+
+  // Block: multiple expressions separated by newlines or semicolons
   // - \n+ or ; separates expressions (but ; cannot be followed by \n)
   // Note: expressions are parsed in drop_all mode (whitespace insensitive),
   // but separators are parsed in keep_newlines mode to distinguish \n from space
   const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
   const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
 
-  const progn = maybe(seq(expr, many(seq(separator, expr).map(([_, e]) => e))))
+  const block = maybe(seq(blockItem, many(seq(separator, blockItem).map(([_, e]) => e))))
     .map((result): Expr => {
-      if (!result) return { type: "progn", exprs: [] };
+      if (!result) return { type: "block", exprs: [] };
       const [first, rest] = result;
-      return { type: "progn", exprs: [first, ...rest] };
+      return { type: "block", exprs: [first, ...rest] };
     });
 
-  const topLevel = seq(progn, eof).map(([e, _]) => e);
+  const topLevel = seq(block, eof).map(([e, _]) => e);
 
   const stream = fromString(input);
   const result = topLevel(stream);

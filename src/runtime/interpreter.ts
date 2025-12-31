@@ -4,35 +4,34 @@ import { defineBinding, getBinding, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepKernel } from "../bootstrap/bootload";
 
+export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
+
 export function makeInterpreter(k: BeepKernel) {
   const {
     thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
-    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol
+    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol, makeScopeObj
    } = k;
 
-  function evaluate(expr: Expr, scope: ScopeObj): RuntimeObj {
+  function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
+    const ret = (value: RuntimeObj) => ({ value, scope });
+
     switch (expr.type) {
-      case 'int': {
-        return makeIntObj(expr.value);
-      }
+      case 'int':
+        return ret(makeIntObj(expr.value));
 
-      case 'string': {
-        return makeStringObj(expr.value);
-      }
+      case 'string':
+        return ret(makeStringObj(expr.value));
 
-      case 'symbol': {
-        return expr.sym;
-      }
+      case 'symbol':
+        return ret(expr.sym);
 
-      case 'list': {
-        const elements = expr.elements.map(e => evaluate(e, scope));
-        return makeListObj(elements);
-      }
+      case 'list':
+        return ret(makeListObj(expr.elements.map(e => evaluate(e, scope).value)));
 
       case 'map': {
         const pairs: [typeof expr.pairs[0]['key'], RuntimeObj][] =
-          expr.pairs.map(p => [p.key, evaluate(p.value, scope)]);
-        return makeMapObj(pairs);
+          expr.pairs.map(p => [p.key, evaluate(p.value, scope).value]);
+        return ret(makeMapObj(pairs));
       }
 
       case 'ident': {
@@ -40,7 +39,7 @@ export function makeInterpreter(k: BeepKernel) {
         if (!value) {
           throw new Error(`Unbound symbol ${show(expr.sym)}`);
         }
-        return value;
+        return ret(value);
       }
 
       case 'dynamicIdent': {
@@ -48,7 +47,7 @@ export function makeInterpreter(k: BeepKernel) {
         if (!value) {
           throw new Error(`Unbound dynamic variable $${expr.sym.name}`);
         }
-        return value;
+        return ret(value);
       }
 
       case 'methodDef': {
@@ -64,8 +63,7 @@ export function makeInterpreter(k: BeepKernel) {
           expr.body,
         );
         receiverType.methods.set(methodObj.name, methodObj);
-
-        return methodObj;
+        return ret(methodObj);
       }
 
       case 'functionDef': {
@@ -78,46 +76,65 @@ export function makeInterpreter(k: BeepKernel) {
         );
         const methodObj = bindMethod(methodObj_, scope);
         defineBinding(methodObj.name, methodObj, scope);
-        return methodObj;
+        return ret(methodObj);
       }
 
       case 'fieldAccess': {
-        const receiver = evaluate(expr.receiver, scope);
+        const receiver = evaluate(expr.receiver, scope).value;
         const method = receiver.type.methods.get(getFieldSymbol);
         if (!method) {
           throw new Error(`No method 'get_field' on ${show(receiver.type)}`);
         }
         const boundMethod = bindMethod(method, receiver);
-        return callMethod(boundMethod, [expr.fieldName]);
+        return ret(callMethod(boundMethod, [expr.fieldName]));
       }
 
       case 'indexAccess': {
-        const receiver = evaluate(expr.receiver, scope);
-        const index = evaluate(expr.index, scope);
+        const receiver = evaluate(expr.receiver, scope).value;
+        const index = evaluate(expr.index, scope).value;
         const method = receiver.type.methods.get(atSymbol);
         if (!method) {
           throw new Error(`No method 'at' on ${show(receiver.type)}`);
         }
         const boundMethod = bindMethod(method, receiver);
-        return callMethod(boundMethod, [index]);
+        return ret(callMethod(boundMethod, [index]));
       }
 
       case 'funcall': {
-        const fn = evaluate(expr.fn, scope) as BoundMethodObj;
+        const fn = evaluate(expr.fn, scope).value as BoundMethodObj;
         if (fn.tag !== 'BoundMethodObj') {
           throw new Error(`Cannot call ${show(fn)}`);
         }
-
-        const args = expr.args.map(arg => evaluate(arg, scope));
-        return callMethod(fn, args);
+        const args = expr.args.map(arg => evaluate(arg, scope).value);
+        return ret(callMethod(fn, args));
       }
 
-      case 'progn': {
+      case 'block': {
         let result: RuntimeObj = makeIntObj(0n);
+        let innerScope = scope;
         for (const e of expr.exprs) {
-          result = evaluate(e, scope);
+          const evalResult = evaluate(e, innerScope);
+          result = evalResult.value;
+          innerScope = evalResult.scope;
         }
-        return result;
+        return ret(result);  // Block doesn't leak scope changes
+      }
+
+      case 'let': {
+        // Evaluate all values in current scope (parallel semantics)
+        const values = expr.bindings.map(b => evaluate(b.value, scope).value);
+
+        // Create new scope and bind all names
+        const letScope = makeScopeObj(scope);
+        for (let i = 0; i < expr.bindings.length; i++) {
+          defineBinding(expr.bindings[i].name, values[i], letScope);
+        }
+
+        // Return 0 and the new scope (block will thread the scope to subsequent expressions)
+        return {
+          value: values.length == 1 ? values[0] : makeListObj(values),
+          scope: letScope
+        };
       }
     }
 

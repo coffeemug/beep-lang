@@ -10,7 +10,7 @@ import { makeSymbolSpaceTypeObj, makeSymbolSpaceObj, intern, initSymbolSpaceMeth
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { makeInterpreter } from "../runtime/interpreter";
+import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 
 export type BeepKernel = {
@@ -54,7 +54,7 @@ export type BeepKernel = {
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
   // More well-known functions
-  evaluate(expr: Expr, scope: ScopeObj): RuntimeObj,
+  evaluate(expr: Expr, scope: ScopeObj): EvalResult,
   show: (obj: RuntimeObj) => string,
   callMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
 }
@@ -141,7 +141,7 @@ function initWellKnownFunctions(k: BeepKernel) {
     for (let i = 0; i < method.argNames.length; i++) {
       defineBinding(method.argNames[i], args[i], callScope);
     }
-    return k.evaluate(method.body, callScope);
+    return k.evaluate(method.body, callScope).value;
   }
 
   k.show = (obj: RuntimeObj): string  => {

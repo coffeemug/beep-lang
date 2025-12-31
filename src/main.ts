@@ -7,6 +7,7 @@ import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 import type { ModuleObj } from "./bootstrap/module";
 import { getBinding } from "./bootstrap/scope";
 import type { MapObj } from "./data_structures/map";
+import type { RuntimeObj } from "./runtime_objects";
 
 async function main(): Promise<void> {
   const kernel = createKernel();
@@ -17,17 +18,29 @@ async function main(): Promise<void> {
 
   const methodsSym = findSymbolByName('methods', symbolSpace)!;
   let activeModule = makeModuleObj(intern("repl"));
+  let currentScope = activeModule.toplevelScope;
 
   function run(input: string): string {
     const ast = parse(input, intern);
-    const result = evaluate(ast, activeModule.toplevelScope);
+    if (ast.type !== 'block') {
+      throw new Error('Parser must return block');
+    }
+
+    // Unwrap top-level block to thread scope across REPL lines
+    // (block itself doesn't leak scope, but REPL should persist let bindings)
+    let result: RuntimeObj = kernel.makeIntObj(0n);
+    for (const e of ast.exprs) {
+      const { value, scope } = evaluate(e, currentScope);
+      result = value;
+      currentScope = scope;
+    }
     return show(result);
   }
 
   function complete(input: string): string[] {
     try {
       const ast = parse(input, intern);
-      const obj = evaluate(ast, activeModule.toplevelScope);
+      const { value: obj } = evaluate(ast, activeModule.toplevelScope);
 
       // Get the methods method from the object's type
       const methodsMethod = obj.type.methods.get(methodsSym);
@@ -50,7 +63,7 @@ async function main(): Promise<void> {
 
   function inCmdHandler(arg_: string) {
     const ast = parse(arg_, intern);
-    const arg = evaluate(ast, activeModule.toplevelScope);
+    const { value: arg } = evaluate(ast, activeModule.toplevelScope);
     if (arg.tag == 'ModuleObj') {
       activeModule = arg as ModuleObj;
     } else if (arg.tag == 'SymbolObj') {
