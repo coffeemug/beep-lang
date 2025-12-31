@@ -75,7 +75,13 @@ export function makeInterpreter(k: BeepKernel) {
           expr.body,
         );
         const methodObj = bindMethod(methodObj_, scope);
-        defineBinding(methodObj.name, methodObj, scope);
+
+        let targetScope = scope;
+        while (targetScope.parent) {
+          targetScope = targetScope.parent;
+        }
+
+        defineBinding(methodObj.name, methodObj, targetScope);
         return ret(methodObj);
       }
 
