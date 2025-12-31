@@ -110,27 +110,33 @@ export function makeInterpreter(k: BeepKernel) {
       }
 
       case 'block': {
-        let result: RuntimeObj = makeIntObj(0n);
-        let innerScope = scope;
-        for (const e of expr.exprs) {
-          const evalResult = evaluate(e, innerScope);
-          result = evalResult.value;
-          innerScope = evalResult.scope;
+        const savedDynamicScope = k.dynamicScope;
+        try {
+          let result: RuntimeObj = makeIntObj(0n);
+          let innerScope = scope;
+          for (const e of expr.exprs) {
+            const evalResult = evaluate(e, innerScope);
+            result = evalResult.value;
+            innerScope = evalResult.scope;
+          }
+          return ret(result);
+        } finally {
+          k.dynamicScope = savedDynamicScope;
         }
-        return ret(result);  // Block doesn't leak scope changes
       }
 
       case 'let': {
-        // Evaluate all values in current scope (parallel semantics)
         const values = expr.bindings.map(b => evaluate(b.value, scope).value);
 
-        // Create new scope and bind all names
         const letScope = makeScopeObj(scope);
+        k.dynamicScope = makeScopeObj(k.dynamicScope);
+
         for (let i = 0; i < expr.bindings.length; i++) {
-          defineBinding(expr.bindings[i].name, values[i], letScope);
+          const binding = expr.bindings[i];
+          const targetScope = binding.scope === 'dynamic' ? k.dynamicScope : letScope;
+          defineBinding(binding.name, values[i], targetScope);
         }
 
-        // Return 0 and the new scope (block will thread the scope to subsequent expressions)
         return {
           value: values.length == 1 ? values[0] : makeListObj(values),
           scope: letScope

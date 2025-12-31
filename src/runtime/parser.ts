@@ -26,7 +26,7 @@ export type Expr =
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
   | { type: "block"; exprs: Expr[] }
-  | { type: "let"; bindings: { name: SymbolObj; value: Expr }[] };
+  | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -148,8 +148,11 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
-  // Let expression: let x = 1 or let x = 1, y = 2
-  const letBinding = seq(identSym, "=", expr).map(([name, _, value]) => ({ name, value }));
+  // Let expression: let x = 1 or let x = 1, y = 2 or let $x = 1 (dynamic)
+  const letBinding = either(
+    seq("$", identSym, "=", expr).map(([_, name, __, value]) => ({ name, value, scope: 'dynamic' as const })),
+    seq(identSym, "=", expr).map(([name, _, value]) => ({ name, value, scope: 'lexical' as const }))
+  );
   const letExpr = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
     type: "let",
     bindings,
