@@ -106,3 +106,26 @@ function getBinding_(symbol: SymbolObj, scope: ScopeObj | null): RuntimeObj | nu
 export function getBindings(scope: ScopeObj | null): [SymbolId, RuntimeObj][] {
   return scope ? [...getBindings(scope.parent), ...scope.bindings.entries()] : [];
 }
+
+export function setBinding(symbol: SymbolObj, value: RuntimeObj, scope: ScopeObj): boolean {
+  let current: ScopeObj | null = scope;
+  while (current) {
+    if (current.bindings.has(symbol.id)) {
+      current.bindings.set(symbol.id, value);
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+export function hasDynamicIntro(symbol: SymbolObj, scope: ScopeObj): boolean {
+  let current: ScopeObj | null = scope;
+  while (current) {
+    if (current.dynamicIntros.has(symbol.id)) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}

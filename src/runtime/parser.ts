@@ -26,7 +26,8 @@ export type Expr =
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
   | { type: "block"; exprs: Expr[] }
-  | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] };
+  | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
+  | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -159,8 +160,19 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     bindings,
   }));
 
-  // A block item is either a let or a regular expression
-  const blockItem: parser<Expr> = either(letExpr, expr);
+  // Assignment: x = expr (lexical) or $x = expr (dynamic)
+  const assignTarget = either(
+    seq("$", identSym).map(([_, name]) => ({ name, scope: 'dynamic' as const })),
+    ident.map(id => ({ name: id.sym, scope: 'lexical' as const }))
+  );
+  const assign = seq(assignTarget, "=", expr).map(([target, _, value]): Expr => ({
+    type: "assign",
+    target,
+    value,
+  }));
+
+  // A block item is a let, assignment, or regular expression
+  const blockItem: parser<Expr> = either(letExpr, assign, expr);
 
   // Block: multiple expressions separated by newlines or semicolons
   // - \n+ or ; separates expressions (but ; cannot be followed by \n)

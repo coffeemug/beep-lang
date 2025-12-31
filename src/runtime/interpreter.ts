@@ -1,6 +1,6 @@
 import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { defineBinding, getBinding, type ScopeObj } from "../bootstrap/scope";
+import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepKernel } from "../bootstrap/bootload";
 
@@ -151,6 +151,23 @@ export function makeInterpreter(k: BeepKernel) {
           value: values.length == 1 ? values[0] : makeListObj(values),
           scope: letScope
         };
+      }
+
+      case 'assign': {
+        const value = evaluate(expr.value, scope).value;
+        if (expr.target.scope === 'dynamic') {
+          if (!hasDynamicIntro(expr.target.name, scope)) {
+            throw new Error(`Cannot assign to dynamic variable $${expr.target.name.name} not introduced in lexical scope`);
+          }
+          if (!setBinding(expr.target.name, value, k.dynamicScope)) {
+            throw new Error(`Dynamic variable $${expr.target.name.name} not found in dynamic scope`);
+          }
+        } else {
+          if (!setBinding(expr.target.name, value, scope)) {
+            throw new Error(`Cannot assign to unbound variable ${show(expr.target.name)}`);
+          }
+        }
+        return ret(value);
       }
     }
 
