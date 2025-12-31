@@ -35,16 +35,17 @@ type Suffix =
 
 export function parse(input: string, intern: (name: string) => SymbolObj): Expr {
   // Identifier character: alphanumeric or underscore
+  const identFirstChar = either(alpha, "_");
   const identChar = either(alnum, "_");
 
   // Identifiers and symbols
-  const identSym = lex(seq(alpha, many(identChar))).map(([first, rest]) => {
+  const identSym = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) => {
     const name = [first, ...rest].join("");
     return intern(name);
   });
 
   // Method names can have an optional ! at the end (e.g., push!)
-  const methodNameSym = lex(seq(alpha, many(identChar), maybe("!"))).map(([first, rest, bang]) => {
+  const methodNameSym = lex(seq(identFirstChar, many(identChar), maybe("!"))).map(([first, rest, bang]) => {
     const name = [first, ...rest, bang ?? ""].join("");
     return intern(name);
   });
