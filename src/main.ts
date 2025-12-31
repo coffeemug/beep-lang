@@ -5,7 +5,7 @@ import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 import type { ModuleObj } from "./bootstrap/module";
-import { getBinding } from "./bootstrap/scope";
+import { getBinding, type ScopeObj } from "./bootstrap/scope";
 import type { MapObj } from "./data_structures/map";
 import type { RuntimeObj } from "./runtime_objects";
 
@@ -17,8 +17,25 @@ async function main(): Promise<void> {
   } = kernel;
 
   const methodsSym = findSymbolByName('methods', symbolSpace)!;
-  let activeModule = makeModuleObj(intern("repl"));
-  let currentScope = activeModule.toplevelScope;
+
+  /*
+    Per-module scope tracking
+    */
+  const moduleScopes = new Map<ModuleObj, ScopeObj>();
+  let activeModule: ModuleObj;
+
+  function switchModule(module: ModuleObj): void {
+    activeModule = module;
+    if (!moduleScopes.has(module)) {
+      moduleScopes.set(module, module.toplevelScope);
+    }
+  }
+
+  const getCurrentScope = () => moduleScopes.get(activeModule)!;
+  const setCurrentScope = (scope: ScopeObj) => moduleScopes.set(activeModule, scope);
+
+  // Start in :repl module
+  switchModule(makeModuleObj(intern("repl")));
 
   function run(input: string): string {
     const ast = parse(input, intern);
@@ -30,9 +47,9 @@ async function main(): Promise<void> {
     // (block itself doesn't leak scope, but REPL should persist let bindings)
     let result: RuntimeObj = kernel.makeIntObj(0n);
     for (const e of ast.exprs) {
-      const { value, scope } = evaluate(e, currentScope);
+      const { value, scope } = evaluate(e, getCurrentScope());
       result = value;
-      currentScope = scope;
+      setCurrentScope(scope);
     }
     return show(result);
   }
@@ -65,14 +82,14 @@ async function main(): Promise<void> {
     const ast = parse(arg_, intern);
     const { value: arg } = evaluate(ast, activeModule.toplevelScope);
     if (arg.tag == 'ModuleObj') {
-      activeModule = arg as ModuleObj;
+      switchModule(arg as ModuleObj);
     } else if (arg.tag == 'SymbolObj') {
       const modules = getBinding(kernel.modulesSymbol, kernel.dynamicScope) as MapObj;
       const module = modules.kv.get(arg);
       if (!module) {
         throw new Error("Module must exist");
       }
-      activeModule = module as ModuleObj;
+      switchModule(module as ModuleObj);
     } else {
       throw new Error("Must be module or symbol");
     }
