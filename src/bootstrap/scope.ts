@@ -16,6 +16,7 @@ export type ScopeObj =
   & RuntimeObjMixin<'ScopeObj', ScopeTypeObj>
   & {
     bindings: Map<SymbolId, RuntimeObj>,
+    dynamicIntros: Set<SymbolId>,
     parent: ScopeObj | null,
   }
 
@@ -37,6 +38,7 @@ export function makeBootstrapScope(scopeTypeObj: ScopeTypeObj, parent?: ScopeObj
     tag: 'ScopeObj',
     type: scopeTypeObj,
     bindings: new Map(),
+    dynamicIntros: new Set(),
     parent: parent ?? null,
   };
 }
@@ -53,6 +55,7 @@ export function initScope(k: BeepKernel) {
     tag: 'ScopeObj',
     type: scopeTypeObj,
     bindings: new Map(),
+    dynamicIntros: new Set(),
     parent: parent ?? null,
   });
 }

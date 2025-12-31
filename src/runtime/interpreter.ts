@@ -139,8 +139,12 @@ export function makeInterpreter(k: BeepKernel) {
 
         for (let i = 0; i < expr.bindings.length; i++) {
           const binding = expr.bindings[i];
-          const targetScope = binding.scope === 'dynamic' ? k.dynamicScope : letScope;
-          defineBinding(binding.name, values[i], targetScope);
+          if (binding.scope === 'dynamic') {
+            defineBinding(binding.name, values[i], k.dynamicScope);
+            letScope.dynamicIntros.add(binding.name.id);
+          } else {
+            defineBinding(binding.name, values[i], letScope);
+          }
         }
 
         return {
