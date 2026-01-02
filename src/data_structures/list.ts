@@ -83,8 +83,14 @@ export function initListMethods(k: BeepKernel) {
   defMethod('len', 0, thisObj =>
     makeIntObj(BigInt(thisObj.elements.length)));
 
-  defMethod('at', 1, (thisObj, args) =>
-    thisObj.elements[Number((args[0] as IntObj).value)]);
+  defMethod('at', 1, (thisObj, args) => {
+    const idx = Number((args[0] as IntObj).value);
+    if (idx >= thisObj.elements.length) {
+      throw new Error("Index out of bounds");
+    } else {
+      return thisObj.elements[idx];
+    }
+  });
 
   const deepFlatten = (elements: RuntimeObj[]): RuntimeObj[] => {
     const result: RuntimeObj[] = [];
