@@ -45,15 +45,29 @@ export function initStruct(k: BeepKernel) {
       ownMethods: new Map(),
     };
     registerDefaultMethods(k, namedStructType);
+
+    // Add 'new' own method for instantiation: Person.new('Alice', 30)
+    const defOwnMethod = k.makeDefNative<NamedStructTypeObj>(k.kernelModule.toplevelScope, namedStructType, 'own');
+    defOwnMethod('new', fields.length, (thisObj, args) => {
+      return k.instantiateNamedStruct(thisObj, args);
+    });
+
     return namedStructType;
   };
 
-  k.instantiateNamedStruct = (namedStructTypeObj: NamedStructTypeObj, fields: RuntimeObj[]): NamedStructObj => {
-    // TODO: validate fields
+  k.instantiateNamedStruct = (namedStructTypeObj: NamedStructTypeObj, fieldValues: RuntimeObj[]): NamedStructObj => {
+    const fieldNames = namedStructTypeObj.fields;
+    if (fieldValues.length !== fieldNames.length) {
+      throw new Error(`${namedStructTypeObj.name.name} expects ${fieldNames.length} fields, got ${fieldValues.length}`);
+    }
+    const fieldsMap = new Map<SymbolObj, RuntimeObj>();
+    for (let i = 0; i < fieldNames.length; i++) {
+      fieldsMap.set(fieldNames[i], fieldValues[i]);
+    }
     return {
       tag: 'NamedStructObj',
       type: namedStructTypeObj,
-      fields: new Map(),
+      fields: fieldsMap,
     }
   };
 }
