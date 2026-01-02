@@ -166,6 +166,32 @@ function initWellKnownFunctions(k: BeepKernel) {
   k.evaluate = makeInterpreter(k).evaluate;
 }
 
+export function registerDefaultMethods(k: BeepKernel, receiverType: TypeObj) {
+  const scope = k.kernelModule!.toplevelScope;
+  const defMethod = k.makeDefNative!(scope, receiverType);
+  defMethod('type', 0, thisObj => thisObj.type);
+  defMethod('methods', 0, thisObj =>
+    k.makeListObj!(thisObj.type.methods.values().toArray()));
+  defMethod('get_field', 1, (thisObj, args) => {
+    const fieldName = args[0] as SymbolObj;
+
+    const field = thisObj.type.methods.get(fieldName);
+    if (field) {
+      return k.bindMethod!(field, thisObj);
+    }
+
+    if ("ownMethods" in thisObj) {
+      thisObj = thisObj as TypeObj;
+      const ownField = thisObj.ownMethods.get(fieldName);
+      if (ownField) {
+        return ownField;
+      }
+    }
+
+    throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);
+  });
+}
+
 function initPreludeTypeMethods(k: BeepKernel) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
@@ -176,28 +202,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
 
   for (const typeName of typeNames) {
     const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolSpaceObj)!;
-    const defMethod = k.makeDefNative!(scope, receiverType);
-    defMethod('type', 0, thisObj => thisObj.type);
-    defMethod('methods', 0, thisObj =>
-      k.makeListObj!(thisObj.type.methods.values().toArray()));
-    defMethod('get_field', 1, (thisObj, args) => {
-      const fieldName = args[0] as SymbolObj;
-
-      const field = thisObj.type.methods.get(fieldName);
-      if (field) {
-        return k.bindMethod!(field, thisObj);
-      }
-
-      if ("ownMethods" in thisObj) {
-        thisObj = thisObj as TypeObj;
-        const ownField = thisObj.ownMethods.get(fieldName);
-        if (ownField) {
-          return ownField;
-        }
-      }
-
-      throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);        
-    });
+    registerDefaultMethods(k, receiverType);
   }
 
   initIntMethods(k);

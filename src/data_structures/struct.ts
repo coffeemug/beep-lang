@@ -1,7 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
-import type { BeepKernel } from "../bootstrap/bootload";
+import { type BeepKernel, registerDefaultMethods } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
 import type { RuntimeObj } from "../runtime_objects";
 
@@ -35,14 +35,18 @@ export function initStruct(k: BeepKernel) {
   defineBinding(structTypeObj.name, structTypeObj, k.kernelModule.toplevelScope);
 
   k.structTypeObj = structTypeObj;
-  k.defineNamedStruct = (name: SymbolObj, fields: SymbolObj[]): NamedStructTypeObj => ({
-    tag: 'NamedStructTypeObj',
-    type: structTypeObj,
-    name,
-    fields,
-    methods: new Map(),
-    ownMethods: new Map(),
-  });
+  k.defineNamedStruct = (name: SymbolObj, fields: SymbolObj[]): NamedStructTypeObj => {
+    const namedStructType: NamedStructTypeObj = {
+      tag: 'NamedStructTypeObj',
+      type: structTypeObj,
+      name,
+      fields,
+      methods: new Map(),
+      ownMethods: new Map(),
+    };
+    registerDefaultMethods(k, namedStructType);
+    return namedStructType;
+  };
 
   k.instantiateNamedStruct = (namedStructTypeObj: NamedStructTypeObj, fields: RuntimeObj[]): NamedStructObj => {
     // TODO: validate fields
@@ -55,4 +59,7 @@ export function initStruct(k: BeepKernel) {
 }
 
 export function initStructMethods(k: BeepKernel) {
+  const defMethod = k.makeDefNative<NamedStructTypeObj>(k.kernelModule.toplevelScope, k.structTypeObj);
+  defMethod('show', 0, thisObj => k.makeStringObj(`<type ${thisObj.name.name}>`));
+  defMethod('fields', 0, thisObj => k.makeListObj(thisObj.fields));
 }
