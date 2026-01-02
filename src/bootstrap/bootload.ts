@@ -12,6 +12,7 @@ import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
+import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 
 export type BeepKernel = {
   symbolSpaceObj: SymbolSpaceObj,
@@ -27,6 +28,7 @@ export type BeepKernel = {
   stringTypeObj: StringTypeObj,
   listTypeObj: ListTypeObj,
   mapTypeObj: MapTypeObj,
+  structTypeObj: StructTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
   scopeTypeObj: ScopeTypeObj,
@@ -47,6 +49,9 @@ export type BeepKernel = {
   intern: (name: string) => SymbolObj,
 
   makeModuleObj: (name: SymbolObj) => ModuleObj,
+
+  defineNamedStruct: (name: SymbolObj, fields: SymbolObj[]) => NamedStructTypeObj,
+  instantiateNamedStruct: (namedStructTypeObj: NamedStructTypeObj, fields: RuntimeObj[]) => NamedStructObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding?: 'instance' | 'own') =>
@@ -115,6 +120,7 @@ function initPreludeTypes(k: Partial<BeepKernel>) {
   initBoundMethod(k as BeepKernel);
   initModule(k as BeepKernel);
   initScope(k as BeepKernel);
+  initStruct(k as BeepKernel);
 
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
@@ -164,7 +170,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope', 'map',
+    'module', 'scope', 'map', 'structure',
   ];
   const scope = k.kernelModule!.toplevelScope;
 
@@ -205,6 +211,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   initRootTypeMethods(k);
   initModuleMethods(k as BeepKernel);
   initScopeMethods(k);
+  initStructMethods(k);
 }
 
 function initDynamicScope(k: BeepKernel) {

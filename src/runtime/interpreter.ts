@@ -9,7 +9,8 @@ export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 export function makeInterpreter(k: BeepKernel) {
   const {
     thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
-    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol, makeScopeObj
+    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol, makeScopeObj,
+    defineNamedStruct
    } = k;
 
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
@@ -168,6 +169,16 @@ export function makeInterpreter(k: BeepKernel) {
           }
         }
         return ret(value);
+      }
+
+      case 'structDef': {
+        const structType = defineNamedStruct(expr.name, expr.fields);
+        let targetScope = scope;
+        while (targetScope.parent) {
+          targetScope = targetScope.parent;
+        }
+        defineBinding(expr.name, structType, targetScope);
+        return ret(structType);
       }
     }
 

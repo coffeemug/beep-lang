@@ -9,12 +9,14 @@ import type { BoundMethodObj, BoundMethodTypeObj } from "./bootstrap/bound_metho
 import type { ScopeTypeObj, ScopeObj } from "./bootstrap/scope";
 import type { MapObj, MapTypeObj } from "./data_structures/map";
 import type { SymbolSpaceTypeObj, SymbolSpaceObj } from "./bootstrap/symbol_space";
+import type { NamedStructObj, NamedStructTypeObj, StructTypeObj } from "./data_structures/struct";
 
 export type TypeObj =
   IntTypeObj | ListTypeObj | ModuleTypeObj | RootTypeObj | SymbolTypeObj
   | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj | ScopeTypeObj
-  | MapTypeObj | SymbolSpaceTypeObj;
+  | MapTypeObj | SymbolSpaceTypeObj | StructTypeObj | NamedStructTypeObj;
 
 export type RuntimeObj =
   IntObj | ListObj | ModuleObj | SymbolObj | UnboundMethodObj
-  | BoundMethodObj | StringObj | ScopeObj | MapObj | SymbolSpaceObj | TypeObj;
+  | BoundMethodObj | StringObj | ScopeObj | MapObj | SymbolSpaceObj | TypeObj
+  | NamedStructObj;

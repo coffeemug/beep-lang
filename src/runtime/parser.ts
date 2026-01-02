@@ -27,7 +27,8 @@ export type Expr =
   | { type: "funcall"; fn: Expr; args: Expr[] }
   | { type: "block"; exprs: Expr[] }
   | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
-  | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr };
+  | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
+  | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -52,7 +53,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   });
 
   // Reserved keywords that cannot be used as identifiers
-  const reserved = either("def", "end", "let");
+  // Use lexMode to check word boundary before whitespace is dropped
+  const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"));
 
   const ident = seq(peek(not(reserved)), identSym)
     .map(([_, sym]) => ({ type: "ident" as const, sym }));
@@ -114,6 +117,14 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
+  // Struct definition: struct name fields end
+  const structDef = seq("struct", identSym, sepBy(identSym, ","), "end")
+    .map(([_struct, name, fields, _end]): Expr => ({
+      type: "structDef" as const,
+      name,
+      fields,
+    }));
+
   // Suffix: (args) for funcall
   const funcallSuffix = seq(
     "(", sepBy(expr, ","), ")"
@@ -136,7 +147,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   // Postfix operators: .name, (args), and [index]
   const postfixExpr = postfix(
-    either(methodDef, functionDef, primary),
+    either(structDef, methodDef, functionDef, primary),
     either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
     (acc, suf): Expr => {
       if (suf.type === "fieldAccess") {
