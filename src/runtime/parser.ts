@@ -20,6 +20,7 @@ export type Expr =
   | { type: "map"; pairs: { key: SymbolObj; value: Expr }[] }
   | { type: "ident"; sym: SymbolObj }
   | { type: "dynamicIdent"; sym: SymbolObj }
+  | { type: "memberField"; fieldName: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
@@ -61,8 +62,12 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_, sym]) => ({ type: "ident" as const, sym }));
 
   // Dynamic identifier: $foo (lookup in dynamic scope)
-  const dynamicIdent = seq("$", identSym)
+  const dynamicIdent = lex(seq("$", identSym))
     .map(([_dollar, sym]) => ({ type: "dynamicIdent" as const, sym }));
+
+  // This field access: @foo (equivalent to this.foo)
+  const memberField = lex(seq("@", identSym))
+    .map(([_at, sym]) => ({ type: "memberField" as const, fieldName: sym }));
 
   // Integer literals
   const intLit = int.map((n) => ({ type: "int" as const, value: n }));
@@ -92,7 +97,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
 
   // Primary expressions (atoms)
-  const primary = either(mapLit, listLit, symLit, strLit, intLit, dynamicIdent, ident);
+  const primary = either(mapLit, listLit, symLit, strLit, intLit, memberField, dynamicIdent, ident);
 
   // Shared: (params) body end
   const defBody = seq("(", sepBy(identSym, ","), ")", body, "end")

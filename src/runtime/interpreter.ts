@@ -51,6 +51,19 @@ export function makeInterpreter(k: BeepKernel) {
         return ret(value);
       }
 
+      case 'memberField': {
+        const receiver = getBinding(thisSymbol, scope);
+        if (!receiver) {
+          throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
+        }
+        const method = receiver.type.methods.get(getFieldSymbol);
+        if (!method) {
+          throw new Error(`No method 'get_field' on ${show(receiver.type)}`);
+        }
+        const boundMethod = bindMethod(method, receiver);
+        return ret(callMethod(boundMethod, [expr.fieldName]));
+      }
+
       case 'methodDef': {
         const receiverType = getBinding(expr.receiverType, scope) as TypeObj;
         if (!receiverType) {
