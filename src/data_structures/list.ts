@@ -107,4 +107,17 @@ export function initListMethods(k: BeepKernel) {
   };
 
   defMethod('flatten', 0, thisObj => makeListObj(deepFlatten(thisObj.elements)));
+
+  defMethod('eq', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'ListObj') return makeIntObj(0n);
+    const otherList = other as ListObj;
+    if (thisObj.elements.length !== otherList.elements.length) return makeIntObj(0n);
+    for (let i = 0; i < thisObj.elements.length; i++) {
+      if (!k.isEqual(thisObj.elements[i], otherList.elements[i])) {
+        return makeIntObj(0n);
+      }
+    }
+    return makeIntObj(1n);
+  });
 }

@@ -38,3 +38,4 @@ class objects and build methods on top of that.
 - Assignment
 - Support for structs
 - @ sigil for member access
+- equality operator

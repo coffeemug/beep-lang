@@ -56,4 +56,17 @@ export function initMapMethods(k: BeepKernel) {
     }
     return kvValue;
   });
+
+  defMethod('eq', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'MapObj') return k.makeIntObj(0n);
+    const otherMap = other as MapObj;
+    if (thisObj.kv.size !== otherMap.kv.size) return k.makeIntObj(0n);
+    for (const [key, value] of thisObj.kv) {
+      const otherValue = otherMap.kv.get(key);
+      if (otherValue === undefined) return k.makeIntObj(0n);
+      if (!k.isEqual(value, otherValue)) return k.makeIntObj(0n);
+    }
+    return k.makeIntObj(1n);
+  });
 }

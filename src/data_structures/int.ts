@@ -34,9 +34,15 @@ export function initInt(k: BeepKernel) {
 }
 
 export function initIntMethods(k: BeepKernel) {
-  const { makeStringObj, makeDefNative, intTypeObj } = k;
+  const { makeStringObj, makeDefNative, intTypeObj, makeIntObj } = k;
 
   const defMethod = makeDefNative<IntObj>(k.kernelModule.toplevelScope, intTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(thisObj.value.toString()));
+
+  defMethod('eq', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') return makeIntObj(0n);
+    return makeIntObj(thisObj.value === (other as IntObj).value ? 1n : 0n);
+  });
 }

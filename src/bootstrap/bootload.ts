@@ -39,6 +39,7 @@ export type BeepKernel = {
   getMemberSymbol: SymbolObj,
   getItemSymbol: SymbolObj,
   modulesSymbol: SymbolObj,
+  eqSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: bigint) => IntObj,
@@ -62,6 +63,7 @@ export type BeepKernel = {
   evaluate(expr: Expr, scope: ScopeObj): EvalResult,
   show: (obj: RuntimeObj) => string,
   callMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
+  isEqual: (a: RuntimeObj, b: RuntimeObj) => boolean,
 }
 
 export function createKernel(): BeepKernel {
@@ -128,6 +130,7 @@ function initPreludeTypes(k: Partial<BeepKernel>) {
   k.modulesSymbol = k.intern!('modules');
   k.getMemberSymbol = k.intern!('get_member');
   k.getItemSymbol = k.intern!('get_item');
+  k.eqSymbol = k.intern!('eq');
 }
 
 function initWellKnownFunctions(k: BeepKernel) {
@@ -160,6 +163,31 @@ function initWellKnownFunctions(k: BeepKernel) {
     const boundMethod = bindMethod(showMethod, obj);
     const result = k.callMethod(boundMethod, []) as StringObj;
     return result.value;
+  }
+
+  k.isEqual = (a: RuntimeObj, b: RuntimeObj): boolean => {
+    // Reference equality
+    if (a === b) return true;
+
+    // Try a.eq(b)
+    const aEqMethod = a.type.methods.get(k.eqSymbol);
+    if (aEqMethod) {
+      const result = k.callMethod(bindMethod(aEqMethod, a), [b]) as IntObj;
+      if (result.value === 0n || result.value === 1n) {
+        return result.value === 1n;
+      }
+    }
+
+    // Try b.eq(a)
+    const bEqMethod = b.type.methods.get(k.eqSymbol);
+    if (bEqMethod) {
+      const result = k.callMethod(bindMethod(bEqMethod, b), [a]) as IntObj;
+      if (result.value === 0n || result.value === 1n) {
+        return result.value === 1n;
+      }
+    }
+
+    return false;
   }
 
   // Has to be last as `makeInterpreter` expects `callMethod` and `show`

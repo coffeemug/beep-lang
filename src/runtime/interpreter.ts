@@ -190,6 +190,15 @@ export function makeInterpreter(k: BeepKernel) {
         defineBinding(expr.name, structType, targetScope);
         return ret(structType);
       }
+
+      case 'binOp': {
+        if (expr.op !== '==') {
+          throw new Error(`Unknown binary operator: ${expr.op}`);
+        }
+        const left = evaluate(expr.left, scope).value;
+        const right = evaluate(expr.right, scope).value;
+        return ret(makeIntObj(k.isEqual(left, right) ? 1n : 0n));
+      }
     }
 
     const _exhaustive: never = expr;

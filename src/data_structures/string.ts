@@ -42,4 +42,10 @@ export function initStringMethods(k: BeepKernel) {
 
   defMethod('len', 0, thisObj =>
     makeIntObj(BigInt([...thisObj.value].length)));
+
+  defMethod('eq', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'StringObj') return makeIntObj(0n);
+    return makeIntObj(thisObj.value === (other as StringObj).value ? 1n : 0n);
+  });
 }

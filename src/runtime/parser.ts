@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
@@ -29,7 +29,8 @@ export type Expr =
   | { type: "block"; exprs: Expr[] }
   | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
   | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
-  | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] };
+  | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
+  | { type: "binOp"; op: string; left: Expr; right: Expr };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -81,7 +82,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_colon, sym]) => ({ type: "symbol" as const, sym }));
 
   // Forward reference for full expressions (needed for list elements, method bodies, and args)
-  const expr: parser<Expr> = fwd(() => postfixExpr);
+  const expr: parser<Expr> = fwd(() => comparisonExpr);
 
   // Forward reference for block (needed for function/method bodies)
   const body: parser<Expr> = fwd(() => block);
@@ -164,6 +165,13 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       }
       throw new Error("unreachable");
     }
+  );
+
+  // Comparison operators: ==
+  const comparisonExpr = binop(
+    str("=="),
+    postfixExpr,
+    (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 
   // Let expression: let x = 1 or let x = 1, y = 2 or let $x = 1 (dynamic)
