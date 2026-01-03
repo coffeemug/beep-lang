@@ -58,8 +58,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
   const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"));
 
-  const ident = seq(peek(not(reserved)), identSym)
-    .map(([_, sym]) => ({ type: "ident" as const, sym }));
+  const ident = lex(seq(peek(not(reserved)), seq(identFirstChar, many(identChar))))
+    .map(([_, [first, rest]]) => ({ type: "ident" as const, sym: intern(first + rest.join("")) }));
 
   // Dynamic identifier: $foo (lookup in dynamic scope)
   const dynamicIdent = lex(seq("$", identSym))
