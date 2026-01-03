@@ -12,8 +12,10 @@
 - async/await
 - label-based error handling
 - good ffi
-- gensym (and wellknowns for protocol use)
+- gensym (and wellknowns for protocol use?)
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
+- mixins (e.g. to auto-add enumeration methods based on `each`)
+- protocols/contracts
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
