@@ -36,8 +36,8 @@ export type BeepKernel = {
   // Well-known symbols
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
-  atSymbol: SymbolObj,
-  getFieldSymbol: SymbolObj,
+  getMemberSymbol: SymbolObj,
+  getItemSymbol: SymbolObj,
   modulesSymbol: SymbolObj,
 
   // Well-known functions
@@ -124,9 +124,9 @@ function initPreludeTypes(k: Partial<BeepKernel>) {
 
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
-  k.atSymbol = k.intern!('at');
   k.modulesSymbol = k.intern!('modules');
-  k.getFieldSymbol = k.intern!('get_field');
+  k.getMemberSymbol = k.intern!('get_member');
+  k.getItemSymbol = k.intern!('get_item');
 }
 
 function initWellKnownFunctions(k: BeepKernel) {
@@ -162,7 +162,7 @@ function initWellKnownFunctions(k: BeepKernel) {
   }
 
   // Has to be last as `makeInterpreter` expects `callMethod` and `show`
-  // to be defined in `k`. We can fix that later.  
+  // to be defined in `k`. We can fix that later.
   k.evaluate = makeInterpreter(k).evaluate;
 }
 
@@ -172,23 +172,26 @@ export function registerDefaultMethods(k: BeepKernel, receiverType: TypeObj) {
   defMethod('type', 0, thisObj => thisObj.type);
   defMethod('methods', 0, thisObj =>
     k.makeListObj!(thisObj.type.methods.values().toArray()));
-  defMethod('get_field', 1, (thisObj, args) => {
-    const fieldName = args[0] as SymbolObj;
+  defMethod('get_member', 1, (thisObj, args) => {
+    if (args[0].tag !== 'SymbolObj') {
+      throw new Error(`Member name must be a symbol, got ${k.show!(args[0])}`);
+    }
+    const memberName = args[0] as SymbolObj;
 
-    const field = thisObj.type.methods.get(fieldName);
-    if (field) {
-      return k.bindMethod!(field, thisObj);
+    const method = thisObj.type.methods.get(memberName);
+    if (method) {
+      return k.bindMethod!(method, thisObj);
     }
 
     if ("ownMethods" in thisObj) {
       thisObj = thisObj as TypeObj;
-      const ownField = thisObj.ownMethods.get(fieldName);
-      if (ownField) {
-        return ownField;
+      const ownMethod = thisObj.ownMethods.get(memberName);
+      if (ownMethod) {
+        return ownMethod;
       }
     }
 
-    throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);
+    throw new Error(`No member ${memberName.name} on ${k.show!(thisObj.type)}`);
   });
 }
 

@@ -8,8 +8,8 @@ export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
 export function makeInterpreter(k: BeepKernel) {
   const {
-    thisSymbol, showSymbol, atSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
-    bindMethod, makeUnboundMethodObj, show, callMethod, getFieldSymbol, makeScopeObj,
+    thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
+    bindMethod, makeUnboundMethodObj, show, callMethod, makeScopeObj,
     defineNamedStruct
    } = k;
 
@@ -56,12 +56,11 @@ export function makeInterpreter(k: BeepKernel) {
         if (!receiver) {
           throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
         }
-        const method = receiver.type.methods.get(getFieldSymbol);
-        if (!method) {
-          throw new Error(`No method 'get_field' on ${show(receiver.type)}`);
+        const getMemberMethod = receiver.type.methods.get(k.getMemberSymbol);
+        if (!getMemberMethod) {
+          throw new Error(`No get_member on ${show(receiver.type)}`);
         }
-        const boundMethod = bindMethod(method, receiver);
-        return ret(callMethod(boundMethod, [expr.fieldName]));
+        return ret(callMethod(bindMethod(getMemberMethod, receiver), [expr.fieldName]));
       }
 
       case 'methodDef': {
@@ -101,23 +100,21 @@ export function makeInterpreter(k: BeepKernel) {
 
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
-        const method = receiver.type.methods.get(getFieldSymbol);
-        if (!method) {
-          throw new Error(`No method 'get_field' on ${show(receiver.type)}`);
+        const getMemberMethod = receiver.type.methods.get(k.getMemberSymbol);
+        if (!getMemberMethod) {
+          throw new Error(`No get_member on ${show(receiver.type)}`);
         }
-        const boundMethod = bindMethod(method, receiver);
-        return ret(callMethod(boundMethod, [expr.fieldName]));
+        return ret(callMethod(bindMethod(getMemberMethod, receiver), [expr.fieldName]));
       }
 
       case 'indexAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
         const index = evaluate(expr.index, scope).value;
-        const method = receiver.type.methods.get(atSymbol);
-        if (!method) {
-          throw new Error(`No method 'at' on ${show(receiver.type)}`);
+        const getItemMethod = receiver.type.methods.get(k.getItemSymbol);
+        if (!getItemMethod) {
+          throw new Error(`No get_item on ${show(receiver.type)}`);
         }
-        const boundMethod = bindMethod(method, receiver);
-        return ret(callMethod(boundMethod, [index]));
+        return ret(callMethod(bindMethod(getItemMethod, receiver), [index]));
       }
 
       case 'funcall': {

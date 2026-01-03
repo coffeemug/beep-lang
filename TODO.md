@@ -15,8 +15,6 @@ Add structs. Then find a small project and add all the features needed to build 
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
 
 # TODO (low risk):
-- Unify `get_field` and `at`
-  - `set_field`/`set_at`
 - Support for struct splicing, struct<->map integration
 - Support for importing modules (and bindings generally)
 - Support for algebraic operators
