@@ -42,7 +42,7 @@ export function initIntMethods(k: BeepKernel) {
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
-    if (other.tag !== 'IntObj') return makeIntObj(0n);
-    return makeIntObj(thisObj.value === (other as IntObj).value ? 1n : 0n);
+    if (other.tag !== 'IntObj') return k.falseObj;
+    return thisObj.value === (other as IntObj).value ? k.trueObj : k.falseObj;
   });
 }

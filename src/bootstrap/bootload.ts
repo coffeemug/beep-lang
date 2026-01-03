@@ -33,6 +33,10 @@ export type BeepKernel = {
   boundMethodTypeObj: BoundMethodTypeObj,
   scopeTypeObj: ScopeTypeObj,
 
+  // Other well-known objects
+  trueObj: RuntimeObj,
+  falseObj: RuntimeObj,
+
   // Well-known symbols
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
@@ -73,7 +77,7 @@ export function createKernel(): BeepKernel {
   initPreludeTypes(kernel);
   initWellKnownFunctions(kernel as BeepKernel);
   initPreludeTypeMethods(kernel as BeepKernel);
-  initPreludeFunctions(kernel as BeepKernel);
+  initPrelude(kernel as BeepKernel);
   initDynamicScope(kernel as BeepKernel);
 
   return kernel as BeepKernel;
@@ -169,6 +173,8 @@ function initWellKnownFunctions(k: BeepKernel) {
     // Reference equality
     if (a === b) return true;
 
+    // TODO: drop `0n` and `1n` once we expose proper bools to the user
+
     // Try a.eq(b)
     const aEqMethod = a.type.methods.get(k.eqSymbol);
     if (aEqMethod) {
@@ -251,7 +257,7 @@ function initPreludeTypeMethods(k: BeepKernel) {
   initStructMethods(k);
 }
 
-function initPreludeFunctions(k: BeepKernel) {
+function initPrelude(k: BeepKernel) {
   const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
 
   const scope = k.kernelModule.toplevelScope;
@@ -259,8 +265,11 @@ function initPreludeFunctions(k: BeepKernel) {
 
   // ref_eq: compares two objects by reference using ===
   // TODO: add booleans
-  const refEqMethod = defMethod('ref_eq', 2, (_, args) => makeIntObj(args[0] === args[1] ? 1n : 0n));
+  const refEqMethod = defMethod('ref_eq', 2, (_, args) => args[0] === args[1] ? k.trueObj : k.falseObj);
   defineBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
+
+  k.falseObj = makeIntObj(0n);
+  k.trueObj = makeIntObj(1n);
 }
 
 function initDynamicScope(k: BeepKernel) {

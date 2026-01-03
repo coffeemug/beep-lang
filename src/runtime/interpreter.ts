@@ -197,7 +197,7 @@ export function makeInterpreter(k: BeepKernel) {
         }
         const left = evaluate(expr.left, scope).value;
         const right = evaluate(expr.right, scope).value;
-        return ret(makeIntObj(k.isEqual(left, right) ? 1n : 0n));
+        return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
       }
     }
 

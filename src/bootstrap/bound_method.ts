@@ -42,12 +42,12 @@ export function initBoundMethodMethods(k: BeepKernel) {
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
-    if (other.tag !== 'BoundMethodObj') return makeIntObj(0n);
+    if (other.tag !== 'BoundMethodObj') return k.falseObj;
     const otherMethod = other as BoundMethodObj;
     // Same method (by name and receiver type) and equal receiver instances
-    if (thisObj.name !== otherMethod.name) return makeIntObj(0n);
-    if (thisObj.receiverType !== otherMethod.receiverType) return makeIntObj(0n);
-    if (thisObj.receiverInstance !== otherMethod.receiverInstance) return makeIntObj(0n);
-    return makeIntObj(1n);
+    if (thisObj.name !== otherMethod.name) return k.falseObj;
+    if (thisObj.receiverType !== otherMethod.receiverType) return k.falseObj;
+    if (thisObj.receiverInstance !== otherMethod.receiverInstance) return k.falseObj;
+    return k.trueObj;
   });
 }

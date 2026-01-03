@@ -110,14 +110,14 @@ export function initListMethods(k: BeepKernel) {
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
-    if (other.tag !== 'ListObj') return makeIntObj(0n);
+    if (other.tag !== 'ListObj') return k.falseObj;
     const otherList = other as ListObj;
-    if (thisObj.elements.length !== otherList.elements.length) return makeIntObj(0n);
+    if (thisObj.elements.length !== otherList.elements.length) return k.falseObj;
     for (let i = 0; i < thisObj.elements.length; i++) {
       if (!k.isEqual(thisObj.elements[i], otherList.elements[i])) {
-        return makeIntObj(0n);
+        return k.falseObj;
       }
     }
-    return makeIntObj(1n);
+    return k.trueObj;
   });
 }

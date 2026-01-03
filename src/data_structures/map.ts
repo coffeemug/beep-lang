@@ -59,14 +59,14 @@ export function initMapMethods(k: BeepKernel) {
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
-    if (other.tag !== 'MapObj') return k.makeIntObj(0n);
+    if (other.tag !== 'MapObj') return k.falseObj;
     const otherMap = other as MapObj;
-    if (thisObj.kv.size !== otherMap.kv.size) return k.makeIntObj(0n);
+    if (thisObj.kv.size !== otherMap.kv.size) return k.falseObj;
     for (const [key, value] of thisObj.kv) {
       const otherValue = otherMap.kv.get(key);
-      if (otherValue === undefined) return k.makeIntObj(0n);
-      if (!k.isEqual(value, otherValue)) return k.makeIntObj(0n);
+      if (otherValue === undefined) return k.falseObj;
+      if (!k.isEqual(value, otherValue)) return k.falseObj;
     }
-    return k.makeIntObj(1n);
+    return k.trueObj;
   });
 }

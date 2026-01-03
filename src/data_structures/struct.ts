@@ -83,15 +83,15 @@ export function initStruct(k: BeepKernel) {
     defInstanceMethod('eq', 1, (thisObj, args) => {
       const other = args[0];
       // Must be exactly the same struct type (same type object)
-      if (other.type !== thisObj.type) return k.makeIntObj(0n);
+      if (other.type !== thisObj.type) return k.falseObj;
       const otherStruct = other as NamedStructObj;
       // Compare all fields defined by the struct type
       for (const fieldName of namedStructType.fields) {
         const thisValue = thisObj.fields.get(fieldName)!;
         const otherValue = otherStruct.fields.get(fieldName)!;
-        if (!k.isEqual(thisValue, otherValue)) return k.makeIntObj(0n);
+        if (!k.isEqual(thisValue, otherValue)) return k.falseObj;
       }
-      return k.makeIntObj(1n);
+      return k.trueObj;
     });
 
     return namedStructType;
