@@ -2,7 +2,8 @@
 # KNOWN BUGS
 
 # NEXT
-Add structs. Then find a small project and add all the features needed to build it. Maybe do that for a small variety of projects until the language is more fleshed out. Then step back and work on foundational features again.
+- Get FizzBuzz working
+- Then maybe go through advent of code?
 
 # TODO (high risk):
 - Variants and pattern matching
