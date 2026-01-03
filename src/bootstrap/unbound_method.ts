@@ -86,9 +86,11 @@ export function initUnboundMethod(k: BeepKernel) {
       const method = makeUnboundNativeMethodObj(scopeClosure, receiverType, internedName, argCount, nativeFn);
       if (binding == 'instance') {
         receiverType.methods.set(internedName, method);
+        return method;
       } else {
         const boundMethod = k.bindMethod(method, receiverType);
         receiverType.ownMethods.set(internedName, boundMethod);
+        return boundMethod;
       }
     }
 }

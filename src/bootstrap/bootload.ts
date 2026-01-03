@@ -55,7 +55,7 @@ export type BeepKernel = {
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding?: 'instance' | 'own') =>
-    (name: string, argCount: number, nativeFn: NativeFn<T>) => void,
+    (name: string, argCount: number, nativeFn: NativeFn<T>) => BoundMethodObj | UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
   // More well-known functions
@@ -71,6 +71,7 @@ export function createKernel(): BeepKernel {
   initPreludeTypes(kernel);
   initWellKnownFunctions(kernel as BeepKernel);
   initPreludeTypeMethods(kernel as BeepKernel);
+  initPreludeFunctions(kernel as BeepKernel);
   initDynamicScope(kernel as BeepKernel);
 
   return kernel as BeepKernel;
@@ -220,6 +221,18 @@ function initPreludeTypeMethods(k: BeepKernel) {
   initModuleMethods(k as BeepKernel);
   initScopeMethods(k);
   initStructMethods(k);
+}
+
+function initPreludeFunctions(k: BeepKernel) {
+  const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
+
+  const scope = k.kernelModule.toplevelScope;
+  const defMethod = makeDefNative<RuntimeObj>(scope, moduleTypeObj);
+
+  // ref_eq: compares two objects by reference using ===
+  // TODO: add booleans
+  const refEqMethod = defMethod('ref_eq', 2, (_, args) => makeIntObj(args[0] === args[1] ? 1n : 0n));
+  defineBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
 }
 
 function initDynamicScope(k: BeepKernel) {
