@@ -23,7 +23,7 @@ export function makeInterpreter(k: BeepContext) {
       case 'string':
         return ret(makeStringObj(expr.value));
 
-      case 'symbol':
+      case 'quotedSymbol':
         return ret(expr.sym);
 
       case 'list':
@@ -35,7 +35,7 @@ export function makeInterpreter(k: BeepContext) {
         return ret(makeMapObj(pairs));
       }
 
-      case 'ident': {
+      case 'lexicalVar': {
         const value = getBinding(expr.sym, scope);
         if (!value) {
           throw new Error(`Unbound symbol ${show(expr.sym)}`);
@@ -43,7 +43,7 @@ export function makeInterpreter(k: BeepContext) {
         return ret(value);
       }
 
-      case 'dynamicIdent': {
+      case 'dynamicVar': {
         const value = getBinding(expr.sym, k.dynamicScope);
         if (!value) {
           throw new Error(`Unbound dynamic variable $${expr.sym.name}`);
@@ -51,7 +51,7 @@ export function makeInterpreter(k: BeepContext) {
         return ret(value);
       }
 
-      case 'memberField': {
+      case 'memberVar': {
         const receiver = getBinding(thisSymbol, scope);
         if (!receiver) {
           throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);

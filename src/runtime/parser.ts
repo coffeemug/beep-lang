@@ -15,12 +15,12 @@ function postfix<B, S, R>(
 export type Expr =
   | { type: "int"; value: bigint }
   | { type: "string"; value: string }
-  | { type: "symbol"; sym: SymbolObj }
+  | { type: "quotedSymbol"; sym: SymbolObj }
   | { type: "list"; elements: Expr[] }
   | { type: "map"; pairs: { key: SymbolObj; value: Expr }[] }
-  | { type: "ident"; sym: SymbolObj }
-  | { type: "dynamicIdent"; sym: SymbolObj }
-  | { type: "memberField"; fieldName: SymbolObj }
+  | { type: "lexicalVar"; sym: SymbolObj }
+  | { type: "dynamicVar"; sym: SymbolObj }
+  | { type: "memberVar"; fieldName: SymbolObj }
   | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
@@ -38,37 +38,30 @@ type Suffix =
   | { type: "funcall"; args: Expr[] };
 
 export function parse(input: string, intern: (name: string) => SymbolObj): Expr {
-  // Identifier character: alphanumeric or underscore
+  // Identifiers and symbols
   const identFirstChar = either(alpha, "_");
   const identChar = either(alnum, "_");
 
-  // Identifiers and symbols
-  const identSym = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) => {
-    const name = [first, ...rest].join("");
-    return intern(name);
-  });
+  const ident = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) =>
+    [first, ...rest].join(""));
 
-  // Method names can have an optional ! at the end (e.g., push!)
-  const methodNameSym = lex(seq(identFirstChar, many(identChar), maybe("!"))).map(([first, rest, bang]) => {
-    const name = [first, ...rest, bang ?? ""].join("");
-    return intern(name);
-  });
+  const symbol = ident.map(intern);
 
-  // Reserved keywords that cannot be used as identifiers
-  // Use lexMode to check word boundary before whitespace is dropped
+  const methodNameSym = lex(seq(ident, maybe("!"))).map(([name, bang]) =>
+    intern(name + (bang ?? "")));
+
+  // Variables
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
   const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"));
 
-  const ident = lex(seq(peek(not(reserved)), seq(identFirstChar, many(identChar))))
-    .map(([_, [first, rest]]) => ({ type: "ident" as const, sym: intern(first + rest.join("")) }));
+  const lexicalVar = lex(seq(peek(not(reserved)), symbol))
+    .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
 
-  // Dynamic identifier: $foo (lookup in dynamic scope)
-  const dynamicIdent = lex(seq("$", identSym))
-    .map(([_dollar, sym]) => ({ type: "dynamicIdent" as const, sym }));
+  const dynamicVar = lex(seq("$", symbol))
+    .map(([_dollar, sym]) => ({ type: "dynamicVar" as const, sym }));
 
-  // This field access: @foo (equivalent to this.foo)
-  const memberField = lex(seq("@", identSym))
-    .map(([_at, sym]) => ({ type: "memberField" as const, fieldName: sym }));
+  const memberVar = lex(seq("@", symbol))
+    .map(([_at, sym]) => ({ type: "memberVar" as const, fieldName: sym }));
 
   // Integer literals
   const intLit = int.map((n) => ({ type: "int" as const, value: n }));
@@ -78,8 +71,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
 
   // Symbol literals: :foo
-  const symLit = seq(":", identSym)
-    .map(([_colon, sym]) => ({ type: "symbol" as const, sym }));
+  const quotedSymbol = seq(":", symbol)
+    .map(([_colon, sym]) => ({ type: "quotedSymbol" as const, sym }));
 
   // Forward reference for full expressions (needed for list elements, method bodies, and args)
   const expr: parser<Expr> = fwd(() => comparisonExpr);
@@ -92,20 +85,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
   // Map literals: { key: value, ... }
-  const mapPair = seq(identSym, ":", expr)
+  const mapPair = seq(symbol, ":", expr)
     .map(([key, _colon, value]) => ({ key, value }));
   const mapLit = seq("{", sepBy(mapPair, ","), "}")
     .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
 
   // Primary expressions (atoms)
-  const primary = either(mapLit, listLit, symLit, strLit, intLit, memberField, dynamicIdent, ident);
+  const primary = either(mapLit, listLit, quotedSymbol, strLit, intLit, memberVar, dynamicVar, lexicalVar);
 
   // Shared: (params) body end
-  const defBody = seq("(", sepBy(identSym, ","), ")", body, "end")
+  const defBody = seq("(", sepBy(symbol, ","), ")", body, "end")
     .map(([_lp, params, _rp, b, _end]) => ({ params, body: b }));
 
   // Method definition: def type/name(params) body end
-  const methodDef = seq("def", identSym, "/", methodNameSym, defBody)
+  const methodDef = seq("def", symbol, "/", methodNameSym, defBody)
     .map(([_def, receiverType, _slash, name, { params, body }]): Expr => ({
       type: "methodDef" as const,
       receiverType,
@@ -124,7 +117,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }));
 
   // Struct definition: struct name fields end
-  const structDef = seq("struct", identSym, sepBy(identSym, ","), "end")
+  const structDef = seq("struct", symbol, sepBy(symbol, ","), "end")
     .map(([_struct, name, fields, _end]): Expr => ({
       type: "structDef" as const,
       name,
@@ -176,8 +169,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   // Let expression: let x = 1 or let x = 1, y = 2 or let $x = 1 (dynamic)
   const letBinding = either(
-    seq("$", identSym, "=", expr).map(([_, name, __, value]) => ({ name, value, scope: 'dynamic' as const })),
-    seq(identSym, "=", expr).map(([name, _, value]) => ({ name, value, scope: 'lexical' as const }))
+    seq(dynamicVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'dynamic' as const })),
+    seq(lexicalVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'lexical' as const }))
   );
   const letExpr = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
     type: "let",
@@ -186,8 +179,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   // Assignment: x = expr (lexical) or $x = expr (dynamic)
   const assignTarget = either(
-    seq("$", identSym).map(([_, name]) => ({ name, scope: 'dynamic' as const })),
-    ident.map(id => ({ name: id.sym, scope: 'lexical' as const }))
+    dynamicVar.map(v => ({ name: v.sym, scope: 'dynamic' as const })),
+    lexicalVar.map(v => ({ name: v.sym, scope: 'lexical' as const }))
   );
   const assign = seq(assignTarget, "=", expr).map(([target, _, value]): Expr => ({
     type: "assign",
