@@ -70,17 +70,17 @@ export type BeepContext = {
   isEqual: (a: RuntimeObj, b: RuntimeObj) => boolean,
 }
 
-export function createKernel(): BeepContext {
-  const kernel: Partial<BeepContext> = {};
+export function makeBeepContext(): BeepContext {
+  const ctx: Partial<BeepContext> = {};
 
-  bootstrapKernelModule(kernel);
-  initPreludeTypes(kernel);
-  initWellKnownFunctions(kernel as BeepContext);
-  initPreludeTypeMethods(kernel as BeepContext);
-  initPrelude(kernel as BeepContext);
-  initDynamicScope(kernel as BeepContext);
+  bootstrapKernelModule(ctx);
+  initPreludeTypes(ctx);
+  initWellKnownFunctions(ctx as BeepContext);
+  initPreludeTypeMethods(ctx as BeepContext);
+  initPrelude(ctx as BeepContext);
+  initDynamicScope(ctx as BeepContext);
 
-  return kernel as BeepContext;
+  return ctx as BeepContext;
 }
 
 function bootstrapKernelModule(k: Partial<BeepContext>) {
