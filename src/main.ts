@@ -1,5 +1,5 @@
 import { repl } from "./repl";
-import { parse } from "./runtime/parser";
+import { parse, type Expr } from "./runtime/parser";
 import { makeBeepContext } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
@@ -39,18 +39,18 @@ async function main(): Promise<void> {
 
   function run(input: string): string {
     const ast = parse(input, intern);
-    if (ast.type !== 'block') {
-      throw new Error('Parser must return block');
-    }
 
     // Unwrap top-level block to thread scope across REPL lines
     // (block itself doesn't leak scope, but REPL should persist let bindings)
+    const exprs = ast.type === 'block' ? ast.exprs : [ast];
     let result: RuntimeObj = ctx.makeIntObj(0n);
-    for (const e of ast.exprs) {
+
+    for (const e of exprs) {
       const { value, scope } = evaluate(e, getCurrentScope());
       result = value;
       setCurrentScope(scope);
     }
+    
     return show(result);
   }
 

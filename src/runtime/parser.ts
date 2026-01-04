@@ -68,10 +68,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_at, sym]) => ({ type: "memberVar" as const, fieldName: sym }));
 
   /*
-    Forward references
+    Forward declare expressions
   */
   const expr: parser<Expr> = fwd(() => comparisonExpr);
-  const body: parser<Expr> = fwd(() => block);
 
   /*
     Literals
@@ -99,7 +98,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Definitions
   */
-  const defBody = seq("(", sepBy(symbol, ","), ")", body, "end")
+  const defBody = seq("(", sepBy(symbol, ","), ")", fwd(() => block), "end")
     .map(([_lp, params, _rp, b, _end]) => ({ params, body: b }));
 
   const methodDef = seq("def", symbol, "/", methodNameSym, defBody)
@@ -129,7 +128,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const definition = either(methodDef, functionDef, structDef);
 
   /*
-    Expressions
+    Compound expressions
   */
   const funcallSuffix = seq(
     "(", sepBy(expr, ","), ")"
@@ -149,7 +148,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   }));
 
   const postfixExpr = postfix(
-    either(definition, primary),
+    primary,
     either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
     (acc, suf): Expr => {
       if (suf.type === "fieldAccess") {
@@ -209,9 +208,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     });
 
   /*
-    Parsing actual input
+    Top-level
   */
-  const topLevel = seq(block, eof).map(([e, _]) => e);
+  const topLevel = seq(either(definition, block), eof).map(([e, _]) => e);
 
   const stream = fromString(input);
   const result = topLevel(stream);
