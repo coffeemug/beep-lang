@@ -199,6 +199,10 @@ export function makeInterpreter(k: BeepContext) {
         const right = evaluate(expr.right, scope).value;
         return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
       }
+
+      case 'for': {
+        throw new Error('for loops not yet implemented');
+      }
     }
 
     const _exhaustive: never = expr;

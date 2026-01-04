@@ -2,6 +2,9 @@ import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, se
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
+const xsep = <T>(p: parserlike<T>) =>
+  lexMode("keep_newlines", either(some("\n"), seq(p, peek(not("\n")))).map(_ => {}));
+
 function postfix<B, S, R>(
   base: parserlike<B>,
   suffix: parserlike<S>,
@@ -30,7 +33,8 @@ export type Expr =
   | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
   | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
-  | { type: "binOp"; op: string; left: Expr; right: Expr };
+  | { type: "binOp"; op: string; left: Expr; right: Expr }
+  | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -56,7 +60,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -192,17 +196,24 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   const lexicalBlock = fwd(() => block("do", "end"));
 
-  const statement = either(vardecl, assign, lexicalBlock);
+  const forLoop = seq(
+    "for", symbol, "in", expr,
+    fwd(() => block(xsep("do"), "end"))
+  ).map(([_for, binding, _in, iterable, body]): Expr => ({
+    type: "for",
+    binding,
+    iterable,
+    body,
+  }));
+
+  const statement = either(forLoop, vardecl, assign, lexicalBlock);
 
   /*
     Blocks
   */
-  const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
-  const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
-
   const clause: parser<Expr> = either(statement, expr);
 
-  const block_ = maybe(seq(clause, many(seq(separator, clause).map(([_, e]) => e))))
+  const block_ = maybe(seq(clause, many(seq(xsep(";"), clause).map(([_, e]) => e))))
     .map((result): Expr => {
       if (!result) return { type: "block", exprs: [] };
       const [first, rest] = result;

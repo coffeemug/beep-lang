@@ -22,12 +22,14 @@ function saveHistory(history: string[]): void {
   writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
 }
 
-// Check if input has unmatched def (more defs than ends)
-function isInsideDef(input: string): boolean {
+// Check if input has unmatched block starters (def/struct/for) vs ends
+function isInsideBlock(input: string): boolean {
   const defCount = (input.match(/\bdef\b/g) || []).length;
+  const structCount = (input.match(/\bstruct\b/g) || []).length;
+  const forCount = (input.match(/\bfor\b/g) || []).length;
   // Match 'end' as a word, but also after digits (e.g., "3end")
   const endCount = (input.match(/(?<=^|[^a-zA-Z_])end(?=$|[^a-zA-Z0-9_])/g) || []).length;
-  return defCount > endCount;
+  return defCount + structCount + forCount > endCount;
 }
 
 export async function repl(
@@ -70,8 +72,8 @@ export async function repl(
   rl.on("line", (line) => {
     buffer += (buffer ? "\n" : "") + line;
 
-    // If inside a def block, continue accumulating
-    if (isInsideDef(buffer)) {
+    // If inside a block, continue accumulating
+    if (isInsideBlock(buffer)) {
       rl.setPrompt("... ");
       rl.prompt();
       return;
