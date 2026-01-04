@@ -1,0 +1,10 @@
+
+for x in [1, 2, 3]
+  1
+  2
+  x
+end
+
+
+for x in [1, 2, 3] do 1; 2; x end
+

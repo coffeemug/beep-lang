@@ -16,13 +16,13 @@
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
 - mixins (e.g. to auto-add enumeration methods based on `each`)
 - protocols/contracts
+- iterables
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
 - Support for importing modules (and bindings generally)
 - Support for algebraic operators
 - Support booleans, boolean operators, and conditionals
-- Loops
 - Types should be sealed or copy on write when changed outside defining module
 - Add syntax highlighting, command to run files, maybe lsp
 - Functions as methods bound to scopes is silly. Maybe have functions as first 
@@ -41,3 +41,4 @@ class objects and build methods on top of that.
 - Support for structs
 - @ sigil for member access
 - equality operator
+- Loops

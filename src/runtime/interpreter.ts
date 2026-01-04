@@ -3,6 +3,7 @@ import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
+import type { ListObj } from "../data_structures/list";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
@@ -201,7 +202,17 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'for': {
-        throw new Error('for loops not yet implemented');
+        const iterable = evaluate(expr.iterable, scope).value;
+        if (iterable.tag !== 'ListObj') {
+          throw new Error(`for loop requires a list, got ${show(iterable)}`);
+        }
+        let result: RuntimeObj = makeIntObj(0n);
+        for (const item of (iterable as ListObj).elements) {
+          const loopScope = makeScopeObj(scope);
+          defineBinding(expr.binding, item, loopScope);
+          result = evaluate(expr.body, loopScope).value;
+        }
+        return ret(result);
       }
     }
 
