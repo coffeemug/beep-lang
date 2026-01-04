@@ -1,7 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
-import { type BeepKernel, registerDefaultMethods } from "../bootstrap/bootload";
+import { type BeepContext, registerDefaultMethods } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
 import type { RuntimeObj } from "../runtime_objects";
 
@@ -23,7 +23,7 @@ export type NamedStructObj =
     fields: Map<SymbolObj, RuntimeObj>,
   }
 
-export function initStruct(k: BeepKernel) {
+export function initStruct(k: BeepContext) {
   const { rootTypeObj, intern } = k;
   const structTypeObj: StructTypeObj = {
     tag: 'StructTypeObj',
@@ -114,7 +114,7 @@ export function initStruct(k: BeepKernel) {
   };
 }
 
-export function initStructMethods(k: BeepKernel) {
+export function initStructMethods(k: BeepContext) {
   const defMethod = k.makeDefNative<NamedStructTypeObj>(k.kernelModule.toplevelScope, k.structTypeObj);
   defMethod('show', 0, thisObj => k.makeStringObj(`<type ${thisObj.name.name}>`));
   defMethod('fields', 0, thisObj => k.makeListObj(thisObj.fields));

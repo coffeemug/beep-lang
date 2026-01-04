@@ -1,7 +1,7 @@
 import { makeSymbolObj, type SymbolObj, type SymbolTypeObj } from "./symbol";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 import type { StringObj } from "../data_structures/string";
 import type { IntObj } from "../data_structures/int";
 
@@ -40,7 +40,7 @@ export function makeSymbolSpaceObj(typeObj: SymbolSpaceTypeObj): SymbolSpaceObj 
   };
 }
 
-export function initSymbolSpaceMethods(k: BeepKernel) {
+export function initSymbolSpaceMethods(k: BeepContext) {
   const { makeStringObj, makeDefNative, symbolSpaceTypeObj, makeListObj } = k;
   const defMethod = makeDefNative<SymbolSpaceObj>(k.kernelModule.toplevelScope, symbolSpaceTypeObj);
   defMethod('show', 0, () => makeStringObj("<symbol_space>"));

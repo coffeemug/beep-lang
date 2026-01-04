@@ -1,6 +1,6 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 import type { SymbolId } from "./symbol_space";
 
 export type SymbolTypeObj =
@@ -33,7 +33,7 @@ export function makeSymbolObj(name: string, id: SymbolId, symbolTypeObj: SymbolT
   };
 }
 
-export function initSymbolMethods(k: BeepKernel) {
+export function initSymbolMethods(k: BeepContext) {
   const { makeDefNative, makeStringObj, makeIntObj, symbolTypeObj } = k;
 
   const defMethod = makeDefNative<SymbolObj>(k.kernelModule.toplevelScope, symbolTypeObj);

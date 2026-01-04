@@ -1,7 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
-import type { BeepKernel } from "../bootstrap/bootload";
+import type { BeepContext } from "../bootstrap/bootload";
 
 export type StringTypeObj =
   & RuntimeObjMixin<'StringTypeObj', RootTypeObj>
@@ -14,7 +14,7 @@ export type StringObj =
     value: string,
   }
 
-export function initString(k: BeepKernel) {
+export function initString(k: BeepContext) {
   const { rootTypeObj, intern } = k;
   const stringTypeObj: StringTypeObj = {
     tag: 'StringTypeObj',
@@ -33,7 +33,7 @@ export function initString(k: BeepKernel) {
   });
 }
 
-export function initStringMethods(k: BeepKernel) {
+export function initStringMethods(k: BeepContext) {
   const { makeStringObj, makeIntObj, stringTypeObj, makeDefNative } = k;
   const defMethod = makeDefNative<StringObj>(k.kernelModule.toplevelScope, stringTypeObj);
 

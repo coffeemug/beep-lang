@@ -3,7 +3,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { defineBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import { type MethodObjBase } from "./unbound_method";
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>
@@ -16,7 +16,7 @@ export type BoundMethodObj = MethodObjBase & {
   receiverInstance: RuntimeObj,
 }
 
-export function initBoundMethod(k: BeepKernel) {
+export function initBoundMethod(k: BeepContext) {
   const { rootTypeObj, intern } = k;
   const boundMethodTypeObj: BoundMethodTypeObj = {
     tag: 'BoundMethodTypeObj',
@@ -30,7 +30,7 @@ export function initBoundMethod(k: BeepKernel) {
   k.boundMethodTypeObj = boundMethodTypeObj;
 }
 
-export function initBoundMethodMethods(k: BeepKernel) {
+export function initBoundMethodMethods(k: BeepContext) {
   const { makeDefNative, makeStringObj, makeIntObj, boundMethodTypeObj, scopeTypeObj } = k;
 
   const defMethod = makeDefNative<BoundMethodObj>(k.kernelModule.toplevelScope, boundMethodTypeObj);

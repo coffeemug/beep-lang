@@ -2,11 +2,11 @@ import type { Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
-import type { BeepKernel } from "../bootstrap/bootload";
+import type { BeepContext } from "../bootstrap/bootload";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
-export function makeInterpreter(k: BeepKernel) {
+export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
     bindMethod, makeUnboundMethodObj, show, callMethod, makeScopeObj,

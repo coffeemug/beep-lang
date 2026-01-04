@@ -2,7 +2,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { RuntimeObj } from "../runtime_objects";
 import { defineBinding } from "../bootstrap/scope";
-import type { BeepKernel } from "../bootstrap/bootload";
+import type { BeepContext } from "../bootstrap/bootload";
 import type { IntObj } from "./int";
 
 export type ListTypeObj =
@@ -16,7 +16,7 @@ export type ListObj =
     elements: RuntimeObj[],
   }
 
-export function initList(k: BeepKernel) {
+export function initList(k: BeepContext) {
   const { rootTypeObj, intern } = k;
   const listTypeObj: ListTypeObj = {
     tag: 'ListTypeObj',
@@ -35,7 +35,7 @@ export function initList(k: BeepKernel) {
   });
 }
 
-export function initListMethods(k: BeepKernel) {
+export function initListMethods(k: BeepContext) {
   const {
     makeStringObj, makeListObj, listTypeObj, makeIntObj,
     show, makeDefNative

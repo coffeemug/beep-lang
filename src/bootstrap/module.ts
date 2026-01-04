@@ -1,4 +1,4 @@
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 import { findSymbolById } from "./symbol_space";
 import { defineBinding, getBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
@@ -17,7 +17,7 @@ export type ModuleObj =
     toplevelScope: ScopeObj,
   }
 
-export function initKernelModule(k: BeepKernel, rootTypeObj: RootTypeObj, scopeTypeObj: ScopeTypeObj): ModuleObj {
+export function initKernelModule(k: BeepContext, rootTypeObj: RootTypeObj, scopeTypeObj: ScopeTypeObj): ModuleObj {
   const { intern } = k;
   const moduleTypeObj: ModuleTypeObj = {
     tag: 'ModuleTypeObj',
@@ -40,7 +40,7 @@ export function initKernelModule(k: BeepKernel, rootTypeObj: RootTypeObj, scopeT
   return k.kernelModule;
 }
 
-export function initModule(k: BeepKernel) {
+export function initModule(k: BeepContext) {
   k.makeModuleObj = (name: SymbolObj): ModuleObj => {
     const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
     if (modules.kv.has(name)) {
@@ -67,7 +67,7 @@ export function initModule(k: BeepKernel) {
   }
 }
 
-export function initModuleMethods(k: BeepKernel) {
+export function initModuleMethods(k: BeepContext) {
   const { makeDefNative, moduleTypeObj, makeModuleObj, makeStringObj, show } = k;
 
   const defMethod = makeDefNative<ModuleObj>(k.kernelModule.toplevelScope, moduleTypeObj);

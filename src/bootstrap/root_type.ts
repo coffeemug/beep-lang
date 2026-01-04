@@ -1,5 +1,5 @@
 import type { TypeObjMixin } from "./object_mixins";
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 
 export type RootTypeObj = TypeObjMixin & {
   /* Fields common to every runtime object */
@@ -21,7 +21,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
   return obj as Omit<RootTypeObj, 'name' | 'bindingModule'>;
 }
 
-export function initRootTypeMethods(k: BeepKernel) {
+export function initRootTypeMethods(k: BeepContext) {
   const { makeDefNative, makeStringObj, rootTypeObj, makeListObj } = k;
 
   const defMethod = makeDefNative<RootTypeObj>(k.kernelModule.toplevelScope, rootTypeObj);

@@ -2,7 +2,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { RuntimeObj } from "../runtime_objects";
 import { defineBinding } from "../bootstrap/scope";
-import type { BeepKernel } from "../bootstrap/bootload";
+import type { BeepContext } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
 
 export type MapTypeObj =
@@ -16,7 +16,7 @@ export type MapObj =
     kv: Map<SymbolObj, RuntimeObj>,
   }
 
-export function initMap(k: BeepKernel) {
+export function initMap(k: BeepContext) {
   const { rootTypeObj, intern } = k;
   const mapTypeObj: MapTypeObj = {
     tag: 'MapTypeObj',
@@ -35,7 +35,7 @@ export function initMap(k: BeepKernel) {
   });
 }
 
-export function initMapMethods(k: BeepKernel) {
+export function initMapMethods(k: BeepContext) {
   const {
     makeStringObj, mapTypeObj, show, makeDefNative,
   } = k;

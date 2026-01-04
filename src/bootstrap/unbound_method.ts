@@ -5,7 +5,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { defineBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
-import type { BeepKernel } from "./bootload";
+import type { BeepContext } from "./bootload";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
@@ -32,7 +32,7 @@ type Procedure =
 
 export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
-export function initUnboundMethod(k: BeepKernel) {
+export function initUnboundMethod(k: BeepContext) {
   const { rootTypeObj, kernelModule, intern } = k;
 
   const unboundMethodTypeObj: UnboundMethodTypeObj = {
@@ -95,7 +95,7 @@ export function initUnboundMethod(k: BeepKernel) {
     }
 }
 
-export function initUnboundMethodMethods(k: BeepKernel) {
+export function initUnboundMethodMethods(k: BeepContext) {
   const {
     bindMethod, makeStringObj, unboundMethodTypeObj, makeDefNative,
    } = k;

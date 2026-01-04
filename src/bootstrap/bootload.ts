@@ -14,7 +14,7 @@ import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 
-export type BeepKernel = {
+export type BeepContext = {
   symbolSpaceObj: SymbolSpaceObj,
   kernelModule: ModuleObj,
   dynamicScope: ScopeObj,
@@ -70,20 +70,20 @@ export type BeepKernel = {
   isEqual: (a: RuntimeObj, b: RuntimeObj) => boolean,
 }
 
-export function createKernel(): BeepKernel {
-  const kernel: Partial<BeepKernel> = {};
+export function createKernel(): BeepContext {
+  const kernel: Partial<BeepContext> = {};
 
   bootstrapKernelModule(kernel);
   initPreludeTypes(kernel);
-  initWellKnownFunctions(kernel as BeepKernel);
-  initPreludeTypeMethods(kernel as BeepKernel);
-  initPrelude(kernel as BeepKernel);
-  initDynamicScope(kernel as BeepKernel);
+  initWellKnownFunctions(kernel as BeepContext);
+  initPreludeTypeMethods(kernel as BeepContext);
+  initPrelude(kernel as BeepContext);
+  initDynamicScope(kernel as BeepContext);
 
-  return kernel as BeepKernel;
+  return kernel as BeepContext;
 }
 
-function bootstrapKernelModule(k: Partial<BeepKernel>) {
+function bootstrapKernelModule(k: Partial<BeepContext>) {
   /*
     Create core types ('type', 'symbol', 'symbol_space', 'module', 'scope') and intern their names.
     These are created before kernelModule exists, so bindingModule is set retroactively.
@@ -105,8 +105,8 @@ function bootstrapKernelModule(k: Partial<BeepKernel>) {
   k.rootTypeObj = rootTypeObj;
 
   // Create scopeTypeObj early so we can create scopes during bootstrap
-  k.scopeTypeObj = makeScopeTypeObj(k as BeepKernel);
-  const kernelModule = initKernelModule(k as BeepKernel, rootTypeObj, k.scopeTypeObj);
+  k.scopeTypeObj = makeScopeTypeObj(k as BeepContext);
+  const kernelModule = initKernelModule(k as BeepContext, rootTypeObj, k.scopeTypeObj);
 
   // Bind type names in the kernel module
   defineBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
@@ -117,17 +117,17 @@ function bootstrapKernelModule(k: Partial<BeepKernel>) {
   k.kernelModule = kernelModule;
 }
 
-function initPreludeTypes(k: Partial<BeepKernel>) {
+function initPreludeTypes(k: Partial<BeepContext>) {
   // Init types that can use the standard pattern
-  initInt(k as BeepKernel);
-  initString(k as BeepKernel);
-  initList(k as BeepKernel);
-  initMap(k as BeepKernel);
-  initUnboundMethod(k as BeepKernel);
-  initBoundMethod(k as BeepKernel);
-  initModule(k as BeepKernel);
-  initScope(k as BeepKernel);
-  initStruct(k as BeepKernel);
+  initInt(k as BeepContext);
+  initString(k as BeepContext);
+  initList(k as BeepContext);
+  initMap(k as BeepContext);
+  initUnboundMethod(k as BeepContext);
+  initBoundMethod(k as BeepContext);
+  initModule(k as BeepContext);
+  initScope(k as BeepContext);
+  initStruct(k as BeepContext);
 
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
@@ -137,7 +137,7 @@ function initPreludeTypes(k: Partial<BeepKernel>) {
   k.eqSymbol = k.intern!('eq');
 }
 
-function initWellKnownFunctions(k: BeepKernel) {
+function initWellKnownFunctions(k: BeepContext) {
   const { bindMethod, showSymbol, thisSymbol } = k;
 
   k.callMethod = (method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
@@ -201,7 +201,7 @@ function initWellKnownFunctions(k: BeepKernel) {
   k.evaluate = makeInterpreter(k).evaluate;
 }
 
-export function registerDefaultMethods(k: BeepKernel, receiverType: TypeObj) {
+export function registerDefaultMethods(k: BeepContext, receiverType: TypeObj) {
   const scope = k.kernelModule!.toplevelScope;
   const defMethod = k.makeDefNative!(scope, receiverType);
   defMethod('type', 0, thisObj => thisObj.type);
@@ -230,7 +230,7 @@ export function registerDefaultMethods(k: BeepKernel, receiverType: TypeObj) {
   });
 }
 
-function initPreludeTypeMethods(k: BeepKernel) {
+function initPreludeTypeMethods(k: BeepContext) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
@@ -252,12 +252,12 @@ function initPreludeTypeMethods(k: BeepKernel) {
   initSymbolMethods(k);
   initSymbolSpaceMethods(k);
   initRootTypeMethods(k);
-  initModuleMethods(k as BeepKernel);
+  initModuleMethods(k as BeepContext);
   initScopeMethods(k);
   initStructMethods(k);
 }
 
-function initPrelude(k: BeepKernel) {
+function initPrelude(k: BeepContext) {
   const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
 
   const scope = k.kernelModule.toplevelScope;
@@ -272,7 +272,7 @@ function initPrelude(k: BeepKernel) {
   k.trueObj = makeIntObj(1n);
 }
 
-function initDynamicScope(k: BeepKernel) {
+function initDynamicScope(k: BeepContext) {
   k.dynamicScope = k.makeScopeObj();
   defineBinding(k.modulesSymbol, k.makeMapObj([
     [k.intern("kernel"), k.kernelModule],
