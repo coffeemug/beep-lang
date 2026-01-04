@@ -10,11 +10,11 @@ import type { MapObj } from "./data_structures/map";
 import type { RuntimeObj } from "./runtime_objects";
 
 async function main(): Promise<void> {
-  const kernel = makeBeepContext();
+  const ctx = makeBeepContext();
   const {
     symbolSpaceObj: symbolSpace, show, callMethod, bindMethod,
     evaluate, intern, makeModuleObj,
-  } = kernel;
+  } = ctx;
 
   const methodsSym = findSymbolByName('methods', symbolSpace)!;
 
@@ -45,7 +45,7 @@ async function main(): Promise<void> {
 
     // Unwrap top-level block to thread scope across REPL lines
     // (block itself doesn't leak scope, but REPL should persist let bindings)
-    let result: RuntimeObj = kernel.makeIntObj(0n);
+    let result: RuntimeObj = ctx.makeIntObj(0n);
     for (const e of ast.exprs) {
       const { value, scope } = evaluate(e, getCurrentScope());
       result = value;
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
     if (arg.tag == 'ModuleObj') {
       switchModule(arg as ModuleObj);
     } else if (arg.tag == 'SymbolObj') {
-      const modules = getBinding(kernel.modulesSymbol, kernel.dynamicScope) as MapObj;
+      const modules = getBinding(ctx.modulesSymbol, ctx.dynamicScope) as MapObj;
       const module = modules.kv.get(arg);
       if (!module) {
         throw new Error("Module must exist");
