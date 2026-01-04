@@ -38,7 +38,9 @@ type Suffix =
   | { type: "funcall"; args: Expr[] };
 
 export function parse(input: string, intern: (name: string) => SymbolObj): Expr {
-  // Identifiers and symbols
+  /*
+    Identifiers and symbols
+  */
   const identFirstChar = either(alpha, "_");
   const identChar = either(alnum, "_");
 
@@ -50,7 +52,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const methodNameSym = lex(seq(ident, maybe("!"))).map(([name, bang]) =>
     intern(name + (bang ?? "")));
 
-  // Variables
+  /*
+    Variables
+  */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
   const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"));
 
@@ -63,41 +67,41 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const memberVar = lex(seq("@", symbol))
     .map(([_at, sym]) => ({ type: "memberVar" as const, fieldName: sym }));
 
-  // Integer literals
+  /*
+    Forward references
+  */
+  const expr: parser<Expr> = fwd(() => comparisonExpr);
+  const body: parser<Expr> = fwd(() => block);
+
+  /*
+    Literals
+  */
   const intLit = int.map((n) => ({ type: "int" as const, value: n }));
 
-  // String literals: 'foo bar'
   const strLit = lex(seq("'", many(anych({ but: "'" })), "'"))
     .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
 
-  // Symbol literals: :foo
   const quotedSymbol = seq(":", symbol)
     .map(([_colon, sym]) => ({ type: "quotedSymbol" as const, sym }));
 
-  // Forward reference for full expressions (needed for list elements, method bodies, and args)
-  const expr: parser<Expr> = fwd(() => comparisonExpr);
-
-  // Forward reference for block (needed for function/method bodies)
-  const body: parser<Expr> = fwd(() => block);
-
-  // List literals: [elem, elem, ...]
   const listLit = seq("[", sepBy(expr, ","), "]")
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
-  // Map literals: { key: value, ... }
   const mapPair = seq(symbol, ":", expr)
     .map(([key, _colon, value]) => ({ key, value }));
   const mapLit = seq("{", sepBy(mapPair, ","), "}")
     .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
 
-  // Primary expressions (atoms)
-  const primary = either(mapLit, listLit, quotedSymbol, strLit, intLit, memberVar, dynamicVar, lexicalVar);
+  const primary = either(
+    mapLit, listLit, quotedSymbol, strLit, intLit,
+    memberVar, dynamicVar, lexicalVar);
 
-  // Shared: (params) body end
+  /*
+    Definitions
+  */
   const defBody = seq("(", sepBy(symbol, ","), ")", body, "end")
     .map(([_lp, params, _rp, b, _end]) => ({ params, body: b }));
 
-  // Method definition: def type/name(params) body end
   const methodDef = seq("def", symbol, "/", methodNameSym, defBody)
     .map(([_def, receiverType, _slash, name, { params, body }]): Expr => ({
       type: "methodDef" as const,
@@ -107,7 +111,6 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  // Function definition: def name(params) body end
   const functionDef = seq("def", methodNameSym, defBody)
     .map(([_def, name, { params, body }]): Expr => ({
       type: "functionDef" as const,
@@ -116,7 +119,6 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  // Struct definition: struct name fields end
   const structDef = seq("struct", symbol, sepBy(symbol, ","), "end")
     .map(([_struct, name, fields, _end]): Expr => ({
       type: "structDef" as const,
@@ -124,7 +126,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       fields,
     }));
 
-  // Suffix: (args) for funcall
+  /*
+    Expressions
+  */
   const funcallSuffix = seq(
     "(", sepBy(expr, ","), ")"
   ).map(([_lp, args, _rp]): Suffix => ({
@@ -132,19 +136,16 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     args,
   }));
 
-  // Suffix: .name for field access
   const fieldAccessSuffix = seq(".", methodNameSym).map(([_dot, name]): Suffix => ({
     type: "fieldAccess",
     name,
   }));
 
-  // Suffix: [expr] for index access
   const indexAccessSuffix = seq("[", expr, "]").map(([_lb, index, _rb]): Suffix => ({
     type: "indexAccess",
     index,
   }));
 
-  // Postfix operators: .name, (args), and [index]
   const postfixExpr = postfix(
     either(structDef, methodDef, functionDef, primary),
     either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
@@ -160,24 +161,24 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
-  // Comparison operators: ==
   const comparisonExpr = binop(
     str("=="),
     postfixExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 
-  // Let expression: let x = 1 or let x = 1, y = 2 or let $x = 1 (dynamic)
+  /*
+    Statements
+  */
   const letBinding = either(
     seq(dynamicVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'dynamic' as const })),
     seq(lexicalVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'lexical' as const }))
   );
-  const letExpr = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
+  const vardecl = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
     type: "let",
     bindings,
   }));
 
-  // Assignment: x = expr (lexical) or $x = expr (dynamic)
   const assignTarget = either(
     dynamicVar.map(v => ({ name: v.sym, scope: 'dynamic' as const })),
     lexicalVar.map(v => ({ name: v.sym, scope: 'lexical' as const }))
@@ -188,23 +189,24 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     value,
   }));
 
-  // A block item is a let, assignment, or regular expression
-  const blockItem: parser<Expr> = either(letExpr, assign, expr);
-
-  // Block: multiple expressions separated by newlines or semicolons
-  // - \n+ or ; separates expressions (but ; cannot be followed by \n)
-  // Note: expressions are parsed in drop_all mode (whitespace insensitive),
-  // but separators are parsed in keep_newlines mode to distinguish \n from space
+  /*
+    Blocks
+  */
   const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
   const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
 
-  const block = maybe(seq(blockItem, many(seq(separator, blockItem).map(([_, e]) => e))))
+  const stmtOrExpr: parser<Expr> = either(vardecl, assign, expr);
+
+  const block = maybe(seq(stmtOrExpr, many(seq(separator, stmtOrExpr).map(([_, e]) => e))))
     .map((result): Expr => {
       if (!result) return { type: "block", exprs: [] };
       const [first, rest] = result;
       return { type: "block", exprs: [first, ...rest] };
     });
 
+  /*
+    Parsing actual input
+  */
   const topLevel = seq(block, eof).map(([e, _]) => e);
 
   const stream = fromString(input);
