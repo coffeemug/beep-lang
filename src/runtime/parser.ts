@@ -126,6 +126,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       fields,
     }));
 
+  const definition = either(methodDef, functionDef, structDef);
+
   /*
     Expressions
   */
@@ -147,7 +149,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   }));
 
   const postfixExpr = postfix(
-    either(structDef, methodDef, functionDef, primary),
+    either(definition, primary),
     either(funcallSuffix, fieldAccessSuffix, indexAccessSuffix),
     (acc, suf): Expr => {
       if (suf.type === "fieldAccess") {
@@ -189,15 +191,17 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     value,
   }));
 
+  const statement = either(vardecl, assign);
+
   /*
     Blocks
   */
   const semicolonSep = lexMode("keep_newlines", seq(";", peek(not("\n"))).map(([s, _]) => s));
   const separator = lexMode("keep_newlines", either(some("\n"), semicolonSep));
 
-  const stmtOrExpr: parser<Expr> = either(vardecl, assign, expr);
+  const clause: parser<Expr> = either(statement, expr);
 
-  const block = maybe(seq(stmtOrExpr, many(seq(separator, stmtOrExpr).map(([_, e]) => e))))
+  const block = maybe(seq(clause, many(seq(separator, clause).map(([_, e]) => e))))
     .map((result): Expr => {
       if (!result) return { type: "block", exprs: [] };
       const [first, rest] = result;
