@@ -190,7 +190,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     value,
   }));
 
-  const statement = either(vardecl, assign);
+  const lexicalBlock = fwd(() => block("do", "end"));
+
+  const statement = either(vardecl, assign, lexicalBlock);
 
   /*
     Blocks
