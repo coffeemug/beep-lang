@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
@@ -98,11 +98,11 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Definitions
   */
-  const defBody = seq("(", sepBy(symbol, ","), ")", fwd(() => block), "end")
-    .map(([_lp, params, _rp, b, _end]) => ({ params, body: b }));
+  const arglist = seq("(", sepBy(symbol, ","), ")").map(([_lp, params, _rp]) => params);
+  const fnBody = fwd(() => block(noop, "end"));
 
-  const methodDef = seq("def", symbol, "/", methodNameSym, defBody)
-    .map(([_def, receiverType, _slash, name, { params, body }]): Expr => ({
+  const methodDef = seq("def", symbol, "/", methodNameSym, arglist, fnBody)
+    .map(([_def, receiverType, _slash, name, params, body]): Expr => ({
       type: "methodDef" as const,
       receiverType,
       name,
@@ -110,8 +110,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  const functionDef = seq("def", methodNameSym, defBody)
-    .map(([_def, name, { params, body }]): Expr => ({
+  const functionDef = seq("def", methodNameSym, arglist, fnBody)
+    .map(([_def, name, params, body]): Expr => ({
       type: "functionDef" as const,
       name,
       params,
@@ -200,17 +200,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   const clause: parser<Expr> = either(statement, expr);
 
-  const block = maybe(seq(clause, many(seq(separator, clause).map(([_, e]) => e))))
+  const block_ = maybe(seq(clause, many(seq(separator, clause).map(([_, e]) => e))))
     .map((result): Expr => {
       if (!result) return { type: "block", exprs: [] };
       const [first, rest] = result;
       return { type: "block", exprs: [first, ...rest] };
     });
 
+  const block = <B, E>(begin: parserlike<B>, end: parserlike<E>) =>
+    seq(begin, block_, end).map(([_1, b, _2]) => b);
+
   /*
     Top-level
   */
-  const topLevel = seq(either(definition, block), eof).map(([e, _]) => e);
+  const topLevel = seq(either(definition, block(noop, noop)), eof).map(([e, _]) => e);
 
   const stream = fromString(input);
   const result = topLevel(stream);
