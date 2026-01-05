@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Get FizzBuzz working
 - Then maybe go through advent of code?
 
 # TODO (high risk):
@@ -42,3 +41,4 @@ class objects and build methods on top of that.
 - @ sigil for member access
 - equality operator
 - Loops
+- Get FizzBuzz working
