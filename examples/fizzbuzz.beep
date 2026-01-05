@@ -1,0 +1,17 @@
+
+def fizzbuzz(n)
+  let res = []
+  for x in 1..n
+    if x % 3 == 0 and x % 5 == 0
+      res.push!('FizzBuzz')
+    elif x % 3 == 0
+      res.push!('Fizz')
+    elif x % 5 == 0
+      res.push!('Buzz')
+    else
+      res.push!(x)
+    end
+  end
+
+  res
+end
