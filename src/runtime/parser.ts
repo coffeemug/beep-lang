@@ -167,9 +167,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
+  const modExpr = binop(
+    str("%"),
+    postfixExpr,
+    (op, left, right): Expr => ({ type: "binOp", op, left, right })
+  );
+
   const rangeExpr = binop(
     either(str("..="), str("..")),
-    postfixExpr,
+    modExpr,
     (op, start, end): Expr => ({
       type: "range",
       start,

@@ -45,4 +45,12 @@ export function initIntMethods(k: BeepContext) {
     if (other.tag !== 'IntObj') return k.falseObj;
     return thisObj.value === (other as IntObj).value ? k.trueObj : k.falseObj;
   });
+
+  defMethod('mod', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`mod requires an integer, got ${k.show(other)}`);
+    }
+    return makeIntObj(thisObj.value % (other as IntObj).value);
+  });
 }

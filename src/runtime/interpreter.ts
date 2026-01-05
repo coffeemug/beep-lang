@@ -195,19 +195,34 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'binOp': {
-        if (expr.op !== '==') {
-          throw new Error(`Unknown binary operator: ${expr.op}`);
-        }
         const left = evaluate(expr.left, scope).value;
         const right = evaluate(expr.right, scope).value;
-        return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
+        switch (expr.op) {
+          case '==':
+            return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
+
+          case '%': {
+            const modMethod = left.type.methods.get(k.modSymbol);
+            if (modMethod) {
+              return ret(callMethod(bindMethod(modMethod, left), [right]));
+            }
+            const rmodMethod = right.type.methods.get(k.rmodSymbol);
+            if (rmodMethod) {
+              return ret(callMethod(bindMethod(rmodMethod, right), [left]));
+            }
+            throw new Error(`No mod method on ${show(left)} or rmod on ${show(right)}`);
+          }
+          
+          default:
+            throw new Error(`Unknown binary operator: ${expr.op}`);
+        }
       }
 
       case 'for': {
         // TODO: use enumerables (once enumerable protocol is a thing)
         let iterable = evaluate(expr.iterable, scope).value;
         if (iterable.tag === 'RangeObj') {
-          const listMethod = iterable.type.methods.get(k.intern('list'));
+          const listMethod = iterable.type.methods.get(k.listSymbol);
           if (!listMethod) {
             throw new Error('Range has no list method');
           }
