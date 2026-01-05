@@ -2,8 +2,13 @@
 # KNOWN BUGS
 
 # NEXT
-- Then maybe go through advent of code?
-
+- Add support for iterator protocol
+- Implement iterator protocol on lists and ranges
+- Change loops to use the iterator protocol
+- This might possibly require adding `nil`/`true`/`false`
+- Add mixin support so everyone gets `map`, `filter`, `take_while`, etc.
+- Possibly add `protocol` abstraction
+  
 # TODO (high risk):
 - Variants and pattern matching
 - Type system!
