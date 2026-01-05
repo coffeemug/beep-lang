@@ -61,7 +61,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -75,7 +75,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Forward declare expressions
   */
-  const expr: parser<Expr> = fwd(() => comparisonExpr);
+  const expr: parser<Expr> = fwd(() => orExpr);
 
   /*
     Literals
@@ -188,6 +188,18 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     str("=="),
     rangeExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
+  );
+
+  const andExpr = binop(
+    lex(keyword("and")),
+    comparisonExpr,
+    (_op, left, right): Expr => ({ type: "binOp", op: "and", left, right })
+  );
+
+  const orExpr = binop(
+    lex(keyword("or")),
+    andExpr,
+    (_op, left, right): Expr => ({ type: "binOp", op: "or", left, right })
   );
 
   /*

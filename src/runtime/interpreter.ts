@@ -195,13 +195,16 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'binOp': {
-        const left = evaluate(expr.left, scope).value;
-        const right = evaluate(expr.right, scope).value;
         switch (expr.op) {
-          case '==':
+          case '==': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
             return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
+          }
 
           case '%': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
             const modMethod = left.type.methods.get(k.modSymbol);
             if (modMethod) {
               return ret(callMethod(bindMethod(modMethod, left), [right]));
@@ -212,7 +215,19 @@ export function makeInterpreter(k: BeepContext) {
             }
             throw new Error(`No mod method on ${show(left)} or rmod on ${show(right)}`);
           }
-          
+
+          case 'and': {
+            const left = evaluate(expr.left, scope).value;
+            if (k.isEqual(left, k.falseObj)) return ret(left);
+            return ret(evaluate(expr.right, scope).value);
+          }
+
+          case 'or': {
+            const left = evaluate(expr.left, scope).value;
+            if (!k.isEqual(left, k.falseObj)) return ret(left);
+            return ret(evaluate(expr.right, scope).value);
+          }
+
           default:
             throw new Error(`Unknown binary operator: ${expr.op}`);
         }
