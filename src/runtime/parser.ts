@@ -35,7 +35,8 @@ export type Expr =
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
-  | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' };
+  | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
+  | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -61,7 +62,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -236,7 +237,34 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     body,
   }));
 
-  const statement = either(forLoop, vardecl, assign, lexicalBlock);
+  const ifBody = fwd(() => block(xsep("then"), peek(lex(either(keyword("elif"), keyword("else"), keyword("end"))))));
+
+  type IfContinuation = { type: 'elif'; cond: Expr; body: Expr; cont: IfContinuation }
+                      | { type: 'else'; body: Expr }
+                      | { type: 'end' };
+
+  const ifContinuation: parser<IfContinuation> = fwd(() => either(
+    seq(lex("elif"), expr, ifBody, ifContinuation).map(([_, cond, body, cont]): IfContinuation => ({ type: 'elif', cond, body, cont })),
+    seq(lex("else"), fwd(() => block(noop, "end"))).map(([_, body]): IfContinuation => ({ type: 'else', body })),
+    lex("end").map((): IfContinuation => ({ type: 'end' }))
+  ));
+
+  const ifStatement = seq("if", expr, ifBody, ifContinuation)
+    .map(([_if, cond, body, cont]): Expr => {
+      const branches: { cond: Expr; body: Expr }[] = [{ cond, body }];
+      let else_: Expr | null = null;
+      let current = cont;
+      while (current.type === 'elif') {
+        branches.push({ cond: current.cond, body: current.body });
+        current = current.cont;
+      }
+      if (current.type === 'else') {
+        else_ = current.body;
+      }
+      return { type: "if", branches, else_ };
+    });
+
+  const statement = either(ifStatement, forLoop, vardecl, assign, lexicalBlock);
 
   /*
     Blocks

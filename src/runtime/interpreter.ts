@@ -267,6 +267,19 @@ export function makeInterpreter(k: BeepContext) {
           expr.mode
         ));
       }
+
+      case 'if': {
+        for (const branch of expr.branches) {
+          const cond = evaluate(branch.cond, scope).value;
+          if (!k.isEqual(cond, k.falseObj)) {
+            return ret(evaluate(branch.body, scope).value);
+          }
+        }
+        if (expr.else_) {
+          return ret(evaluate(expr.else_, scope).value);
+        }
+        return ret(makeIntObj(0n));
+      }
     }
 
     const _exhaustive: never = expr;
