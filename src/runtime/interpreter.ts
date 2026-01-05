@@ -4,6 +4,7 @@ import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj }
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
+import type { IntObj } from "../data_structures/int";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
@@ -11,7 +12,7 @@ export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
     bindMethod, makeUnboundMethodObj, show, callMethod, makeScopeObj,
-    defineNamedStruct
+    defineNamedStruct, makeRangeObj
    } = k;
 
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
@@ -213,6 +214,19 @@ export function makeInterpreter(k: BeepContext) {
           result = evaluate(expr.body, loopScope).value;
         }
         return ret(result);
+      }
+
+      case 'range': {
+        const start = evaluate(expr.start, scope).value;
+        const end = evaluate(expr.end, scope).value;
+        if (start.tag !== 'IntObj' || end.tag !== 'IntObj') {
+          throw new Error(`range requires integers, got ${show(start)} and ${show(end)}`);
+        }
+        return ret(makeRangeObj(
+          (start as IntObj).value,
+          (end as IntObj).value,
+          expr.mode
+        ));
       }
     }
 

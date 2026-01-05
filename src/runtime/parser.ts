@@ -34,7 +34,8 @@ export type Expr =
   | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
-  | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr };
+  | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
+  | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -166,9 +167,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
+  const rangeExpr = binop(
+    either(str("..="), str("..")),
+    postfixExpr,
+    (op, start, end): Expr => ({
+      type: "range",
+      start,
+      end,
+      mode: op === ".." ? 'exclusive' : 'inclusive'
+    })
+  );
+
   const comparisonExpr = binop(
     str("=="),
-    postfixExpr,
+    rangeExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 

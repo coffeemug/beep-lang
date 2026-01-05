@@ -13,6 +13,7 @@ import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
+import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
 
 export type BeepContext = {
   symbolSpaceObj: SymbolSpaceObj,
@@ -29,6 +30,7 @@ export type BeepContext = {
   listTypeObj: ListTypeObj,
   mapTypeObj: MapTypeObj,
   structTypeObj: StructTypeObj,
+  rangeTypeObj: RangeTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
   scopeTypeObj: ScopeTypeObj,
@@ -50,6 +52,7 @@ export type BeepContext = {
   makeStringObj: (value: string) => StringObj,
   makeListObj: (elements: RuntimeObj[]) => ListObj,
   makeMapObj: (pairs: [SymbolObj, RuntimeObj][]) => MapObj,
+  makeRangeObj: (start: bigint, end: bigint, mode: 'exclusive' | 'inclusive') => RangeObj,
   makeScopeObj: (parent?: ScopeObj) => ScopeObj,
   intern: (name: string) => SymbolObj,
 
@@ -123,6 +126,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   initString(k as BeepContext);
   initList(k as BeepContext);
   initMap(k as BeepContext);
+  initRange(k as BeepContext);
   initUnboundMethod(k as BeepContext);
   initBoundMethod(k as BeepContext);
   initModule(k as BeepContext);
@@ -234,7 +238,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope', 'map', 'structure',
+    'module', 'scope', 'map', 'structure', 'range',
   ];
   const scope = k.kernelModule!.toplevelScope;
 
@@ -255,6 +259,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   initModuleMethods(k as BeepContext);
   initScopeMethods(k);
   initStructMethods(k);
+  initRangeMethods(k);
 }
 
 function initPrelude(k: BeepContext) {
