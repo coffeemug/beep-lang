@@ -4,6 +4,7 @@ import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj }
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
+import type { RangeObj } from "../data_structures/range";
 import type { IntObj } from "../data_structures/int";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
@@ -203,9 +204,17 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'for': {
-        const iterable = evaluate(expr.iterable, scope).value;
+        // TODO: use enumerables (once enumerable protocol is a thing)
+        let iterable = evaluate(expr.iterable, scope).value;
+        if (iterable.tag === 'RangeObj') {
+          const listMethod = iterable.type.methods.get(k.intern('list'));
+          if (!listMethod) {
+            throw new Error('Range has no list method');
+          }
+          iterable = callMethod(bindMethod(listMethod, iterable), []);
+        }
         if (iterable.tag !== 'ListObj') {
-          throw new Error(`for loop requires a list, got ${show(iterable)}`);
+          throw new Error(`for loop requires a list or range, got ${show(iterable)}`);
         }
         let result: RuntimeObj = makeIntObj(0n);
         for (const item of (iterable as ListObj).elements) {
