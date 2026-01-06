@@ -318,7 +318,9 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Top-level
   */
-  const topLevel = seq(either(definition, block(noop, noop)), eof).map(([e, _]) => e);
+  const topLevelClause: parser<Expr> = either(definition, statement, expr);
+  const topLevel = seq(sepBy(topLevelClause, xsep(";")), eof).map(([exprs, _]): Expr =>
+    exprs.length === 1 ? exprs[0] : { type: "block", exprs });
 
   const stream = fromString(input);
   const result = topLevel(stream);
