@@ -47,8 +47,10 @@ export type BeepContext = {
   modulesSymbol: SymbolObj,
   eqSymbol: SymbolObj,
   modSymbol: SymbolObj,
-  rmodSymbol: SymbolObj,
   listSymbol: SymbolObj,
+  addSymbol: SymbolObj,
+  subSymbol: SymbolObj,
+  mulSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: bigint) => IntObj,
@@ -143,8 +145,10 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.getItemSymbol = k.intern!('get_item');
   k.eqSymbol = k.intern!('eq');
   k.modSymbol = k.intern!('mod');
-  k.rmodSymbol = k.intern!('rmod');
   k.listSymbol = k.intern!('list');
+  k.addSymbol = k.intern!('add');
+  k.subSymbol = k.intern!('sub');
+  k.mulSymbol = k.intern!('mul');
 }
 
 function initWellKnownFunctions(k: BeepContext) {

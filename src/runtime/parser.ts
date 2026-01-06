@@ -168,9 +168,21 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
+  const mulExpr = binop(
+    str("*"),
+    postfixExpr,
+    (op, left, right): Expr => ({ type: "binOp", op, left, right })
+  );
+
+  const addSubExpr = binop(
+    either(str("+"), str("-")),
+    mulExpr,
+    (op, left, right): Expr => ({ type: "binOp", op, left, right })
+  );
+
   const modExpr = binop(
     str("%"),
-    postfixExpr,
+    addSubExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 

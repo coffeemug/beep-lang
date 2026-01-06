@@ -211,6 +211,36 @@ export function makeInterpreter(k: BeepContext) {
             throw new Error(`No mod method on ${show(left)}`);
           }
 
+          case '+': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            const addMethod = left.type.methods.get(k.addSymbol);
+            if (addMethod) {
+              return ret(callMethod(bindMethod(addMethod, left), [right]));
+            }
+            throw new Error(`No add method on ${show(left)}`);
+          }
+
+          case '-': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            const subMethod = left.type.methods.get(k.subSymbol);
+            if (subMethod) {
+              return ret(callMethod(bindMethod(subMethod, left), [right]));
+            }
+            throw new Error(`No sub method on ${show(left)}`);
+          }
+
+          case '*': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            const mulMethod = left.type.methods.get(k.mulSymbol);
+            if (mulMethod) {
+              return ret(callMethod(bindMethod(mulMethod, left), [right]));
+            }
+            throw new Error(`No mul method on ${show(left)}`);
+          }
+
           case 'and': {
             const left = evaluate(expr.left, scope).value;
             if (k.isEqual(left, k.falseObj)) return ret(left);
