@@ -48,17 +48,7 @@ export function initStruct(k: BeepContext) {
 
     // Save the default get_member before overriding
     const defaultGetMember = namedStructType.methods.get(k.getMemberSymbol)!;
-
-    // Add get_item to access struct fields
     const defInstanceMethod = k.makeDefNative<NamedStructObj>(k.kernelModule.toplevelScope, namedStructType);
-    defInstanceMethod('get_item', 1, (thisObj, args) => {
-      const fieldName = args[0] as SymbolObj;
-      const structField = thisObj.fields.get(fieldName);
-      if (structField === undefined) {
-        throw new Error(`Field ${fieldName.name} not found on struct ${namedStructType.name.name}`);
-      }
-      return structField;
-    });
 
     // Override get_member to check struct fields first, then fall back to default
     defInstanceMethod('get_member', 1, (thisObj, args) => {
@@ -69,6 +59,16 @@ export function initStruct(k: BeepContext) {
       }
       // Fall back to default (methods, own methods)
       return k.callBoundMethod(k.bindMethod(defaultGetMember, thisObj), args);
+    });
+
+    // set_member sets a struct field (not methods)
+    defInstanceMethod('set_member', 2, (thisObj, args) => {
+      const memberName = args[0] as SymbolObj;
+      if (!thisObj.fields.has(memberName)) {
+        throw new Error(`Cannot set member ${memberName.name} on struct ${namedStructType.name.name} (not a field)`);
+      }
+      thisObj.fields.set(memberName, args[1]);
+      return args[1];
     });
 
     // Add 'new' own method for instantiation: Person.new('Alice', 30)

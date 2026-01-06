@@ -94,6 +94,18 @@ export function initListMethods(k: BeepContext) {
     return thisObj.elements[idx];
   });
 
+  defMethod('set_item', 2, (thisObj, args) => {
+    if (args[0].tag !== 'IntObj') {
+      throw new Error(`List index must be an integer, got ${args[0].tag}`);
+    }
+    const idx = Number((args[0] as IntObj).value);
+    if (idx >= thisObj.elements.length) {
+      throw new Error("Index out of bounds");
+    }
+    thisObj.elements[idx] = args[1];
+    return args[1];
+  });
+
   const deepFlatten = (elements: RuntimeObj[]): RuntimeObj[] => {
     const result: RuntimeObj[] = [];
     for (const el of elements) {

@@ -107,6 +107,28 @@ export function makeInterpreter(k: BeepContext) {
         return ret(callMethod(receiver, k.getItemSymbol, [index]));
       }
 
+      case 'indexAssign': {
+        const receiver = evaluate(expr.receiver, scope).value;
+        const index = evaluate(expr.index, scope).value;
+        const value = evaluate(expr.value, scope).value;
+        return ret(callMethod(receiver, k.setItemSymbol, [index, value]));
+      }
+
+      case 'fieldAssign': {
+        const receiver = evaluate(expr.receiver, scope).value;
+        const value = evaluate(expr.value, scope).value;
+        return ret(callMethod(receiver, k.setMemberSymbol, [expr.fieldName, value]));
+      }
+
+      case 'memberAssign': {
+        const receiver = getBinding(thisSymbol, scope);
+        if (!receiver) {
+          throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
+        }
+        const value = evaluate(expr.value, scope).value;
+        return ret(callMethod(receiver, k.setMemberSymbol, [expr.fieldName, value]));
+      }
+
       case 'funcall': {
         const fn = evaluate(expr.fn, scope).value as BoundMethodObj;
         if (fn.tag !== 'BoundMethodObj') {

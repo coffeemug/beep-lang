@@ -51,6 +51,8 @@ export type BeepContext = {
   addSymbol: SymbolObj,
   subSymbol: SymbolObj,
   mulSymbol: SymbolObj,
+  setItemSymbol: SymbolObj,
+  setMemberSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: bigint) => IntObj,
@@ -150,6 +152,8 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.addSymbol = k.intern!('add');
   k.subSymbol = k.intern!('sub');
   k.mulSymbol = k.intern!('mul');
+  k.setItemSymbol = k.intern!('set_item');
+  k.setMemberSymbol = k.intern!('set_member');
 }
 
 function initWellKnownFunctions(k: BeepContext) {

@@ -57,6 +57,12 @@ export function initMapMethods(k: BeepContext) {
     return kvValue;
   });
 
+  defMethod('set_item', 2, (thisObj, args) => {
+    const fieldName = args[0] as SymbolObj;
+    thisObj.kv.set(fieldName, args[1]);
+    return args[1];
+  });
+
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
     if (other.tag !== 'MapObj') return k.falseObj;

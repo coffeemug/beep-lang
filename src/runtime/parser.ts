@@ -32,6 +32,9 @@ export type Expr =
   | { type: "block"; exprs: Expr[] }
   | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
   | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
+  | { type: "indexAssign"; receiver: Expr; index: Expr; value: Expr }
+  | { type: "fieldAssign"; receiver: Expr; fieldName: SymbolObj; value: Expr }
+  | { type: "memberAssign"; fieldName: SymbolObj; value: Expr }
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
@@ -237,6 +240,25 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     value,
   }));
 
+  // Index assignment: obj[index] = value
+  const indexAssign = seq(primary, "[", expr, "]", "=", expr)
+    .map(([receiver, _lb, index, _rb, _eq, value]): Expr => ({
+      type: "indexAssign", receiver, index, value
+    }));
+
+  // Field assignment: obj.field = value
+  const fieldAssign = seq(primary, ".", symbol, "=", expr)
+    .map(([receiver, _dot, fieldName, _eq, value]): Expr => ({
+      type: "fieldAssign", receiver, fieldName, value
+    }));
+
+  // Member assignment: @field = value
+  const memberAssign = seq(memberVar, "=", expr)
+    .map(([member, _eq, value]): Expr => ({
+      type: "memberAssign", fieldName: member.fieldName, value
+    }));
+
+
   const lexicalBlock = fwd(() => block("do", "end"));
 
   const forLoop = seq(
@@ -276,7 +298,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       return { type: "if", branches, else_ };
     });
 
-  const statement = either(ifStatement, forLoop, vardecl, assign, lexicalBlock);
+  const statement = either(ifStatement, forLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
 
   /*
     Blocks
