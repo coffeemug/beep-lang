@@ -4,7 +4,6 @@ import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj }
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
-import type { RangeObj } from "../data_structures/range";
 import type { IntObj } from "../data_structures/int";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
@@ -209,11 +208,7 @@ export function makeInterpreter(k: BeepContext) {
             if (modMethod) {
               return ret(callMethod(bindMethod(modMethod, left), [right]));
             }
-            const rmodMethod = right.type.methods.get(k.rmodSymbol);
-            if (rmodMethod) {
-              return ret(callMethod(bindMethod(rmodMethod, right), [left]));
-            }
-            throw new Error(`No mod method on ${show(left)} or rmod on ${show(right)}`);
+            throw new Error(`No mod method on ${show(left)}`);
           }
 
           case 'and': {

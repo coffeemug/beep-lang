@@ -21,6 +21,7 @@
 - mixins (e.g. to auto-add enumeration methods based on `each`)
 - protocols/contracts
 - iterables
+- decide on `coerce` vs `add`/`radd` approach
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
