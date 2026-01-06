@@ -74,7 +74,8 @@ export type BeepContext = {
   // More well-known functions
   evaluate(expr: Expr, scope: ScopeObj): EvalResult,
   show: (obj: RuntimeObj) => string,
-  callMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
+  callBoundMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
+  callMethod: (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]) => RuntimeObj,
   isEqual: (a: RuntimeObj, b: RuntimeObj) => boolean,
 }
 
@@ -154,7 +155,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
 function initWellKnownFunctions(k: BeepContext) {
   const { bindMethod, showSymbol, thisSymbol } = k;
 
-  k.callMethod = (method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
+  k.callBoundMethod = (method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
     const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
     if (args.length !== expectedCount) {
       throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
@@ -172,6 +173,14 @@ function initWellKnownFunctions(k: BeepContext) {
     return k.evaluate(method.body, callScope).value;
   }
 
+  k.callMethod = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {
+    const method = obj.type.methods.get(methodName);
+    if (!method) {
+      throw new Error(`No ${methodName.name} method on ${k.show(obj)}`);
+    }
+    return k.callBoundMethod(bindMethod(method, obj), args);
+  }
+
   k.show = (obj: RuntimeObj): string  => {
     const showMethod = obj.type.methods.get(showSymbol);
     if (!showMethod) {
@@ -179,7 +188,7 @@ function initWellKnownFunctions(k: BeepContext) {
     }
 
     const boundMethod = bindMethod(showMethod, obj);
-    const result = k.callMethod(boundMethod, []) as StringObj;
+    const result = k.callBoundMethod(boundMethod, []) as StringObj;
     return result.value;
   }
 
@@ -192,7 +201,7 @@ function initWellKnownFunctions(k: BeepContext) {
     // Try a.eq(b)
     const aEqMethod = a.type.methods.get(k.eqSymbol);
     if (aEqMethod) {
-      const result = k.callMethod(bindMethod(aEqMethod, a), [b]) as IntObj;
+      const result = k.callBoundMethod(bindMethod(aEqMethod, a), [b]) as IntObj;
       if (result.value === 0n || result.value === 1n) {
         return result.value === 1n;
       }
@@ -201,7 +210,7 @@ function initWellKnownFunctions(k: BeepContext) {
     // Try b.eq(a)
     const bEqMethod = b.type.methods.get(k.eqSymbol);
     if (bEqMethod) {
-      const result = k.callMethod(bindMethod(bEqMethod, b), [a]) as IntObj;
+      const result = k.callBoundMethod(bindMethod(bEqMethod, b), [a]) as IntObj;
       if (result.value === 0n || result.value === 1n) {
         return result.value === 1n;
       }

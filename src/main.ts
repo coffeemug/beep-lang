@@ -12,7 +12,7 @@ import type { RuntimeObj } from "./runtime_objects";
 async function main(): Promise<void> {
   const ctx = makeBeepContext();
   const {
-    symbolSpaceObj: symbolSpace, show, callMethod, bindMethod,
+    symbolSpaceObj: symbolSpace, show, callBoundMethod: callMethod, bindMethod,
     evaluate, intern, makeModuleObj,
   } = ctx;
 

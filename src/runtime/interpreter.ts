@@ -11,8 +11,8 @@ export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
-    bindMethod, makeUnboundMethodObj, show, callMethod, makeScopeObj,
-    defineNamedStruct, makeRangeObj
+    makeUnboundMethodObj, show, callBoundMethod, callMethod, makeScopeObj,
+    defineNamedStruct, makeRangeObj, bindMethod
    } = k;
 
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
@@ -58,11 +58,7 @@ export function makeInterpreter(k: BeepContext) {
         if (!receiver) {
           throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
         }
-        const getMemberMethod = receiver.type.methods.get(k.getMemberSymbol);
-        if (!getMemberMethod) {
-          throw new Error(`No get_member on ${show(receiver.type)}`);
-        }
-        return ret(callMethod(bindMethod(getMemberMethod, receiver), [expr.fieldName]));
+        return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));
       }
 
       case 'methodDef': {
@@ -102,21 +98,13 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
-        const getMemberMethod = receiver.type.methods.get(k.getMemberSymbol);
-        if (!getMemberMethod) {
-          throw new Error(`No get_member on ${show(receiver.type)}`);
-        }
-        return ret(callMethod(bindMethod(getMemberMethod, receiver), [expr.fieldName]));
+        return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));
       }
 
       case 'indexAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
         const index = evaluate(expr.index, scope).value;
-        const getItemMethod = receiver.type.methods.get(k.getItemSymbol);
-        if (!getItemMethod) {
-          throw new Error(`No get_item on ${show(receiver.type)}`);
-        }
-        return ret(callMethod(bindMethod(getItemMethod, receiver), [index]));
+        return ret(callMethod(receiver, k.getItemSymbol, [index]));
       }
 
       case 'funcall': {
@@ -125,7 +113,7 @@ export function makeInterpreter(k: BeepContext) {
           throw new Error(`Cannot call ${show(fn)}`);
         }
         const args = expr.args.map(arg => evaluate(arg, scope).value);
-        return ret(callMethod(fn, args));
+        return ret(callBoundMethod(fn, args));
       }
 
       case 'block': {
@@ -204,41 +192,25 @@ export function makeInterpreter(k: BeepContext) {
           case '%': {
             const left = evaluate(expr.left, scope).value;
             const right = evaluate(expr.right, scope).value;
-            const modMethod = left.type.methods.get(k.modSymbol);
-            if (modMethod) {
-              return ret(callMethod(bindMethod(modMethod, left), [right]));
-            }
-            throw new Error(`No mod method on ${show(left)}`);
+            return ret(callMethod(left, k.modSymbol, [right]));
           }
 
           case '+': {
             const left = evaluate(expr.left, scope).value;
             const right = evaluate(expr.right, scope).value;
-            const addMethod = left.type.methods.get(k.addSymbol);
-            if (addMethod) {
-              return ret(callMethod(bindMethod(addMethod, left), [right]));
-            }
-            throw new Error(`No add method on ${show(left)}`);
+            return ret(callMethod(left, k.addSymbol, [right]));
           }
 
           case '-': {
             const left = evaluate(expr.left, scope).value;
             const right = evaluate(expr.right, scope).value;
-            const subMethod = left.type.methods.get(k.subSymbol);
-            if (subMethod) {
-              return ret(callMethod(bindMethod(subMethod, left), [right]));
-            }
-            throw new Error(`No sub method on ${show(left)}`);
+            return ret(callMethod(left, k.subSymbol, [right]));
           }
 
           case '*': {
             const left = evaluate(expr.left, scope).value;
             const right = evaluate(expr.right, scope).value;
-            const mulMethod = left.type.methods.get(k.mulSymbol);
-            if (mulMethod) {
-              return ret(callMethod(bindMethod(mulMethod, left), [right]));
-            }
-            throw new Error(`No mul method on ${show(left)}`);
+            return ret(callMethod(left, k.mulSymbol, [right]));
           }
 
           case 'and': {
@@ -262,11 +234,7 @@ export function makeInterpreter(k: BeepContext) {
         // TODO: use enumerables (once enumerable protocol is a thing)
         let iterable = evaluate(expr.iterable, scope).value;
         if (iterable.tag === 'RangeObj') {
-          const listMethod = iterable.type.methods.get(k.listSymbol);
-          if (!listMethod) {
-            throw new Error('Range has no list method');
-          }
-          iterable = callMethod(bindMethod(listMethod, iterable), []);
+          iterable = callMethod(iterable, k.listSymbol, []);
         }
         if (iterable.tag !== 'ListObj') {
           throw new Error(`for loop requires a list or range, got ${show(iterable)}`);

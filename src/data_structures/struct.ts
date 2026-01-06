@@ -68,7 +68,7 @@ export function initStruct(k: BeepContext) {
         return structField;
       }
       // Fall back to default (methods, own methods)
-      return k.callMethod(k.bindMethod(defaultGetMember, thisObj), args);
+      return k.callBoundMethod(k.bindMethod(defaultGetMember, thisObj), args);
     });
 
     // Add 'new' own method for instantiation: Person.new('Alice', 30)
