@@ -53,6 +53,10 @@ export type BeepContext = {
   mulSymbol: SymbolObj,
   setItemSymbol: SymbolObj,
   setMemberSymbol: SymbolObj,
+  ltSymbol: SymbolObj,
+  lteSymbol: SymbolObj,
+  gtSymbol: SymbolObj,
+  gteSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: bigint) => IntObj,
@@ -154,6 +158,10 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.mulSymbol = k.intern!('mul');
   k.setItemSymbol = k.intern!('set_item');
   k.setMemberSymbol = k.intern!('set_member');
+  k.ltSymbol = k.intern!('lt');
+  k.lteSymbol = k.intern!('lte');
+  k.gtSymbol = k.intern!('gt');
+  k.gteSymbol = k.intern!('gte');
 }
 
 function initWellKnownFunctions(k: BeepContext) {

@@ -200,9 +200,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     })
   );
 
+  const orderingExpr = binop(
+    either(str("<="), str(">="), str("<"), str(">")),
+    rangeExpr,
+    (op, left, right): Expr => ({ type: "binOp", op, left, right })
+  );
+
   const comparisonExpr = binop(
     str("=="),
-    rangeExpr,
+    orderingExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 

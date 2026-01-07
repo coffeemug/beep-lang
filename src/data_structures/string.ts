@@ -48,4 +48,36 @@ export function initStringMethods(k: BeepContext) {
     if (other.tag !== 'StringObj') return k.falseObj;
     return thisObj.value === (other as StringObj).value ? k.trueObj : k.falseObj;
   });
+
+  defMethod('lt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'StringObj') {
+      throw new Error(`lt requires a string, got ${k.show(other)}`);
+    }
+    return thisObj.value < (other as StringObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('lte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'StringObj') {
+      throw new Error(`lte requires a string, got ${k.show(other)}`);
+    }
+    return thisObj.value <= (other as StringObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'StringObj') {
+      throw new Error(`gt requires a string, got ${k.show(other)}`);
+    }
+    return thisObj.value > (other as StringObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'StringObj') {
+      throw new Error(`gte requires a string, got ${k.show(other)}`);
+    }
+    return thisObj.value >= (other as StringObj).value ? k.trueObj : k.falseObj;
+  });
 }

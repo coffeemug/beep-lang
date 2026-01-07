@@ -77,4 +77,36 @@ export function initIntMethods(k: BeepContext) {
     }
     return makeIntObj(thisObj.value * (other as IntObj).value);
   });
+
+  defMethod('lt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`lt requires an integer, got ${k.show(other)}`);
+    }
+    return thisObj.value < (other as IntObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('lte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`lte requires an integer, got ${k.show(other)}`);
+    }
+    return thisObj.value <= (other as IntObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`gt requires an integer, got ${k.show(other)}`);
+    }
+    return thisObj.value > (other as IntObj).value ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`gte requires an integer, got ${k.show(other)}`);
+    }
+    return thisObj.value >= (other as IntObj).value ? k.trueObj : k.falseObj;
+  });
 }

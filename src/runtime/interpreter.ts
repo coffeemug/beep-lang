@@ -235,6 +235,30 @@ export function makeInterpreter(k: BeepContext) {
             return ret(callMethod(left, k.mulSymbol, [right]));
           }
 
+          case '<': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(callMethod(left, k.ltSymbol, [right]));
+          }
+
+          case '<=': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(callMethod(left, k.lteSymbol, [right]));
+          }
+
+          case '>': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(callMethod(left, k.gtSymbol, [right]));
+          }
+
+          case '>=': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(callMethod(left, k.gteSymbol, [right]));
+          }
+
           case 'and': {
             const left = evaluate(expr.left, scope).value;
             if (k.isEqual(left, k.falseObj)) return ret(left);

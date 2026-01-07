@@ -132,4 +132,51 @@ export function initListMethods(k: BeepContext) {
     }
     return k.trueObj;
   });
+
+  // Lexicographic comparison for lists
+  const compareLists = (a: ListObj, b: ListObj): number => {
+    const minLen = Math.min(a.elements.length, b.elements.length);
+    for (let i = 0; i < minLen; i++) {
+      const aEl = a.elements[i];
+      const bEl = b.elements[i];
+      // Use lt method to compare elements
+      const ltResult = k.callMethod(aEl, k.ltSymbol, [bEl]);
+      if (k.isEqual(ltResult, k.trueObj)) return -1;
+      const gtResult = k.callMethod(aEl, k.gtSymbol, [bEl]);
+      if (k.isEqual(gtResult, k.trueObj)) return 1;
+    }
+    return a.elements.length - b.elements.length;
+  };
+
+  defMethod('lt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'ListObj') {
+      throw new Error(`lt requires a list, got ${k.show(other)}`);
+    }
+    return compareLists(thisObj, other as ListObj) < 0 ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('lte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'ListObj') {
+      throw new Error(`lte requires a list, got ${k.show(other)}`);
+    }
+    return compareLists(thisObj, other as ListObj) <= 0 ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gt', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'ListObj') {
+      throw new Error(`gt requires a list, got ${k.show(other)}`);
+    }
+    return compareLists(thisObj, other as ListObj) > 0 ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('gte', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'ListObj') {
+      throw new Error(`gte requires a list, got ${k.show(other)}`);
+    }
+    return compareLists(thisObj, other as ListObj) >= 0 ? k.trueObj : k.falseObj;
+  });
 }
