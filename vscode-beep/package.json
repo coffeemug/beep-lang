@@ -1,0 +1,30 @@
+{
+  "name": "beep-language",
+  "displayName": "Beep Language",
+  "description": "Syntax highlighting for the Beep programming language",
+  "version": "0.1.0",
+  "publisher": "beep",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "beep",
+        "aliases": ["Beep", "beep"],
+        "extensions": [".beep"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "beep",
+        "scopeName": "source.beep",
+        "path": "./syntaxes/beep.tmLanguage.json"
+      }
+    ]
+  }
+}
