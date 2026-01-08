@@ -304,6 +304,15 @@ function initPrelude(k: BeepContext) {
   const refEqMethod = defMethod('ref_eq', 2, (_, args) => args[0] === args[1] ? k.trueObj : k.falseObj);
   defineBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
 
+  // intern: takes a string and returns an interned symbol
+  const internMethod = defMethod('intern', 1, (_, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`intern requires a string, got ${k.show(args[0])}`);
+    }
+    return intern((args[0] as StringObj).value);
+  });
+  defineBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
+
   k.falseObj = makeIntObj(0n);
   k.trueObj = makeIntObj(1n);
 }
