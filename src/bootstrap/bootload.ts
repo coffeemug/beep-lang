@@ -324,4 +324,5 @@ function initDynamicScope(k: BeepContext) {
   ]), k.dynamicScope);
 
   defineBinding(k.intern("symbols"), k.symbolSpaceObj, k.dynamicScope);
+  defineBinding(k.intern("loadpath"), k.makeListObj([k.makeStringObj(process.cwd())]), k.dynamicScope);
 }
