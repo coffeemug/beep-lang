@@ -19,6 +19,41 @@ export function makeInterpreter(k: BeepContext) {
     defineNamedStruct, makeRangeObj, bindMethod
    } = k;
 
+  function loadModule(path: string): RuntimeObj {
+    const moduleName = k.intern(path);
+    const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
+
+    // Return existing module if already loaded
+    if (modules.kv.has(moduleName)) {
+      return modules.kv.get(moduleName)!;
+    }
+
+    const filename = path + '.beep';
+    const loadpath = getBinding(k.intern('loadpath'), k.dynamicScope) as ListObj;
+
+    let foundPath: string | null = null;
+    for (const pathObj of loadpath.elements) {
+      const basePath = (pathObj as StringObj).value;
+      const fullPath = join(basePath, filename);
+      if (existsSync(fullPath)) {
+        foundPath = fullPath;
+        break;
+      }
+    }
+
+    if (!foundPath) {
+      throw new Error(`Cannot find module: ${path}`);
+    }
+
+    const moduleObj = k.makeModuleObj(moduleName);
+
+    const source = readFileSync(foundPath, 'utf-8');
+    const ast = parse(source, k.intern);
+    evaluate(ast, moduleObj.toplevelScope);
+
+    return moduleObj;
+  }
+
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
     const ret = (value: RuntimeObj) => ({ value, scope });
 
@@ -325,38 +360,33 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'use': {
-        const moduleName = k.intern(expr.path);
-        const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
+        const moduleObj = loadModule(expr.path);
 
-        // Return existing module if already loaded
-        if (modules.kv.has(moduleName)) {
-          return ret(modules.kv.get(moduleName)!);
-        }
+        // Use alias if provided, otherwise use the last part of path
+        const bindingName = expr.alias
+          ? k.intern(expr.alias)
+          : k.intern(expr.path.split('/').pop()!);
 
-        const filename = expr.path + '.beep';
-        const loadpath = getBinding(k.intern('loadpath'), k.dynamicScope) as ListObj;
-
-        let foundPath: string | null = null;
-        for (const pathObj of loadpath.elements) {
-          const basePath = (pathObj as StringObj).value;
-          const fullPath = join(basePath, filename);
-          if (existsSync(fullPath)) {
-            foundPath = fullPath;
-            break;
-          }
-        }
-
-        if (!foundPath) {
-          throw new Error(`Cannot find module: ${expr.path}`);
-        }
-
-        const moduleObj = k.makeModuleObj(moduleName);
-
-        const source = readFileSync(foundPath, 'utf-8');
-        const ast = parse(source, k.intern);
-        evaluate(ast, moduleObj.toplevelScope);
-
+        defineBinding(bindingName, moduleObj, scope);
         return ret(moduleObj);
+      }
+
+      case 'useNames': {
+        const moduleObj = loadModule(expr.path);
+        const moduleScope = (moduleObj as { toplevelScope: ScopeObj }).toplevelScope;
+
+        const imported: RuntimeObj[] = [];
+        for (const { name, alias } of expr.names) {
+          const value = getBinding(k.intern(name), moduleScope);
+          if (!value) {
+            throw new Error(`Cannot import '${name}' from module ${expr.path}: not found`);
+          }
+          const bindingName = k.intern(alias ?? name);
+          defineBinding(bindingName, value, scope);
+          imported.push(value);
+        }
+
+        return ret(makeListObj(imported));
       }
     }
 

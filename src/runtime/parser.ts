@@ -40,7 +40,8 @@ export type Expr =
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
-  | { type: "use"; path: string };
+  | { type: "use"; path: string; alias: string | null }
+  | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -66,7 +67,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -135,11 +136,42 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       fields,
     }));
 
-  const useStatement = seq("use", sepBy1(ident, "/"))
+  // use foo/bar/baz/[sin, cos as c, tan]
+  const useImport = either(
+    seq(ident, "as", ident).map(([name, _, alias]) => ({ name, alias })),
+    ident.map(name => ({ name, alias: null }))
+  );
+  const useImportList = seq("[", sepBy1(useImport, ","), "]")
+    .map(([_lb, names, _rb]) => names);
+
+  // Path segment: ident followed by /
+  const pathSegment = seq(ident, "/").map(([name, _]) => name);
+
+  // use foo/bar/baz/[sin, cos as c, tan]
+  const useNamesStatement = seq("use", some(pathSegment), useImportList)
+    .map(([_use, parts, names]): Expr => ({
+      type: "useNames",
+      path: parts.join("/"),
+      names,
+    }));
+
+  // use foo/bar/baz as blah
+  const useAsStatement = seq("use", sepBy1(ident, "/"), "as", ident)
+    .map(([_use, parts, _as, alias]): Expr => ({
+      type: "use",
+      path: parts.join("/"),
+      alias,
+    }));
+
+  // use foo/bar/baz
+  const useSimpleStatement = seq("use", sepBy1(ident, "/"))
     .map(([_use, parts]): Expr => ({
       type: "use",
       path: parts.join("/"),
+      alias: null,
     }));
+
+  const useStatement = either(useNamesStatement, useAsStatement, useSimpleStatement);
 
   const definition = either(methodDef, functionDef, structDef);
 
