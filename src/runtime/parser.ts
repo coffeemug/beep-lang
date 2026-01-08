@@ -39,7 +39,8 @@ export type Expr =
   | { type: "binOp"; op: string; left: Expr; right: Expr }
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
-  | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null };
+  | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
+  | { type: "use"; path: string };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -65,7 +66,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -132,6 +133,12 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       type: "structDef" as const,
       name,
       fields,
+    }));
+
+  const useStatement = seq("use", sepBy1(ident, "/"))
+    .map(([_use, parts]): Expr => ({
+      type: "use",
+      path: parts.join("/"),
     }));
 
   const definition = either(methodDef, functionDef, structDef);
@@ -324,7 +331,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Top-level
   */
-  const topLevelClause: parser<Expr> = either(definition, statement, expr);
+  const topLevelClause: parser<Expr> = either(useStatement, definition, statement, expr);
   const topLevel = seq(sepBy(topLevelClause, xsep(";")), eof).map(([exprs, _]): Expr =>
     exprs.length === 1 ? exprs[0] : { type: "block", exprs });
 

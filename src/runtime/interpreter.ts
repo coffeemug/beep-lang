@@ -1,10 +1,13 @@
-import type { Expr } from "./parser";
+import { parse, type Expr } from "./parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
 import type { IntObj } from "../data_structures/int";
+import type { StringObj } from "../data_structures/string";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
@@ -318,6 +321,34 @@ export function makeInterpreter(k: BeepContext) {
           return ret(evaluate(expr.else_, scope).value);
         }
         return ret(makeIntObj(0n));
+      }
+
+      case 'use': {
+        const filename = expr.path + '.beep';
+        const loadpath = getBinding(k.intern('loadpath'), k.dynamicScope) as ListObj;
+
+        let foundPath: string | null = null;
+        for (const pathObj of loadpath.elements) {
+          const basePath = (pathObj as StringObj).value;
+          const fullPath = join(basePath, filename);
+          if (existsSync(fullPath)) {
+            foundPath = fullPath;
+            break;
+          }
+        }
+
+        if (!foundPath) {
+          throw new Error(`Cannot find module: ${expr.path}`);
+        }
+
+        const moduleName = k.intern(expr.path);
+        const moduleObj = k.makeModuleObj(moduleName);
+
+        const source = readFileSync(foundPath, 'utf-8');
+        const ast = parse(source, k.intern);
+        evaluate(ast, moduleObj.toplevelScope);
+
+        return ret(moduleObj);
       }
     }
 
