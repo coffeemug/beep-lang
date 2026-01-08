@@ -6,6 +6,7 @@ import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
 import type { IntObj } from "../data_structures/int";
 import type { StringObj } from "../data_structures/string";
+import type { MapObj } from "../data_structures/map";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
@@ -324,6 +325,14 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'use': {
+        const moduleName = k.intern(expr.path);
+        const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
+
+        // Return existing module if already loaded
+        if (modules.kv.has(moduleName)) {
+          return ret(modules.kv.get(moduleName)!);
+        }
+
         const filename = expr.path + '.beep';
         const loadpath = getBinding(k.intern('loadpath'), k.dynamicScope) as ListObj;
 
@@ -341,7 +350,6 @@ export function makeInterpreter(k: BeepContext) {
           throw new Error(`Cannot find module: ${expr.path}`);
         }
 
-        const moduleName = k.intern(expr.path);
         const moduleObj = k.makeModuleObj(moduleName);
 
         const source = readFileSync(foundPath, 'utf-8');
