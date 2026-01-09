@@ -2,8 +2,7 @@
 # KNOWN BUGS
 
 # NEXT
-- Add mixin support so everyone gets `map`, `filter`, `take_while`, etc.
-- Possibly add `protocol` abstraction
+- Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.). 
 
 # TODO (high risk):
 - Variants and pattern matching
@@ -46,4 +45,6 @@ class objects and build methods on top of that.
 - Loops
 - Get FizzBuzz working
 - Iterators now supported on lists/ranges and in for loops
+- Add mixin support so all iterables get methods like `map`
+- Possibly add `protocol` abstraction (ended up being `prototype`)
 

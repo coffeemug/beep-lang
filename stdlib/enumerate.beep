@@ -1,0 +1,12 @@
+
+proto enumerate
+
+def enumerate/map(cb)
+  let res = []
+  for x in this.make_iter()
+    res.push!(cb(x))
+  end
+
+  res
+end
+

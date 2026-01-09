@@ -66,7 +66,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Variables
   */
-  const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
+  const keyword = (kw: string) => lex(lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k));
   const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))

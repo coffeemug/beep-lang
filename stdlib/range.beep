@@ -1,0 +1,26 @@
+
+use stdlib/enumerate/[enumerate]
+
+def range/make_iter()
+  range_iter.new(this, this.start())
+end
+
+struct range_iter
+  range, n
+end
+
+def range_iter/make_iter()
+  this
+end
+
+def range_iter/next()
+  if @n < @range.stop_excl()
+    let val = @n
+    @n = @n + 1
+    [:ok, val]
+  else
+    [:done]
+  end
+end
+
+mix enumerate into range
