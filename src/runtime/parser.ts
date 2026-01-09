@@ -136,43 +136,25 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       fields,
     }));
 
-  // use foo/bar/baz/[sin, cos as c, tan]
+  // use foo/bar/baz
+  // use foo/bar/baz as alias
+  // use foo/bar/baz/[sin, cos as c]
+  const useStatement = seq("use", lex(sepBy1(ident, "/", "leave")), fwd(() => useSuffix))
+    .map(([_use, parts, toExpr]) => toExpr(parts.join("/")));
+
+  const useSuffix = either(
+    seq("as", ident).map(([_, alias]) => (path: string): Expr => ({ type: "use", path, alias })),
+    seq("/", fwd(() => useImportList)).map(([_, names]) => (path: string): Expr => ({ type: "useNames", path, names })),
+    noop.map(() => (path: string): Expr => ({ type: "use", path, alias: null })),
+  );
+  
+  const useImportList = seq("[", sepBy1(fwd(() => useImport), ","), "]")
+    .map(([_lb, names, _rb]) => names);
+  
   const useImport = either(
     seq(ident, "as", ident).map(([name, _, alias]) => ({ name, alias })),
     ident.map(name => ({ name, alias: null }))
   );
-  const useImportList = seq("[", sepBy1(useImport, ","), "]")
-    .map(([_lb, names, _rb]) => names);
-
-  // Path segment: ident followed by /
-  const pathSegment = seq(ident, "/").map(([name, _]) => name);
-
-  // use foo/bar/baz/[sin, cos as c, tan]
-  const useNamesStatement = seq("use", some(pathSegment), useImportList)
-    .map(([_use, parts, names]): Expr => ({
-      type: "useNames",
-      path: parts.join("/"),
-      names,
-    }));
-
-  // use foo/bar/baz as blah
-  const useAsStatement = seq("use", sepBy1(ident, "/"), "as", ident)
-    .map(([_use, parts, _as, alias]): Expr => ({
-      type: "use",
-      path: parts.join("/"),
-      alias,
-    }));
-
-  // use foo/bar/baz
-  const useSimpleStatement = seq("use", sepBy1(ident, "/"))
-    .map(([_use, parts]): Expr => ({
-      type: "use",
-      path: parts.join("/"),
-      alias: null,
-    }));
-
-  const useStatement = either(useNamesStatement, useAsStatement, useSimpleStatement);
-
   const definition = either(methodDef, functionDef, structDef);
 
   /*
