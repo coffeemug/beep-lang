@@ -16,7 +16,7 @@ export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
     makeUnboundMethodObj, show, callBoundMethod, callMethod, makeScopeObj,
-    defineNamedStruct, makeRangeObj, bindMethod
+    defineNamedStruct, defineNamedPrototype, makeRangeObj, bindMethod
    } = k;
 
   function loadModule(path: string): RuntimeObj {
@@ -240,6 +240,16 @@ export function makeInterpreter(k: BeepContext) {
         }
         defineBinding(expr.name, structType, targetScope);
         return ret(structType);
+      }
+
+      case 'prototypeDef': {
+        const prototypeType = defineNamedPrototype(expr.name);
+        let targetScope = scope;
+        while (targetScope.parent) {
+          targetScope = targetScope.parent;
+        }
+        defineBinding(expr.name, prototypeType, targetScope);
+        return ret(prototypeType);
       }
 
       case 'binOp': {

@@ -43,6 +43,7 @@ export type Expr =
   | { type: "fieldAssign"; receiver: Expr; fieldName: SymbolObj; value: Expr }
   | { type: "memberAssign"; fieldName: SymbolObj; value: Expr }
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
+  | { type: "prototypeDef"; name: SymbolObj }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
@@ -65,7 +66,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -121,7 +122,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  const functionDef = seq("def", symbol, arglist, fnBody)
+  const functionDef = seq(keyword("def"), symbol, arglist, fnBody)
     .map(([_def, name, params, body]): Expr => ({
       type: "functionDef" as const,
       name,
@@ -129,11 +130,17 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  const structDef = seq("struct", symbol, sepBy(symbol, ","), "end")
+  const structDef = seq(keyword("struct"), symbol, sepBy(symbol, ","), "end")
     .map(([_struct, name, fields, _end]): Expr => ({
       type: "structDef" as const,
       name,
       fields,
+    }));
+
+  const prototypeDef = seq(keyword("proto"), symbol)
+    .map(([_prototype, name]): Expr => ({
+      type: "prototypeDef" as const,
+      name,
     }));
 
   // use foo/bar/baz
@@ -155,7 +162,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq(ident, "as", ident).map(([name, _, alias]) => ({ name, alias })),
     ident.map(name => ({ name, alias: null }))
   );
-  const definition = either(methodDef, functionDef, structDef);
+  const definition = either(methodDef, functionDef, structDef, prototypeDef);
 
   /*
     Compound expressions

@@ -14,6 +14,7 @@ import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
+import { initPrototype, initPrototypeMethods, type PrototypeTypeObj, type NamedPrototypeTypeObj } from "../runtime/prototype";
 
 export type BeepContext = {
   symbolSpaceObj: SymbolSpaceObj,
@@ -30,6 +31,7 @@ export type BeepContext = {
   listTypeObj: ListTypeObj,
   mapTypeObj: MapTypeObj,
   structTypeObj: StructTypeObj,
+  prototypeTypeObj: PrototypeTypeObj,
   rangeTypeObj: RangeTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
@@ -75,6 +77,7 @@ export type BeepContext = {
 
   defineNamedStruct: (name: SymbolObj, fields: SymbolObj[]) => NamedStructTypeObj,
   instantiateNamedStruct: (namedStructTypeObj: NamedStructTypeObj, fields: RuntimeObj[]) => NamedStructObj,
+  defineNamedPrototype: (name: SymbolObj) => NamedPrototypeTypeObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding?: 'instance' | 'own') =>
@@ -149,6 +152,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   initModule(k as BeepContext);
   initScope(k as BeepContext);
   initStruct(k as BeepContext);
+  initPrototype(k as BeepContext);
 
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
@@ -278,7 +282,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope', 'map', 'structure', 'range',
+    'module', 'scope', 'map', 'structure', 'prototype', 'range',
   ];
   const scope = k.kernelModule!.toplevelScope;
 
@@ -299,6 +303,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   initModuleMethods(k as BeepContext);
   initScopeMethods(k);
   initStructMethods(k);
+  initPrototypeMethods(k);
   initRangeMethods(k);
 }
 

@@ -22,7 +22,6 @@ def list_iter/next()
 end
 
 
-
 def range/make_iter()
   range_iter.new(this, this.start())
 end
@@ -44,3 +43,4 @@ def range_iter/next()
     [:done]
   end
 end
+
