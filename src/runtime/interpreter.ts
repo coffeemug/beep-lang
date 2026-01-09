@@ -398,6 +398,20 @@ export function makeInterpreter(k: BeepContext) {
 
         return ret(makeListObj(imported));
       }
+
+      case 'mixInto': {
+        const prototype = getBinding(expr.prototype, scope);
+        if (!prototype) {
+          throw new Error(`Unbound symbol ${show(expr.prototype)}`);
+        }
+        const target = getBinding(expr.target, scope);
+        if (!target) {
+          throw new Error(`Unbound symbol ${show(expr.target)}`);
+        }
+        // mix_into is an own method, so we need to get it via get_member
+        const mixIntoMethod = callMethod(prototype, k.getMemberSymbol, [k.intern('mix_into')]);
+        return ret(callBoundMethod(mixIntoMethod as BoundMethodObj, [target]));
+      }
     }
 
     const _exhaustive: never = expr;

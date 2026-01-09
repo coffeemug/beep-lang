@@ -5,8 +5,10 @@
   "patterns": [
     { "include": "#comments" },
     { "include": "#use-statement" },
+    { "include": "#mix-into-statement" },
     { "include": "#def-block" },
     { "include": "#struct-block" },
+    { "include": "#proto-statement" },
     { "include": "#keywords" },
     { "include": "#strings" },
     { "include": "#numbers" },
@@ -117,6 +119,22 @@
           "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }
       ]
+    },
+    "proto-statement": {
+      "match": "\\b(proto)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.proto.beep" },
+        "2": { "name": "entity.name.type.beep" }
+      }
+    },
+    "mix-into-statement": {
+      "match": "\\b(mix)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+(into)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.mix.beep" },
+        "2": { "name": "entity.name.type.beep" },
+        "3": { "name": "keyword.other.mix.beep" },
+        "4": { "name": "entity.name.type.beep" }
+      }
     },
     "keywords": {
       "patterns": [

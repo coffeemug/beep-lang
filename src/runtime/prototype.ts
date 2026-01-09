@@ -3,6 +3,7 @@ import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import { type BeepContext, registerDefaultMethods } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
+import type { TypeObj } from "../runtime_objects";
 
 export type PrototypeTypeObj =
   & RuntimeObjMixin<'PrototypeTypeObj', RootTypeObj>
@@ -35,6 +36,17 @@ export function initPrototype(k: BeepContext) {
       ownMethods: new Map(),
     };
     registerDefaultMethods(k, namedPrototypeType);
+
+    // Add 'mix_into' own method: MyProto.mix_into(SomeType)
+    const defOwnMethod = k.makeDefNative<NamedPrototypeTypeObj>(k.kernelModule.toplevelScope, namedPrototypeType, 'own');
+    defOwnMethod('mix_into', 1, (thisObj, args) => {
+      const targetType = args[0] as TypeObj;
+      // Copy all methods from this prototype to the target type
+      for (const [methodName, method] of thisObj.methods) {
+        targetType.methods.set(methodName, method);
+      }
+      return targetType;
+    });
 
     return namedPrototypeType;
   };

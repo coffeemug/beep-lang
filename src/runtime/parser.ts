@@ -49,7 +49,8 @@ export type Expr =
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
   | { type: "use"; path: string; alias: string | null }
-  | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] };
+  | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] }
+  | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -66,7 +67,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k);
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -162,6 +163,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq(ident, "as", ident).map(([name, _, alias]) => ({ name, alias })),
     ident.map(name => ({ name, alias: null }))
   );
+
+  // mix foo into bar
+  const mixIntoStatement = seq(lex(keyword("mix")), symbol, lex(keyword("into")), symbol)
+    .map(([_mix, prototype, _into, target]): Expr => ({
+      type: "mixInto",
+      prototype,
+      target,
+    }));
+
   const definition = either(methodDef, functionDef, structDef, prototypeDef);
 
   /*
@@ -352,7 +362,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Top-level
   */
-  const topLevelClause: parser<Expr> = either(useStatement, definition, statement, expr);
+  const topLevelClause: parser<Expr> = either(useStatement, mixIntoStatement, definition, statement, expr);
   const topLevel = seq(sepBy(topLevelClause, xsep(";")), eof).map(([exprs, _]): Expr =>
     exprs.length === 1 ? exprs[0] : { type: "block", exprs });
 
