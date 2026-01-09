@@ -2,6 +2,13 @@ import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, se
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 
+const identFirstChar = either(alpha, "_");
+const identChar = either(alnum, "_");
+const ident = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) =>
+  [first, ...rest].join(""));
+export const symbolName = lex(seq(ident, maybe("!"))).map(([name, bang]) =>
+  name + (bang ?? ""));
+
 const xsep = <T>(p: parserlike<T>) =>
   lexMode("keep_newlines", either(some("\n"), seq(p, peek(not("\n")))).map(_ => {}));
 
@@ -52,16 +59,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Identifiers and symbols
   */
-  const identFirstChar = either(alpha, "_");
-  const identChar = either(alnum, "_");
-
-  const ident = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) =>
-    [first, ...rest].join(""));
-
-  const symbol = ident.map(intern);
-
-  const methodNameSym = lex(seq(ident, maybe("!"))).map(([name, bang]) =>
-    intern(name + (bang ?? "")));
+  const symbol = symbolName.map(intern);
 
   /*
     Variables
@@ -91,8 +89,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const strLit = lex(seq("'", many(anych({ but: "'" })), "'"))
     .map(([_q1, chars, _q2]) => ({ type: "string" as const, value: chars.join("") }));
 
-  const quotedSymbol = seq(":", symbol)
-    .map(([_colon, sym]) => ({ type: "quotedSymbol" as const, sym }));
+  const quotedSymbol = either(
+    seq(":", strLit).map(([_, str]) => ({ type: "quotedSymbol" as const, sym: intern(str.value) })),
+    seq(":", symbol).map(([_colon, sym]) => ({ type: "quotedSymbol" as const, sym }))
+  );
 
   const listLit = seq("[", sepBy(expr, ","), "]")
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
@@ -112,7 +112,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const arglist = seq("(", sepBy(symbol, ","), ")").map(([_lp, params, _rp]) => params);
   const fnBody = fwd(() => block(noop, "end"));
 
-  const methodDef = seq("def", symbol, "/", methodNameSym, arglist, fnBody)
+  const methodDef = seq("def", symbol, "/", symbol, arglist, fnBody)
     .map(([_def, receiverType, _slash, name, params, body]): Expr => ({
       type: "methodDef" as const,
       receiverType,
@@ -121,7 +121,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
-  const functionDef = seq("def", methodNameSym, arglist, fnBody)
+  const functionDef = seq("def", symbol, arglist, fnBody)
     .map(([_def, name, params, body]): Expr => ({
       type: "functionDef" as const,
       name,
@@ -167,7 +167,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     args,
   }));
 
-  const fieldAccessSuffix = seq(".", methodNameSym).map(([_dot, name]): Suffix => ({
+  const fieldAccessSuffix = seq(".", symbol).map(([_dot, name]): Suffix => ({
     type: "fieldAccess",
     name,
   }));

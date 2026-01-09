@@ -2,6 +2,8 @@ import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
 import type { BeepContext } from "./bootload";
 import type { SymbolId } from "./symbol_space";
+import { symbolName } from "../runtime/parser";
+import { fromString, lexMode, seq, eof } from "@spakhm/ts-parsec";
 
 export type SymbolTypeObj =
   & RuntimeObjMixin<'SymbolTypeObj', RootTypeObj>
@@ -38,7 +40,15 @@ export function initSymbolMethods(k: BeepContext) {
 
   const defMethod = makeDefNative<SymbolObj>(k.kernelModule.toplevelScope, symbolTypeObj);
 
-  defMethod('show', 0, thisObj => makeStringObj(`${thisObj.name}`));
+  defMethod('show', 0, thisObj => {
+    const name = thisObj.name;
+    const result = lexMode("keep_all", seq(symbolName, eof))(fromString(name));
+    if (result.type === 'ok') {
+      return makeStringObj(name);
+    } else {
+      return makeStringObj(`:'${name}'`);
+    }
+  });
   defMethod('id', 0, thisObj => makeIntObj(thisObj.id));
 
   defMethod('lt', 1, (thisObj, args) => {
