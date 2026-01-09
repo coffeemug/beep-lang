@@ -140,7 +140,7 @@
       "patterns": [
         {
           "name": "keyword.control.beep",
-          "match": "\\b(if|then|elif|else|end|for|in|do|and|or)\\b"
+          "match": "\\b(if|then|elif|else|end|for|while|in|do|and|or)\\b"
         },
         {
           "name": "keyword.other.beep",

@@ -343,6 +343,16 @@ export function makeInterpreter(k: BeepContext) {
         return ret(result);
       }
 
+      case 'while': {
+        let result: RuntimeObj = makeIntObj(0n);
+        while (true) {
+          const cond = evaluate(expr.cond, scope).value;
+          if (k.isEqual(cond, k.falseObj)) break;
+          result = evaluate(expr.body, scope).value;
+        }
+        return ret(result);
+      }
+
       case 'range': {
         const start = evaluate(expr.start, scope).value;
         const end = evaluate(expr.end, scope).value;

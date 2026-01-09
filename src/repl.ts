@@ -22,16 +22,17 @@ function saveHistory(history: string[]): void {
   writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
 }
 
-// Check if input has unmatched block starters (def/struct/for/if) vs ends
+// Check if input has unmatched block starters (def/struct/for/if/while) vs ends
 function isInsideBlock(input: string): boolean {
   const defCount = (input.match(/\bdef\b/g) || []).length;
   const structCount = (input.match(/\bstruct\b/g) || []).length;
   const forCount = (input.match(/\bfor\b/g) || []).length;
+  const whileCount = (input.match(/\bwhile\b/g) || []).length;
   const ifCount = (input.match(/\bif\b/g) || []).length;
   // Match 'end' as a word, but also after digits (e.g., "3end")
   // Exclude :end (symbol) by requiring it's not preceded by ':'
   const endCount = (input.match(/(?<=^|[^a-zA-Z_:])end(?=$|[^a-zA-Z0-9_])/g) || []).length;
-  return defCount + structCount + forCount + ifCount > endCount;
+  return defCount + structCount + forCount + whileCount + ifCount > endCount;
 }
 
 export async function repl(

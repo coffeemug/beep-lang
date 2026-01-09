@@ -46,6 +46,7 @@ export type Expr =
   | { type: "prototypeDef"; name: SymbolObj }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
   | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
+  | { type: "while"; cond: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
   | { type: "use"; path: string; alias: string | null }
@@ -67,7 +68,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lex(lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k));
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("while"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -315,6 +316,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     body,
   }));
 
+  const whileLoop = seq(
+    "while", expr,
+    fwd(() => block(xsep("do"), "end"))
+  ).map(([_while, cond, body]): Expr => ({
+    type: "while",
+    cond,
+    body,
+  }));
+
   const ifBody = fwd(() => block(xsep("then"), peek(lex(either(keyword("elif"), keyword("else"), keyword("end"))))));
 
   type IfContinuation = { type: 'elif'; cond: Expr; body: Expr; cont: IfContinuation }
@@ -342,7 +352,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       return { type: "if", branches, else_ };
     });
 
-  const statement = either(ifStatement, forLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
+  const statement = either(ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
 
   /*
     Blocks

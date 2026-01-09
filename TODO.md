@@ -2,7 +2,9 @@
 # KNOWN BUGS
 
 # NEXT
-- Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.). 
+- Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.)
+- Add lambdas to make `enumerate` machinery useful
+- Add comments support to make visual grouping possible
 
 # TODO (high risk):
 - Variants and pattern matching
