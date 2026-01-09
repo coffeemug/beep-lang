@@ -316,16 +316,16 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'for': {
-        // TODO: use enumerables (once enumerable protocol is a thing)
-        let iterable = evaluate(expr.iterable, scope).value;
-        if (iterable.tag === 'RangeObj') {
-          iterable = callMethod(iterable, k.listSymbol, []);
-        }
-        if (iterable.tag !== 'ListObj') {
-          throw new Error(`for loop requires a list or range, got ${show(iterable)}`);
-        }
+        const iterable = evaluate(expr.iterable, scope).value;
+        const iter = callMethod(iterable, k.makeIterSymbol, []);
         let result: RuntimeObj = makeIntObj(0n);
-        for (const item of (iterable as ListObj).elements) {
+
+        while (true) {
+          const next = callMethod(iter, k.nextSymbol, []) as ListObj;
+          const tag = next.elements[0];
+          if (k.isEqual(tag, k.doneSymbol)) break;
+
+          const item = next.elements[1];
           const loopScope = makeScopeObj(scope);
           defineBinding(expr.binding, item, loopScope);
           result = evaluate(expr.body, loopScope).value;

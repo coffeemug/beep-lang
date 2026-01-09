@@ -2,13 +2,9 @@
 # KNOWN BUGS
 
 # NEXT
-- Add support for iterator protocol
-- Implement iterator protocol on lists and ranges
-- Change loops to use the iterator protocol
-- This might possibly require adding `nil`/`true`/`false`
 - Add mixin support so everyone gets `map`, `filter`, `take_while`, etc.
 - Possibly add `protocol` abstraction
-  
+
 # TODO (high risk):
 - Variants and pattern matching
 - Type system!
@@ -34,6 +30,7 @@
 class objects and build methods on top of that.
 - Native sets & set literals
 - `structure.new(:foo, [:a, :b])` should work (though currently no way to set a binding at module toplevel.)
+- repl support to reload modules
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
@@ -48,3 +45,5 @@ class objects and build methods on top of that.
 - equality operator
 - Loops
 - Get FizzBuzz working
+- Iterators now supported on lists/ranges and in for loops
+

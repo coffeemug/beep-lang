@@ -57,6 +57,10 @@ export type BeepContext = {
   lteSymbol: SymbolObj,
   gtSymbol: SymbolObj,
   gteSymbol: SymbolObj,
+  makeIterSymbol: SymbolObj,
+  nextSymbol: SymbolObj,
+  okSymbol: SymbolObj,
+  doneSymbol: SymbolObj,
 
   // Well-known functions
   makeIntObj: (value: bigint) => IntObj,
@@ -94,6 +98,7 @@ export function makeBeepContext(): BeepContext {
   initPreludeTypeMethods(ctx as BeepContext);
   initPrelude(ctx as BeepContext);
   initDynamicScope(ctx as BeepContext);
+  importStdlib(ctx as BeepContext);
 
   return ctx as BeepContext;
 }
@@ -162,6 +167,10 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.lteSymbol = k.intern!('lte');
   k.gtSymbol = k.intern!('gt');
   k.gteSymbol = k.intern!('gte');
+  k.makeIterSymbol = k.intern!('make_iter');
+  k.nextSymbol = k.intern!('next');
+  k.okSymbol = k.intern!('ok');
+  k.doneSymbol = k.intern!('done');
 }
 
 function initWellKnownFunctions(k: BeepContext) {
@@ -325,4 +334,12 @@ function initDynamicScope(k: BeepContext) {
 
   defineBinding(k.intern("symbols"), k.symbolSpaceObj, k.dynamicScope);
   defineBinding(k.intern("loadpath"), k.makeListObj([k.makeStringObj(process.cwd())]), k.dynamicScope);
+}
+
+function importStdlib(k: BeepContext) {
+  const stdlibModules = ['stdlib/iter'];
+  for (const modulePath of stdlibModules) {
+    const useExpr: Expr = { type: 'use', path: modulePath, alias: null };
+    k.evaluate(useExpr, k.kernelModule.toplevelScope);
+  }
 }

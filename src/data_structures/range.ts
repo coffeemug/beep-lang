@@ -55,4 +55,12 @@ export function initRangeMethods(k: BeepContext) {
     }
     return makeListObj(elements);
   });
+
+  defMethod('start', 0, thisObj => {
+    return makeIntObj(thisObj.start);
+  });
+
+  defMethod('stop_excl', 0, thisObj => {
+    return makeIntObj(thisObj.mode === 'exclusive' ? thisObj.end : thisObj.end + 1n);
+  });
 }

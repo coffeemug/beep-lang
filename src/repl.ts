@@ -29,7 +29,8 @@ function isInsideBlock(input: string): boolean {
   const forCount = (input.match(/\bfor\b/g) || []).length;
   const ifCount = (input.match(/\bif\b/g) || []).length;
   // Match 'end' as a word, but also after digits (e.g., "3end")
-  const endCount = (input.match(/(?<=^|[^a-zA-Z_])end(?=$|[^a-zA-Z0-9_])/g) || []).length;
+  // Exclude :end (symbol) by requiring it's not preceded by ':'
+  const endCount = (input.match(/(?<=^|[^a-zA-Z_:])end(?=$|[^a-zA-Z0-9_])/g) || []).length;
   return defCount + structCount + forCount + ifCount > endCount;
 }
 

@@ -1,0 +1,46 @@
+
+def list/make_iter()
+  list_iter.new(this, 0)
+end
+
+struct list_iter
+  list, index
+end
+
+def list_iter/make_iter()
+  this
+end
+
+def list_iter/next()
+  if @index < @list.len()
+    let val = @list.get_item(@index)
+    @index = @index + 1
+    [:ok, val]
+  else
+    [:done]
+  end
+end
+
+
+
+def range/make_iter()
+  range_iter.new(this, this.start())
+end
+
+struct range_iter
+  range, n
+end
+
+def range_iter/make_iter()
+  this
+end
+
+def range_iter/next()
+  if @n < @range.stop_excl()
+    let val = @n
+    @n = @n + 1
+    [:ok, val]
+  else
+    [:done]
+  end
+end
