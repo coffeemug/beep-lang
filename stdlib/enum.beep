@@ -186,3 +186,12 @@ def enum/batch(n)
 
   res
 end
+
+def enum/empty?()
+  let i = @make_iter()
+  if i.next()[0] == :ok
+    0
+  else
+    1
+  end
+end
