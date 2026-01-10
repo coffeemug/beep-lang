@@ -32,6 +32,7 @@ class objects and build methods on top of that.
 - optional, keyword, rest arguments.
 - clean up O(N^2) impelementations in `enum`
 - add own method definition syntax (e.g. `def list/@@zip() ...`)
+- repl support to reload modules (in an actually usable way)
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
@@ -54,5 +55,4 @@ class objects and build methods on top of that.
 - Support for importing modules (and bindings generally)
 - Support for algebraic operators
 - Support boolean operators, and conditionals
-- repl support to reload modules
 
