@@ -4,6 +4,8 @@
 # NEXT
 - Add lambdas to make `enumerate` machinery useful
 - Add comments support to make visual grouping possible
+- Make iterators enumerable (requires some function rewrites to not consume extra elements)
+- If I define `int/foo` I can't say `int.foo` and get an unbound method. That is strange.
 
 # TODO (high risk):
 - Variants and pattern matching
@@ -16,21 +18,17 @@
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
 - mixins (e.g. to auto-add enumeration methods based on `each`)
 - protocols/contracts
-- iterables
 - decide on `coerce` vs `add`/`radd` approach
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
-- Support for importing modules (and bindings generally)
-- Support for algebraic operators
-- Support booleans, boolean operators, and conditionals
+- Support booleans
 - Types should be sealed or copy on write when changed outside defining module
 - Add syntax highlighting, command to run files, maybe lsp
 - Functions as methods bound to scopes is silly. Maybe have functions as first 
 class objects and build methods on top of that.
 - Native sets & set literals
 - `structure.new(:foo, [:a, :b])` should work (though currently no way to set a binding at module toplevel.)
-- repl support to reload modules
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
@@ -49,4 +47,9 @@ class objects and build methods on top of that.
 - Add mixin support so all iterables get methods like `map`
 - Possibly add `protocol` abstraction (ended up being `prototype`)
 - Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.)
+- iterables
+- Support for importing modules (and bindings generally)
+- Support for algebraic operators
+- Support boolean operators, and conditionals
+- repl support to reload modules
 
