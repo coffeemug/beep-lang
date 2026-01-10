@@ -344,7 +344,7 @@ function initDynamicScope(k: BeepContext) {
 function importStdlib(k: BeepContext) {
   const stdlibModules: string[] = ['stdlib/list', 'stdlib/range'];
   for (const modulePath of stdlibModules) {
-    const useExpr: Expr = { type: 'use', path: modulePath, alias: null };
+    const useExpr: Expr = { type: 'use', path: modulePath, alias: null, force: false };
     k.evaluate(useExpr, k.kernelModule.toplevelScope);
   }
 }

@@ -19,12 +19,12 @@ export function makeInterpreter(k: BeepContext) {
     defineNamedStruct, defineNamedPrototype, makeRangeObj, bindMethod
    } = k;
 
-  function loadModule(path: string): RuntimeObj {
+  function loadModule(path: string, force: boolean = false): RuntimeObj {
     const moduleName = k.intern(path);
     const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
 
-    // Return existing module if already loaded
-    if (modules.kv.has(moduleName)) {
+    // Return existing module if already loaded (unless force reload)
+    if (!force && modules.kv.has(moduleName)) {
       return modules.kv.get(moduleName)!;
     }
 
@@ -380,7 +380,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'use': {
-        const moduleObj = loadModule(expr.path);
+        const moduleObj = loadModule(expr.path, expr.force);
 
         // Use alias if provided, otherwise use the last part of path
         const bindingName = expr.alias
@@ -392,7 +392,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'useNames': {
-        const moduleObj = loadModule(expr.path);
+        const moduleObj = loadModule(expr.path, expr.force);
         const moduleScope = (moduleObj as { toplevelScope: ScopeObj }).toplevelScope;
 
         const imported: RuntimeObj[] = [];
