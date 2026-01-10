@@ -67,6 +67,22 @@ def enumerate/drop(n)
   res
 end
 
+def enumerate/drop_while(cb)
+  let iter = @make_iter()
+  let next = iter.next()
+  while next[0] == :ok and cb(next[1])
+    next = iter.next()
+  end
+
+  let res = []
+  while next[0] == :ok
+    res.push!(next[1])
+    next = iter.next()
+  end
+
+  res
+end
+
 def enumerate/list()
   let res = []
   for x in @make_iter()
