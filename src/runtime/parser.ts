@@ -49,8 +49,8 @@ export type Expr =
   | { type: "while"; cond: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
-  | { type: "use"; path: string; alias: string | null; force: boolean }
-  | { type: "useNames"; path: string; names: { name: string; alias: string | null }[]; force: boolean }
+  | { type: "use"; path: string; alias: string | null }
+  | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] }
   | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
   | { type: "lambda"; params: SymbolObj[]; body: Expr }
   | { type: "not"; expr: Expr };
@@ -164,14 +164,13 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   // use foo/bar/baz
   // use foo/bar/baz as alias
   // use foo/bar/baz/[sin, cos as c]
-  // use! foo/bar/baz (force reload)
-  const useStatement = seq(either("use!", "use"), lex(sepBy1(ident, "/", "leave")), fwd(() => useSuffix))
-    .map(([useKw, parts, toExpr]) => toExpr(parts.join("/"), useKw === "use!"));
+  const useStatement = seq("use", lex(sepBy1(ident, "/", "leave")), fwd(() => useSuffix))
+    .map(([_use, parts, toExpr]) => toExpr(parts.join("/")));
 
   const useSuffix = either(
-    seq("as", ident).map(([_, alias]) => (path: string, force: boolean): Expr => ({ type: "use", path, alias, force })),
-    seq("/", fwd(() => useImportList)).map(([_, names]) => (path: string, force: boolean): Expr => ({ type: "useNames", path, names, force })),
-    noop.map(() => (path: string, force: boolean): Expr => ({ type: "use", path, alias: null, force })),
+    seq("as", ident).map(([_, alias]) => (path: string): Expr => ({ type: "use", path, alias })),
+    seq("/", fwd(() => useImportList)).map(([_, names]) => (path: string): Expr => ({ type: "useNames", path, names })),
+    noop.map(() => (path: string): Expr => ({ type: "use", path, alias: null })),
   );
   
   const useImportList = seq("[", sepBy1(fwd(() => useImport), ","), "]")

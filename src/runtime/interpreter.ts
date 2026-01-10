@@ -396,7 +396,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'use': {
-        const moduleObj = loadModule(expr.path, expr.force);
+        const moduleObj = loadModule(expr.path);
 
         // Use alias if provided, otherwise use the last part of path
         const bindingName = expr.alias
@@ -408,7 +408,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'useNames': {
-        const moduleObj = loadModule(expr.path, expr.force);
+        const moduleObj = loadModule(expr.path);
         const moduleScope = (moduleObj as { toplevelScope: ScopeObj }).toplevelScope;
 
         const imported: RuntimeObj[] = [];
