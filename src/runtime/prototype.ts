@@ -42,8 +42,11 @@ export function initPrototype(k: BeepContext) {
     defOwnMethod('mix_into', 1, (thisObj, args) => {
       const targetType = args[0] as TypeObj;
       // Copy all methods from this prototype to the target type
+      // but don't overwrite existing.
       for (const [methodName, method] of thisObj.methods) {
-        targetType.methods.set(methodName, method);
+        if (!targetType.methods.get(methodName)) {
+          targetType.methods.set(methodName, method);
+        }
       }
       return targetType;
     });

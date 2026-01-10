@@ -75,3 +75,12 @@ def enumerate/list()
 
   res
 end
+
+def enumerate/len()
+  let i = 0
+  for x in @make_iter()
+    i = i + 1
+  end
+
+  i
+end

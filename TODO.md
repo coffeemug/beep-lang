@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.)
 - Add lambdas to make `enumerate` machinery useful
 - Add comments support to make visual grouping possible
 
@@ -49,4 +48,5 @@ class objects and build methods on top of that.
 - Iterators now supported on lists/ranges and in for loops
 - Add mixin support so all iterables get methods like `map`
 - Possibly add `protocol` abstraction (ended up being `prototype`)
+- Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.)
 
