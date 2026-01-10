@@ -131,3 +131,11 @@ def enum/product()
   @reduce(\acc, x => acc * x, 1)
 end
 
+def enum/reverse()
+  let res = []
+  for x in @make_iter()
+    res.push_front!(x)
+  end
+
+  res
+end

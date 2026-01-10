@@ -30,6 +30,7 @@ class objects and build methods on top of that.
 - Make iterators enumerable (requires some function rewrites to not consume extra elements)
 - Add comments support to make visual grouping possible
 - optional, keyword, rest arguments.
+- clean up O(N^2) impelementations in `enum`
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
