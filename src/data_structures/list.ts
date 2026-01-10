@@ -120,6 +120,21 @@ export function initListMethods(k: BeepContext) {
 
   defMethod('flatten', 0, thisObj => makeListObj(deepFlatten(thisObj.elements)));
 
+  const compareElements = (a: RuntimeObj, b: RuntimeObj): number => {
+    const ltResult = k.callMethod(a, k.ltSymbol, [b]);
+    if (k.isEqual(ltResult, k.trueObj)) return -1;
+    const gtResult = k.callMethod(a, k.gtSymbol, [b]);
+    if (k.isEqual(gtResult, k.trueObj)) return 1;
+    return 0;
+  };
+
+  defMethod('sort!', 0, thisObj => {
+    thisObj.elements.sort(compareElements);
+    return thisObj;
+  });
+
+  defMethod('sorted', 0, thisObj => makeListObj(thisObj.elements.toSorted(compareElements)));
+
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
     if (other.tag !== 'ListObj') return k.falseObj;

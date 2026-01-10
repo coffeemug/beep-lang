@@ -153,3 +153,12 @@ def enum/partition(is_left_cb)
 
   [l, r]
 end
+
+def enum/min(n)
+  this.sorted().take(n)
+end
+
+def enum/max(n)
+  this.sorted().last(n)
+end
+
