@@ -2,9 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Add comments support to make visual grouping possible
-- Make iterators enumerable (requires some function rewrites to not consume extra elements)
-- If I define `int/foo` I can't say `int.foo` and get an unbound method. That is strange.
 
 # TODO (high risk):
 - Variants and pattern matching
@@ -18,6 +15,8 @@
 - mixins (e.g. to auto-add enumeration methods based on `each`)
 - protocols/contracts
 - decide on `coerce` vs `add`/`radd` approach
+- If I define `int/foo` I can't say `int.foo` and get an unbound method. Also, `1.methods()` returns unbound methods. All this is conceptually right but empirically confusing.
+- possibly maybe overloading mechanics.
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
@@ -28,6 +27,9 @@
 class objects and build methods on top of that.
 - Native sets & set literals
 - `structure.new(:foo, [:a, :b])` should work (though currently no way to set a binding at module toplevel.)
+- Make iterators enumerable (requires some function rewrites to not consume extra elements)
+- Add comments support to make visual grouping possible
+- optional, keyword, rest arguments.
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.

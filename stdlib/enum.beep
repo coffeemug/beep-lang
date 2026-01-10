@@ -10,6 +10,15 @@ def enum/map(cb)
   res
 end
 
+def enum/reduce(cb, first)
+  let acc = first
+  for x in @make_iter()
+    acc = cb(acc, x)
+  end
+
+  acc
+end
+
 def enum/filter(cb)
   let res = []
   for x in @make_iter()
@@ -113,3 +122,12 @@ def enum/len()
 
   i
 end
+
+def enum/sum()
+  @reduce(\acc, x => acc + x, 0)
+end
+
+def enum/product()
+  @reduce(\acc, x => acc * x, 1)
+end
+
