@@ -10,3 +10,15 @@ def enumerate/map(cb)
   res
 end
 
+def enumerate/take_while(cb)
+  let iter = this.make_iter()
+  let next = iter.next()
+  let res = []
+  while next[0] == :ok and cb(next[1])
+    res.push!(next[1])
+    next = iter.next()
+  end
+
+  res
+end
+

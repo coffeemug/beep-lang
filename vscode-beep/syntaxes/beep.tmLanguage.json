@@ -8,6 +8,10 @@
     { "include": "#mix-into-statement" },
     { "include": "#def-block" },
     { "include": "#struct-block" },
+    { "include": "#while-block" },
+    { "include": "#for-block" },
+    { "include": "#if-block" },
+    { "include": "#do-block" },
     { "include": "#proto-statement" },
     { "include": "#keywords" },
     { "include": "#strings" },
@@ -118,6 +122,58 @@
           "name": "variable.other.field.beep",
           "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }
+      ]
+    },
+    "while-block": {
+      "begin": "\\b(while)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.while.beep" }
+      },
+      "end": "\\b(end)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.while.beep" }
+      },
+      "patterns": [
+        { "include": "$self" }
+      ]
+    },
+    "for-block": {
+      "begin": "\\b(for)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.for.beep" }
+      },
+      "end": "\\b(end)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.for.beep" }
+      },
+      "patterns": [
+        { "include": "$self" }
+      ]
+    },
+    "if-block": {
+      "begin": "\\b(if)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.if.beep" }
+      },
+      "end": "\\b(end)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.if.beep" }
+      },
+      "patterns": [
+        { "include": "$self" }
+      ]
+    },
+    "do-block": {
+      "begin": "\\b(do)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.do.beep" }
+      },
+      "end": "\\b(end)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.do.beep" }
+      },
+      "patterns": [
+        { "include": "$self" }
       ]
     },
     "proto-statement": {
