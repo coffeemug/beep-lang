@@ -3,7 +3,7 @@ proto enumerate
 
 def enumerate/map(cb)
   let res = []
-  for x in this.make_iter()
+  for x in @make_iter()
     res.push!(cb(x))
   end
 
@@ -11,7 +11,7 @@ def enumerate/map(cb)
 end
 
 def enumerate/take_while(cb)
-  let iter = this.make_iter()
+  let iter = @make_iter()
   let next = iter.next()
   let res = []
   while next[0] == :ok and cb(next[1])
