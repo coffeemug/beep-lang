@@ -133,7 +133,7 @@ export function initListMethods(k: BeepContext) {
     return thisObj;
   });
 
-  defMethod('sorted', 0, thisObj => makeListObj(thisObj.elements.toSorted(compareElements)));
+  defMethod('sort', 0, thisObj => makeListObj(thisObj.elements.toSorted(compareElements)));
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];

@@ -155,10 +155,10 @@ def enum/partition(is_left_cb)
 end
 
 def enum/min(n)
-  this.sorted().take(n)
+  this.sort().take(n)
 end
 
 def enum/max(n)
-  this.sorted().last(n)
+  this.sort().last(n)
 end
 
