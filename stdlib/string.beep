@@ -1,0 +1,8 @@
+
+use stdlib/enum/[enum]
+
+def string/make_iter()
+  @list().make_iter()
+end
+
+mix enum into string

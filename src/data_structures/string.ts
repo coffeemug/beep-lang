@@ -34,14 +34,14 @@ export function initString(k: BeepContext) {
 }
 
 export function initStringMethods(k: BeepContext) {
-  const { makeStringObj, makeIntObj, stringTypeObj, makeDefNative } = k;
+  const { makeStringObj, makeIntObj, stringTypeObj, makeListObj, makeDefNative } = k;
   const defMethod = makeDefNative<StringObj>(k.kernelModule.toplevelScope, stringTypeObj);
 
   defMethod('show', 0, thisObj =>
     makeStringObj(`'${thisObj.value}'`));
 
-  defMethod('len', 0, thisObj =>
-    makeIntObj(BigInt([...thisObj.value].length)));
+  defMethod('list', 0, thisObj =>
+    makeListObj([...thisObj.value].map(makeStringObj)));
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];
