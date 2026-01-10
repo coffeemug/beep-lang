@@ -10,11 +10,56 @@ def enumerate/map(cb)
   res
 end
 
+def enumerate/filter(cb)
+  let res = []
+  for x in @make_iter()
+    if cb(x)
+      res.push!(x)
+    end
+  end
+
+  res
+end
+
+def enumerate/take(n)
+  let iter = @make_iter()
+  let next = iter.next()
+  let res = []
+  let i = 0
+
+  while next[0] == :ok and i < n
+    res.push!(next[1])
+    i = i + 1
+    next = iter.next()
+  end
+
+  res
+end
+
 def enumerate/take_while(cb)
   let iter = @make_iter()
   let next = iter.next()
   let res = []
   while next[0] == :ok and cb(next[1])
+    res.push!(next[1])
+    next = iter.next()
+  end
+
+  res
+end
+
+def enumerate/drop(n)
+  let iter = @make_iter()
+  let i = 0
+  let next = iter.next()
+
+  while next[0] == :ok and i < n
+    i = i + 1
+    next = iter.next()
+  end
+
+  let res = []
+  while next[0] == :ok
     res.push!(next[1])
     next = iter.next()
   end
