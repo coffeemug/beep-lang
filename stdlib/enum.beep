@@ -139,3 +139,17 @@ def enum/reverse()
 
   res
 end
+
+def enum/partition(is_left_cb)
+  let l = []
+  let r = []
+  for x in @make_iter()
+    if (is_left_cb(x))
+      l.push!(x)
+    else
+      r.push!(x)
+    end
+  end
+
+  [l, r]
+end
