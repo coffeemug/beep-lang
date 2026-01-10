@@ -1,7 +1,7 @@
 
-proto enumerate
+proto enum
 
-def enumerate/map(cb)
+def enum/map(cb)
   let res = []
   for x in @make_iter()
     res.push!(cb(x))
@@ -10,7 +10,7 @@ def enumerate/map(cb)
   res
 end
 
-def enumerate/filter(cb)
+def enum/filter(cb)
   let res = []
   for x in @make_iter()
     if cb(x)
@@ -21,7 +21,7 @@ def enumerate/filter(cb)
   res
 end
 
-def enumerate/take(n)
+def enum/take(n)
   let iter = @make_iter()
   let next = iter.next()
   let res = []
@@ -36,7 +36,7 @@ def enumerate/take(n)
   res
 end
 
-def enumerate/take_while(cb)
+def enum/take_while(cb)
   let iter = @make_iter()
   let next = iter.next()
   let res = []
@@ -48,7 +48,7 @@ def enumerate/take_while(cb)
   res
 end
 
-def enumerate/drop(n)
+def enum/drop(n)
   let iter = @make_iter()
   let i = 0
   let next = iter.next()
@@ -67,7 +67,7 @@ def enumerate/drop(n)
   res
 end
 
-def enumerate/drop_while(cb)
+def enum/drop_while(cb)
   let iter = @make_iter()
   let next = iter.next()
   while next[0] == :ok and cb(next[1])
@@ -83,7 +83,7 @@ def enumerate/drop_while(cb)
   res
 end
 
-def enumerate/last(n)
+def enum/last(n)
   let res = []
   for x in @make_iter()
     res.push!(x)
@@ -92,11 +92,11 @@ def enumerate/last(n)
   res.drop(res.len() - n)
 end
 
-def enumerate/includes?(x)
+def enum/includes?(x)
   @filter(\z => z == x).len() > 0
 end
 
-def enumerate/list()
+def enum/list()
   let res = []
   for x in @make_iter()
     res.push!(x)
@@ -105,7 +105,7 @@ def enumerate/list()
   res
 end
 
-def enumerate/len()
+def enum/len()
   let i = 0
   for x in @make_iter()
     i = i + 1

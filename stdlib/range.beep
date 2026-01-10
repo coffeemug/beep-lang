@@ -1,5 +1,5 @@
 
-use stdlib/enumerate/[enumerate]
+use stdlib/enum/[enum]
 
 def range/make_iter()
   range_iter.new(this, this.start())
@@ -23,4 +23,4 @@ def range_iter/next()
   end
 end
 
-mix enumerate into range
+mix enum into range

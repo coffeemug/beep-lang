@@ -1,5 +1,5 @@
 
-use stdlib/enumerate/[enumerate]
+use stdlib/enum/[enum]
 
 def list/make_iter()
   list_iter.new(this, 0)
@@ -23,4 +23,4 @@ def list_iter/next()
   end
 end
 
-mix enumerate into list
+mix enum into list
