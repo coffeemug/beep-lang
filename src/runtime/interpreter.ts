@@ -146,6 +146,11 @@ export function makeInterpreter(k: BeepContext) {
         return ret(bindMethod(methodObj_, scope));
       }
 
+      case 'not': {
+        const value = evaluate(expr.expr, scope).value;
+        return ret(k.isEqual(value, k.falseObj) ? k.trueObj : k.falseObj);
+      }
+
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
         return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));

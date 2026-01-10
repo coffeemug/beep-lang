@@ -52,7 +52,8 @@ export type Expr =
   | { type: "use"; path: string; alias: string | null; force: boolean }
   | { type: "useNames"; path: string; names: { name: string; alias: string | null }[]; force: boolean }
   | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
-  | { type: "lambda"; params: SymbolObj[]; body: Expr };
+  | { type: "lambda"; params: SymbolObj[]; body: Expr }
+  | { type: "not"; expr: Expr };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -226,9 +227,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     }
   );
 
+  // Unary not: !expr
+  const notExpr: parser<Expr> = fwd(() => either(
+    seq("!", notExpr).map(([_, e]): Expr => ({ type: "not", expr: e })),
+    postfixExpr
+  ));
+
   const mulExpr = binop(
     str("*"),
-    postfixExpr,
+    notExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );
 
