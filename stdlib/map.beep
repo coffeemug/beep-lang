@@ -1,0 +1,26 @@
+
+use stdlib/enum/[enum]
+
+def map/make_iter()
+  map_iter.new(this, this.keys().make_iter())
+end
+
+struct map_iter
+  map, keys_iter
+end
+
+def map_iter/make_iter()
+  this
+end
+
+def map_iter/next()
+  let next_key = @keys_iter.next()
+  if next_key[0] == :ok
+    let key = next_key[1]
+    [:ok, [key, @map[key]]]
+  else
+    [:done]
+  end
+end
+
+mix enum into map

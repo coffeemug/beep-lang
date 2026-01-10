@@ -37,7 +37,7 @@ export function initMap(k: BeepContext) {
 
 export function initMapMethods(k: BeepContext) {
   const {
-    makeStringObj, mapTypeObj, show, makeDefNative,
+    makeStringObj, mapTypeObj, show, makeDefNative, makeListObj
   } = k;
 
   const defMethod = makeDefNative<MapObj>(k.kernelModule.toplevelScope, mapTypeObj)
@@ -45,7 +45,7 @@ export function initMapMethods(k: BeepContext) {
   defMethod('show', 0, thisObj => {
     const items = thisObj.kv.entries().map(e =>
       `${show(e[0])}: ${show(e[1])}`).toArray().join(', ');
-    return makeStringObj(`{ ${items} }`);
+    return makeStringObj(items.length == 0 ? '{}' : `{ ${items} }`);
   });
 
   defMethod('get_item', 1, (thisObj, args) => {
@@ -62,6 +62,9 @@ export function initMapMethods(k: BeepContext) {
     thisObj.kv.set(fieldName, args[1]);
     return args[1];
   });
+
+  defMethod('keys', 0, (thisObj) =>
+    makeListObj(thisObj.kv.keys().toArray()));
 
   defMethod('eq', 1, (thisObj, args) => {
     const other = args[0];

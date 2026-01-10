@@ -159,7 +159,7 @@ def enum/min(n)
 end
 
 def enum/max(n)
-  this.sort().last(n)
+  this.sort().last(n).reverse()
 end
 
 def enum/batch(n)
@@ -194,4 +194,8 @@ def enum/empty?()
   else
     1
   end
+end
+
+def enum/sort()
+  @list().sort()
 end
