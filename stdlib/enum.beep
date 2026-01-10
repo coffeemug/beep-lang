@@ -162,3 +162,27 @@ def enum/max(n)
   this.sort().last(n)
 end
 
+def enum/batch(n)
+  'TODO: error if n < 1'
+
+  let res = []
+  let batch = []
+  let i = 0
+
+  for x in @make_iter()
+    if i == n
+      res.push!(batch)
+      batch = []
+      i = 0
+    end
+
+    batch.push!(x)
+    i = i + 1
+  end
+
+  if batch.len() > 0
+    res.push!(batch)
+  end
+
+  res
+end
