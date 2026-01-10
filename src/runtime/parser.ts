@@ -105,8 +105,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const mapLit = seq("{", sepBy(mapPair, ","), "}")
     .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
 
+  const parenExpr = seq("(", expr, ")").map(([_lp, e, _rp]) => e);
+
   const primary = either(
-    mapLit, listLit, quotedSymbol, strLit, intLit,
+    parenExpr, mapLit, listLit, quotedSymbol, strLit, intLit,
     memberVar, dynamicVar, lexicalVar);
 
   /*
