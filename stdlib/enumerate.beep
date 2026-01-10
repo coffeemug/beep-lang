@@ -67,3 +67,11 @@ def enumerate/drop(n)
   res
 end
 
+def enumerate/list()
+  let res = []
+  for x in @make_iter()
+    res.push!(x)
+  end
+
+  res
+end

@@ -6,7 +6,7 @@ def list/make_iter()
 end
 
 struct list_iter
-  list, index
+  list_, index_
 end
 
 def list_iter/make_iter()
@@ -14,9 +14,9 @@ def list_iter/make_iter()
 end
 
 def list_iter/next()
-  if @index < @list.len()
-    let val = @list.get_item(@index)
-    @index = @index + 1
+  if @index_ < @list_.len()
+    let val = @list_.get_item(@index_)
+    @index_ = @index_ + 1
     [:ok, val]
   else
     [:done]

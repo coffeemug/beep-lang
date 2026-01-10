@@ -47,15 +47,6 @@ export function initRangeMethods(k: BeepContext) {
     return makeStringObj(`${thisObj.start}${op}${thisObj.end}`);
   });
 
-  defMethod('list', 0, thisObj => {
-    const elements = [];
-    const endVal = thisObj.mode === 'exclusive' ? thisObj.end : thisObj.end + 1n;
-    for (let i = thisObj.start; i < endVal; i++) {
-      elements.push(makeIntObj(i));
-    }
-    return makeListObj(elements);
-  });
-
   defMethod('start', 0, thisObj => {
     return makeIntObj(thisObj.start);
   });

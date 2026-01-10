@@ -6,7 +6,7 @@ def range/make_iter()
 end
 
 struct range_iter
-  range, n
+  range_, n_
 end
 
 def range_iter/make_iter()
@@ -14,9 +14,9 @@ def range_iter/make_iter()
 end
 
 def range_iter/next()
-  if @n < @range.stop_excl()
-    let val = @n
-    @n = @n + 1
+  if @n_ < @range_.stop_excl()
+    let val = @n_
+    @n_ = @n_ + 1
     [:ok, val]
   else
     [:done]
