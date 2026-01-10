@@ -74,7 +74,7 @@
     "def-block": {
       "patterns": [
         {
-          "begin": "\\b(def)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*/\\s*([a-zA-Z_][a-zA-Z0-9_]*!?)\\s*(\\([^)]*\\))",
+          "begin": "\\b(def)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*/\\s*([a-zA-Z_][a-zA-Z0-9_]*[!?]?)\\s*(\\([^)]*\\))",
           "beginCaptures": {
             "1": { "name": "keyword.other.def.beep" },
             "2": { "name": "entity.name.type.beep" },
@@ -90,7 +90,7 @@
           ]
         },
         {
-          "begin": "\\b(def)\\s+([a-zA-Z_][a-zA-Z0-9_]*!?)\\s*(\\([^)]*\\))",
+          "begin": "\\b(def)\\s+([a-zA-Z_][a-zA-Z0-9_]*[!?]?)\\s*(\\([^)]*\\))",
           "beginCaptures": {
             "1": { "name": "keyword.other.def.beep" },
             "2": { "name": "entity.name.function.beep" },
@@ -267,7 +267,7 @@
       "patterns": [
         {
           "name": "entity.name.function.beep",
-          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*!?)(?=\\s*\\()"
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*[!?]?)(?=\\s*\\()"
         }
       ]
     }

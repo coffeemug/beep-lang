@@ -6,8 +6,8 @@ const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");
 const ident = lex(seq(identFirstChar, many(identChar))).map(([first, rest]) =>
   [first, ...rest].join(""));
-export const symbolName = lex(seq(ident, maybe("!"))).map(([name, bang]) =>
-  name + (bang ?? ""));
+export const symbolName = lex(seq(ident, maybe(either("!", "?")))).map(([name, suffix]) =>
+  name + (suffix ?? ""));
 
 const xsep = <T>(p: parserlike<T>) =>
   lexMode("keep_newlines", either(some("\n"), seq(p, peek(not("\n")))).map(_ => {}));

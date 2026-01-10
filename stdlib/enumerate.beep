@@ -92,6 +92,10 @@ def enumerate/last(n)
   res.drop(res.len() - n)
 end
 
+def enumerate/includes?(x)
+  @filter(\z => z == x).len() > 0
+end
+
 def enumerate/list()
   let res = []
   for x in @make_iter()
