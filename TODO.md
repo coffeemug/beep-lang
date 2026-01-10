@@ -31,6 +31,7 @@ class objects and build methods on top of that.
 - Add comments support to make visual grouping possible
 - optional, keyword, rest arguments.
 - clean up O(N^2) impelementations in `enum`
+- add own method definition syntax (e.g. `def list/@@zip() ...`)
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
