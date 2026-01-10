@@ -83,6 +83,15 @@ def enumerate/drop_while(cb)
   res
 end
 
+def enumerate/last(n)
+  let res = []
+  for x in @make_iter()
+    res.push!(x)
+  end
+
+  res.drop(res.len() - n)
+end
+
 def enumerate/list()
   let res = []
   for x in @make_iter()
