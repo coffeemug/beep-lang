@@ -51,7 +51,8 @@ export type Expr =
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
   | { type: "use"; path: string; alias: string | null; force: boolean }
   | { type: "useNames"; path: string; names: { name: string; alias: string | null }[]; force: boolean }
-  | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj };
+  | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
+  | { type: "lambda"; params: SymbolObj[]; body: Expr };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -107,8 +108,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   const parenExpr = seq("(", expr, ")").map(([_lp, e, _rp]) => e);
 
+  // Lambda expressions: \x => expr, \x, y => expr, \ => expr
+  const lambdaBody: parser<Expr> = fwd(() => either(
+    seq("do", block_, "end").map(([_do, body, _end]) => body),
+    expr
+  ));
+  const lambdaExpr = seq("\\", sepBy(symbol, ","), "=>", lambdaBody)
+    .map(([_backslash, params, _arrow, body]): Expr => ({
+      type: "lambda",
+      params,
+      body,
+    }));
+
   const primary = either(
-    parenExpr, mapLit, listLit, quotedSymbol, strLit, intLit,
+    lambdaExpr, parenExpr, mapLit, listLit, quotedSymbol, strLit, intLit,
     memberVar, dynamicVar, lexicalVar);
 
   /*

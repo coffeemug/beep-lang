@@ -135,6 +135,17 @@ export function makeInterpreter(k: BeepContext) {
         return ret(methodObj);
       }
 
+      case 'lambda': {
+        const methodObj_ = makeUnboundMethodObj(
+          scope,
+          scope.type,
+          k.intern('<lambda>'),
+          expr.params,
+          expr.body,
+        );
+        return ret(bindMethod(methodObj_, scope));
+      }
+
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
         return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));

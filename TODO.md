@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Add lambdas to make `enumerate` machinery useful
 - Add comments support to make visual grouping possible
 - Make iterators enumerable (requires some function rewrites to not consume extra elements)
 - If I define `int/foo` I can't say `int.foo` and get an unbound method. That is strange.
