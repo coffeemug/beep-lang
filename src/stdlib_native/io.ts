@@ -1,0 +1,46 @@
+import type { BeepContext } from "../bootstrap/bootload";
+import { defineBinding } from "../bootstrap/scope";
+import type { UnboundMethodObj } from "../bootstrap/unbound_method";
+import type { StringObj } from "../data_structures/string";
+import { readSync } from "fs";
+
+export function initIO(k: BeepContext) {
+  const { makeModuleObj, intern, makeDefNative, moduleTypeObj, bindMethod, makeStringObj, makeIntObj } = k;
+
+  const ioModule = makeModuleObj(intern('stdlib/io'));
+  const defMethod = makeDefNative<typeof ioModule>(ioModule.toplevelScope, moduleTypeObj);
+
+  // readline: reads a single line from stdin synchronously
+  const readlineMethod = defMethod('readline', 0, () => {
+    const buf = Buffer.alloc(1024);
+    let line = '';
+    let bytesRead: number;
+
+    // Read one byte at a time until we hit newline
+    while (true) {
+      try {
+        bytesRead = readSync(0, buf, 0, 1, null);
+      } catch {
+        break;
+      }
+      if (bytesRead === 0) break;
+      const char = buf.toString('utf8', 0, 1);
+      if (char === '\n') break;
+      line += char;
+    }
+
+    return makeStringObj(line);
+  });
+  defineBinding(intern('readline'), bindMethod(readlineMethod as UnboundMethodObj, ioModule), ioModule.toplevelScope);
+
+  // print: prints a string to stdout
+  const printMethod = defMethod('print', 1, (_, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`print requires a string, got ${k.show(args[0])}`);
+    }
+    const str = (args[0] as StringObj).value;
+    process.stdout.write(`${str}\n`);
+    return makeIntObj(0n);
+  });
+  defineBinding(intern('print'), bindMethod(printMethod as UnboundMethodObj, ioModule), ioModule.toplevelScope);
+}

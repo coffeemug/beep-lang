@@ -15,6 +15,7 @@ import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_s
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
 import { initPrototype, initPrototypeMethods, type PrototypeTypeObj, type NamedPrototypeTypeObj } from "../runtime/prototype";
+import { initIO } from "../stdlib_native/io";
 
 export type BeepContext = {
   symbolSpaceObj: SymbolSpaceObj,
@@ -101,6 +102,7 @@ export function makeBeepContext(): BeepContext {
   initPreludeTypeMethods(ctx as BeepContext);
   initPrelude(ctx as BeepContext);
   initDynamicScope(ctx as BeepContext);
+  importNativeStdlib(ctx as BeepContext);
   importStdlib(ctx as BeepContext);
 
   return ctx as BeepContext;
@@ -344,6 +346,10 @@ function initDynamicScope(k: BeepContext) {
 
   defineBinding(k.intern("symbols"), k.symbolSpaceObj, k.dynamicScope);
   defineBinding(k.intern("loadpath"), k.makeListObj([k.makeStringObj(process.cwd())]), k.dynamicScope);
+}
+
+function importNativeStdlib(k: BeepContext) {
+  initIO(k);
 }
 
 function importStdlib(k: BeepContext) {
