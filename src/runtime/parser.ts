@@ -38,7 +38,7 @@ export type Expr =
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
   | { type: "block"; exprs: Expr[] }
-  | { type: "let"; bindings: { name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }[] }
+  | { type: "let"; name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }
   | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
   | { type: "indexAssign"; receiver: Expr; index: Expr; value: Expr }
   | { type: "fieldAssign"; receiver: Expr; fieldName: SymbolObj; value: Expr }
@@ -290,14 +290,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Statements
   */
-  const letBinding = either(
-    seq(dynamicVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'dynamic' as const })),
-    seq(lexicalVar, "=", expr).map(([v, _, value]) => ({ name: v.sym, value, scope: 'lexical' as const }))
+  const vardecl = either(
+    seq("let", dynamicVar, "=", expr).map(([_let, v, _, value]): Expr => ({ type: "let", name: v.sym, value, scope: 'dynamic' })),
+    seq("let", lexicalVar, "=", expr).map(([_let, v, _, value]): Expr => ({ type: "let", name: v.sym, value, scope: 'lexical' }))
   );
-  const vardecl = seq("let", sepBy1(letBinding, ",")).map(([_let, bindings]): Expr => ({
-    type: "let",
-    bindings,
-  }));
 
   const assignTarget = either(
     dynamicVar.map(v => ({ name: v.sym, scope: 'dynamic' as const })),

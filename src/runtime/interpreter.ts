@@ -211,25 +211,18 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'let': {
-        const values = expr.bindings.map(b => evaluate(b.value, scope).value);
-
+        const value = evaluate(expr.value, scope).value;
         const letScope = makeScopeObj(scope);
         k.dynamicScope = makeScopeObj(k.dynamicScope);
 
-        for (let i = 0; i < expr.bindings.length; i++) {
-          const binding = expr.bindings[i];
-          if (binding.scope === 'dynamic') {
-            defineBinding(binding.name, values[i], k.dynamicScope);
-            letScope.dynamicIntros.add(binding.name.id);
-          } else {
-            defineBinding(binding.name, values[i], letScope);
-          }
+        if (expr.scope === 'dynamic') {
+          defineBinding(expr.name, value, k.dynamicScope);
+          letScope.dynamicIntros.add(expr.name.id);
+        } else {
+          defineBinding(expr.name, value, letScope);
         }
 
-        return {
-          value: values.length == 1 ? values[0] : makeListObj(values),
-          scope: letScope
-        };
+        return { value, scope: letScope };
       }
 
       case 'assign': {
