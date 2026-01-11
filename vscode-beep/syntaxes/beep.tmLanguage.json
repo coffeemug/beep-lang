@@ -214,7 +214,7 @@
       "patterns": [
         {
           "name": "keyword.control.beep",
-          "match": "\\b(if|then|elif|else|end|for|while|in|do|and|or)\\b"
+          "match": "\\b(if|then|elif|else|end|for|while|in|do|and|or|break|return)\\b"
         },
         {
           "name": "keyword.other.beep",
