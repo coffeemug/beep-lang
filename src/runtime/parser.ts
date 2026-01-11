@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop, err, toParser } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { isAssignable, type Pattern } from "./pattern";
@@ -46,7 +46,7 @@ export type Expr =
   | { type: "structDef"; name: SymbolObj; fields: SymbolObj[] }
   | { type: "prototypeDef"; name: SymbolObj }
   | { type: "binOp"; op: string; left: Expr; right: Expr }
-  | { type: "for"; binding: SymbolObj; iterable: Expr; body: Expr }
+  | { type: "for"; binding: Pattern; iterable: Expr; body: Expr }
   | { type: "while"; cond: Expr; body: Expr }
   | { type: "range"; start: Expr; end: Expr; mode: 'exclusive' | 'inclusive' }
   | { type: "if"; branches: { cond: Expr; body: Expr }[]; else_: Expr | null }
@@ -291,20 +291,12 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Statements
   */
   const vardecl: parser<Expr> = fwd(() =>
-    seq("let", pattern, "=", expr).map(([_let, pat, _, value]): Expr => {
-      if (!isAssignable(pat)) {
-        throw new Error("Cannot bind to literal pattern");
-      }
-      return { type: "let", pattern: pat, value };
-    }));
+    seq("let", assignablePattern, "=", expr).map(([_let, pat, _, value]): Expr =>
+      ({ type: "let", pattern: pat, value })));
 
   const assign: parser<Expr> = fwd(() =>
-    seq(pattern, "=", expr).map(([target, _, value]): Expr => {
-      if (!isAssignable(target)) {
-        throw new Error("Cannot assign to literal pattern");
-      }
-      return { type: "assign", target, value };
-    }));
+    seq(assignablePattern, "=", expr).map(([target, _, value]): Expr =>
+      ({ type: "assign", target, value })));
 
   // Index assignment: obj[index] = value
   const indexAssign = seq(primary, "[", expr, "]", "=", expr)
@@ -327,15 +319,11 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
 
   const lexicalBlock = fwd(() => block("do", "end"));
 
-  const forLoop = seq(
-    "for", symbol, "in", expr,
-    fwd(() => block(xsep("do"), "end"))
-  ).map(([_for, binding, _in, iterable, body]): Expr => ({
-    type: "for",
-    binding,
-    iterable,
-    body,
-  }));
+  const forLoop: parser<Expr> = fwd(() => seq(
+    "for", assignablePattern, "in", expr,
+    block(xsep("do"), "end")
+  ).map(([_for, binding, _in, iterable, body]): Expr =>
+    ({ type: "for", binding, iterable, body })));
 
   const whileLoop = seq(
     "while", expr,
@@ -388,6 +376,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq("[", sepBy(pattern, ","), "]").map(([_, elements, __]): Pattern => ({ type: "list", elements })));
   const pattern: parser<Pattern> = fwd(() =>
     either(wildcardPattern, listPattern, symbolPattern, intPattern, stringPattern, dynamicBindingPattern, lexicalBindingPattern));
+
+  const assignablePattern: parser<Pattern> = toParser((source) => {
+    const result = pattern(source);
+    if (result.type === 'err') return result;
+    if (!isAssignable(result.res)) {
+      return err(source.row, source.col, "Cannot bind to literal pattern");
+    }
+    return result;
+  });
 
   const caseBody: parser<Expr> = fwd(() => either(
     block(lex("do"), "end"),
