@@ -1,4 +1,5 @@
 import { parse, type Expr } from "./parser";
+import type { SymbolObj } from "../bootstrap/symbol";
 import { matchPattern, type Binding } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
@@ -70,6 +71,17 @@ export function makeInterpreter(k: BeepContext) {
     return newScope;
   }
 
+  function consumeIterable(iterable: RuntimeObj): RuntimeObj[] {
+    const iter = callMethod(iterable, k.makeIterSymbol, []);
+    const result: RuntimeObj[] = [];
+    while (true) {
+      const next = callMethod(iter, k.nextSymbol, []) as ListObj;
+      if (k.isEqual(next.elements[0], k.doneSymbol)) break;
+      result.push(next.elements[1]);
+    }
+    return result;
+  }
+
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
     const ret = (value: RuntimeObj) => ({ value, scope });
 
@@ -83,12 +95,40 @@ export function makeInterpreter(k: BeepContext) {
       case 'quotedSymbol':
         return ret(expr.sym);
 
-      case 'list':
-        return ret(makeListObj(expr.elements.map(e => evaluate(e, scope).value)));
+      case 'list': {
+        const elements: RuntimeObj[] = [];
+        for (const el of expr.elements) {
+          if (el.kind === 'spread') {
+            elements.push(...consumeIterable(evaluate(el.expr, scope).value));
+          } else {
+            elements.push(evaluate(el.expr, scope).value);
+          }
+        }
+        return ret(makeListObj(elements));
+      }
 
       case 'map': {
-        const pairs: [typeof expr.pairs[0]['key'], RuntimeObj][] =
-          expr.pairs.map(p => [p.key, evaluate(p.value, scope).value]);
+        const pairs: [SymbolObj, RuntimeObj][] = [];
+        for (const el of expr.pairs) {
+          if (el.kind === 'spread') {
+            for (const item of consumeIterable(evaluate(el.expr, scope).value)) {
+              if (item.tag !== 'ListObj') {
+                throw new Error(`Spread into map requires [key, value] pairs, got ${show(item)}`);
+              }
+              const pair = item as ListObj;
+              if (pair.elements.length !== 2) {
+                throw new Error(`Map spread pairs must have exactly 2 elements, got ${pair.elements.length}`);
+              }
+              const key = pair.elements[0];
+              if (key.tag !== 'SymbolObj') {
+                throw new Error(`Map keys must be symbols, got ${show(key)}`);
+              }
+              pairs.push([key as SymbolObj, pair.elements[1]]);
+            }
+          } else {
+            pairs.push([el.key, evaluate(el.value, scope).value]);
+          }
+        }
         return ret(makeMapObj(pairs));
       }
 

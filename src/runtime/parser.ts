@@ -23,12 +23,20 @@ function postfix<B, S, R>(
   );
 }
 
+export type ListElement =
+  | { kind: "value"; expr: Expr }
+  | { kind: "spread"; expr: Expr };
+
+export type MapElement =
+  | { kind: "pair"; key: SymbolObj; value: Expr }
+  | { kind: "spread"; expr: Expr };
+
 export type Expr =
   | { type: "int"; value: bigint }
   | { type: "string"; value: string }
   | { type: "quotedSymbol"; sym: SymbolObj }
-  | { type: "list"; elements: Expr[] }
-  | { type: "map"; pairs: { key: SymbolObj; value: Expr }[] }
+  | { type: "list"; elements: ListElement[] }
+  | { type: "map"; pairs: MapElement[] }
   | { type: "lexicalVar"; sym: SymbolObj }
   | { type: "dynamicVar"; sym: SymbolObj }
   | { type: "memberVar"; fieldName: SymbolObj }
@@ -101,12 +109,19 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq(":", symbol).map(([_colon, sym]) => ({ type: "quotedSymbol" as const, sym }))
   );
 
-  const listLit = seq("[", sepBy(expr, ","), "]")
+  const spread = seq("...", expr).map(([_, e]) => ({ kind: "spread" as const, expr: e }));
+
+  const listElement = either(
+    spread,
+    expr.map((e): ListElement => ({ kind: "value", expr: e }))
+  );
+  const listLit = seq("[", sepBy(listElement, ","), "]")
     .map(([_lb, elements, _rb]) => ({ type: "list" as const, elements }));
 
   const mapPair = seq(symbol, ":", expr)
-    .map(([key, _colon, value]) => ({ key, value }));
-  const mapLit = seq("{", sepBy(mapPair, ","), "}")
+    .map(([key, _colon, value]): MapElement => ({ kind: "pair", key, value }));
+  const mapElement = either(spread, mapPair);
+  const mapLit = seq("{", sepBy(mapElement, ","), "}")
     .map(([_lb, pairs, _rb]) => ({ type: "map" as const, pairs }));
 
   const parenExpr = seq("(", expr, ")").map(([_lp, e, _rp]) => e);
