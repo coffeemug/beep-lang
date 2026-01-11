@@ -212,14 +212,20 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'let': {
         const value = evaluate(expr.value, scope).value;
+        const result = matchPattern(expr.pattern, value);
+        if (!result.matched) {
+          throw new Error(`Pattern match failed in let binding`);
+        }
         const letScope = makeScopeObj(scope);
         k.dynamicScope = makeScopeObj(k.dynamicScope);
 
-        if (expr.scope === 'dynamic') {
-          defineBinding(expr.name, value, k.dynamicScope);
-          letScope.dynamicIntros.add(expr.name.id);
-        } else {
-          defineBinding(expr.name, value, letScope);
+        for (const binding of result.bindings) {
+          if (binding.scope === 'dynamic') {
+            defineBinding(binding.sym, binding.value, k.dynamicScope);
+            letScope.dynamicIntros.add(binding.sym.id);
+          } else {
+            defineBinding(binding.sym, binding.value, letScope);
+          }
         }
 
         return { value, scope: letScope };
@@ -227,16 +233,22 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'assign': {
         const value = evaluate(expr.value, scope).value;
-        if (expr.target.scope === 'dynamic') {
-          if (!hasDynamicIntro(expr.target.name, scope)) {
-            throw new Error(`Cannot assign to dynamic variable $${expr.target.name.name} not introduced in lexical scope`);
-          }
-          if (!setBinding(expr.target.name, value, k.dynamicScope)) {
-            throw new Error(`Dynamic variable $${expr.target.name.name} not found in dynamic scope`);
-          }
-        } else {
-          if (!setBinding(expr.target.name, value, scope)) {
-            throw new Error(`Cannot assign to unbound variable ${show(expr.target.name)}`);
+        const result = matchPattern(expr.target, value);
+        if (!result.matched) {
+          throw new Error(`Pattern match failed in assignment`);
+        }
+        for (const binding of result.bindings) {
+          if (binding.scope === 'dynamic') {
+            if (!hasDynamicIntro(binding.sym, scope)) {
+              throw new Error(`Cannot assign to dynamic variable $${binding.sym.name} not introduced in lexical scope`);
+            }
+            if (!setBinding(binding.sym, binding.value, k.dynamicScope)) {
+              throw new Error(`Dynamic variable $${binding.sym.name} not found in dynamic scope`);
+            }
+          } else {
+            if (!setBinding(binding.sym, binding.value, scope)) {
+              throw new Error(`Cannot assign to unbound variable ${show(binding.sym)}`);
+            }
           }
         }
         return ret(value);

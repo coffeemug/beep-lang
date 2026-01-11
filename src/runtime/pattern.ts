@@ -18,6 +18,26 @@ export type MatchResult =
   | { matched: true; bindings: Binding[] }
   | { matched: false };
 
+function exhaustive(_: never): never {
+  throw new Error('Exhaustive check failed');
+}
+
+export function isAssignable(pattern: Pattern): boolean {
+  switch (pattern.type) {
+    case 'wildcard':
+    case 'binding':
+      return true;
+    case 'list':
+      return pattern.elements.every(isAssignable);
+    case 'symbol':
+    case 'int':
+    case 'string':
+      return false;
+    default:
+      return exhaustive(pattern);
+  }
+}
+
 export function matchPattern(pattern: Pattern, value: RuntimeObj): MatchResult {
   switch (pattern.type) {
     case 'wildcard':
@@ -55,5 +75,8 @@ export function matchPattern(pattern: Pattern, value: RuntimeObj): MatchResult {
         bindings.push(...result.bindings);
       }
       return { matched: true, bindings };
+
+    default:
+      return exhaustive(pattern);
   }
 }

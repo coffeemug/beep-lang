@@ -1,7 +1,7 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
-import type { Pattern } from "./pattern";
+import { isAssignable, type Pattern } from "./pattern";
 
 const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");
@@ -38,8 +38,8 @@ export type Expr =
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
   | { type: "block"; exprs: Expr[] }
-  | { type: "let"; name: SymbolObj; value: Expr; scope: 'lexical' | 'dynamic' }
-  | { type: "assign"; target: { name: SymbolObj; scope: 'lexical' | 'dynamic' }; value: Expr }
+  | { type: "let"; pattern: Pattern; value: Expr }
+  | { type: "assign"; target: Pattern; value: Expr }
   | { type: "indexAssign"; receiver: Expr; index: Expr; value: Expr }
   | { type: "fieldAssign"; receiver: Expr; fieldName: SymbolObj; value: Expr }
   | { type: "memberAssign"; fieldName: SymbolObj; value: Expr }
@@ -290,20 +290,21 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Statements
   */
-  const vardecl = either(
-    seq("let", dynamicVar, "=", expr).map(([_let, v, _, value]): Expr => ({ type: "let", name: v.sym, value, scope: 'dynamic' })),
-    seq("let", lexicalVar, "=", expr).map(([_let, v, _, value]): Expr => ({ type: "let", name: v.sym, value, scope: 'lexical' }))
-  );
+  const vardecl: parser<Expr> = fwd(() =>
+    seq("let", pattern, "=", expr).map(([_let, pat, _, value]): Expr => {
+      if (!isAssignable(pat)) {
+        throw new Error("Cannot bind to literal pattern");
+      }
+      return { type: "let", pattern: pat, value };
+    }));
 
-  const assignTarget = either(
-    dynamicVar.map(v => ({ name: v.sym, scope: 'dynamic' as const })),
-    lexicalVar.map(v => ({ name: v.sym, scope: 'lexical' as const }))
-  );
-  const assign = seq(assignTarget, "=", expr).map(([target, _, value]): Expr => ({
-    type: "assign",
-    target,
-    value,
-  }));
+  const assign: parser<Expr> = fwd(() =>
+    seq(pattern, "=", expr).map(([target, _, value]): Expr => {
+      if (!isAssignable(target)) {
+        throw new Error("Cannot assign to literal pattern");
+      }
+      return { type: "assign", target, value };
+    }));
 
   // Index assignment: obj[index] = value
   const indexAssign = seq(primary, "[", expr, "]", "=", expr)
