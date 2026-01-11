@@ -14,6 +14,14 @@ import { join } from "path";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
+export class BreakSignal {
+  constructor(public value: RuntimeObj) {}
+}
+
+export class ReturnSignal {
+  constructor(public value: RuntimeObj) {}
+}
+
 export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
@@ -396,28 +404,38 @@ export function makeInterpreter(k: BeepContext) {
         const iter = callMethod(iterable, k.makeIterSymbol, []);
         let result: RuntimeObj = makeIntObj(0n);
 
-        while (true) {
-          const next = callMethod(iter, k.nextSymbol, []) as ListObj;
-          const tag = next.elements[0];
-          if (k.isEqual(tag, k.doneSymbol)) break;
+        try {
+          while (true) {
+            const next = callMethod(iter, k.nextSymbol, []) as ListObj;
+            const tag = next.elements[0];
+            if (k.isEqual(tag, k.doneSymbol)) break;
 
-          const item = next.elements[1];
-          const matchResult = matchPattern(expr.binding, item);
-          if (!matchResult.matched) {
-            throw new Error(`Pattern match failed in for loop`);
+            const item = next.elements[1];
+            const matchResult = matchPattern(expr.binding, item);
+            if (!matchResult.matched) {
+              throw new Error(`Pattern match failed in for loop`);
+            }
+            const loopScope = scopedBindings(matchResult.bindings, scope);
+            result = evaluate(expr.body, loopScope).value;
           }
-          const loopScope = scopedBindings(matchResult.bindings, scope);
-          result = evaluate(expr.body, loopScope).value;
+        } catch (e) {
+          if (e instanceof BreakSignal) return ret(e.value);
+          throw e;
         }
         return ret(result);
       }
 
       case 'while': {
         let result: RuntimeObj = makeIntObj(0n);
-        while (true) {
-          const cond = evaluate(expr.cond, scope).value;
-          if (k.isEqual(cond, k.falseObj)) break;
-          result = evaluate(expr.body, scope).value;
+        try {
+          while (true) {
+            const cond = evaluate(expr.cond, scope).value;
+            if (k.isEqual(cond, k.falseObj)) break;
+            result = evaluate(expr.body, scope).value;
+          }
+        } catch (e) {
+          if (e instanceof BreakSignal) return ret(e.value);
+          throw e;
         }
         return ret(result);
       }
@@ -505,6 +523,16 @@ export function makeInterpreter(k: BeepContext) {
         // mix_into is an own method, so we need to get it via get_member
         const mixIntoMethod = callMethod(prototype, k.getMemberSymbol, [k.intern('mix_into')]);
         return ret(callBoundMethod(mixIntoMethod as BoundMethodObj, [target]));
+      }
+
+      case 'break': {
+        const value = expr.value ? evaluate(expr.value, scope).value : makeIntObj(0n);
+        throw new BreakSignal(value);
+      }
+
+      case 'return': {
+        const value = expr.value ? evaluate(expr.value, scope).value : makeIntObj(0n);
+        throw new ReturnSignal(value);
       }
     }
 

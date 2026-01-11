@@ -63,7 +63,9 @@ export type Expr =
   | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
   | { type: "lambda"; params: SymbolObj[]; body: Expr }
   | { type: "not"; expr: Expr }
-  | { type: "case"; subject: Expr; branches: { pattern: Pattern; body: Expr }[] };
+  | { type: "case"; subject: Expr; branches: { pattern: Pattern; body: Expr }[] }
+  | { type: "break"; value: Expr | null }
+  | { type: "return"; value: Expr | null };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -80,7 +82,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lex(lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k));
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("while"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"), keyword("case"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("while"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"), keyword("case"), keyword("break"), keyword("return"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -410,7 +412,13 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const caseStatement = seq("case", expr, xsep(noop), some(caseBranch), "end")
     .map(([_case, subject, _sep, branches, _end]): Expr => ({ type: "case", subject, branches }));
 
-  const statement = either(caseStatement, ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
+  const breakStatement = seq(keyword("break"), maybe(expr))
+    .map(([_, value]): Expr => ({ type: "break", value: value ?? null }));
+
+  const returnStatement = seq(keyword("return"), maybe(expr))
+    .map(([_, value]): Expr => ({ type: "return", value: value ?? null }));
+
+  const statement = either(breakStatement, returnStatement, caseStatement, ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
 
   /*
     Blocks

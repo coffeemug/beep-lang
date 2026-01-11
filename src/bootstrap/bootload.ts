@@ -10,7 +10,7 @@ import { makeSymbolSpaceTypeObj, makeSymbolSpaceObj, intern, initSymbolSpaceMeth
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
+import { makeInterpreter, type EvalResult, ReturnSignal } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
@@ -195,7 +195,12 @@ function initWellKnownFunctions(k: BeepContext) {
     for (let i = 0; i < method.argNames.length; i++) {
       defineBinding(method.argNames[i], args[i], callScope);
     }
-    return k.evaluate(method.body, callScope).value;
+    try {
+      return k.evaluate(method.body, callScope).value;
+    } catch (e) {
+      if (e instanceof ReturnSignal) return e.value;
+      throw e;
+    }
   }
 
   k.callMethod = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {

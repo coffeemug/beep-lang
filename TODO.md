@@ -2,10 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Pattern matching for dicts
-- Spread pattern in dicts/lists
-- Implicit tuples (e.g. `for x, y in some_map do ...`)
-- `while let`? I really dislike this, but there is a better way maybe?
 
 # TODO (high risk):
 - Variants
@@ -20,6 +16,9 @@
 - decide on `coerce` vs `add`/`radd` approach
 - If I define `int/foo` I can't say `int.foo` and get an unbound method. Also, `1.methods()` returns unbound methods. All this is conceptually right but empirically confusing.
 - possibly maybe overloading mechanics.
+- `while let`? I really dislike this, but there is a better way maybe?
+- Implicit tuples (e.g. `for x, y in some_map do ...`)
+- However errors are handle, need a signal system to implement `break`/`return` in interpreters
 
 # TODO (low risk):
 - Support for struct splicing, struct<->map integration
@@ -36,6 +35,8 @@ class objects and build methods on top of that.
 - clean up O(N^2) impelementations in `enum`
 - add own method definition syntax (e.g. `def list/@@zip() ...`)
 - repl support to reload modules (in an actually usable way)
+- Pattern matching for dicts
+- Spread pattern in dicts/lists
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
@@ -60,3 +61,4 @@ class objects and build methods on top of that.
 - Support for algebraic operators
 - Support boolean operators, and conditionals
 - Basic pattern matching machinery
+- break, return
