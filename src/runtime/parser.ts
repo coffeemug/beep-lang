@@ -1,6 +1,7 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
+import type { Pattern } from "./pattern";
 
 const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");
@@ -53,7 +54,8 @@ export type Expr =
   | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] }
   | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
   | { type: "lambda"; params: SymbolObj[]; body: Expr }
-  | { type: "not"; expr: Expr };
+  | { type: "not"; expr: Expr }
+  | { type: "case"; subject: Expr; branches: { pattern: Pattern; body: Expr }[] };
 
 type Suffix =
   | { type: "fieldAccess"; name: SymbolObj }
@@ -70,7 +72,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Variables
   */
   const keyword = (kw: string) => lex(lexMode("keep_all", seq(kw, peek(not(identChar)))).map(([k, _]) => k));
-  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("while"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"));
+  const reserved = either(keyword("def"), keyword("end"), keyword("let"), keyword("struct"), keyword("proto"), keyword("for"), keyword("while"), keyword("in"), keyword("do"), keyword("and"), keyword("or"), keyword("if"), keyword("then"), keyword("else"), keyword("elif"), keyword("use"), keyword("as"), keyword("mix"), keyword("into"), keyword("case"));
 
   const lexicalVar = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]) => ({ type: "lexicalVar" as const, sym }));
@@ -374,7 +376,30 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       return { type: "if", branches, else_ };
     });
 
-  const statement = either(ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
+  /*
+    Pattern matching
+  */
+  const wildcardPattern = lex("_").map((): Pattern => ({ type: "wildcard" }));
+  const symbolPattern = quotedSymbol.map((qs): Pattern => ({ type: "symbol", sym: qs.sym }));
+  const intPattern = intLit.map((lit): Pattern => ({ type: "int", value: lit.value }));
+  const stringPattern = strLit.map((lit): Pattern => ({ type: "string", value: lit.value }));
+  const bindingPattern = lex(seq(peek(not(reserved)), symbol))
+    .map(([_, sym]): Pattern => ({ type: "binding", sym }));
+  const listPattern: parser<Pattern> = fwd(() =>
+    seq("[", sepBy(pattern, ","), "]").map(([_, elements, __]): Pattern => ({ type: "list", elements })));
+  const pattern: parser<Pattern> = fwd(() =>
+    either(wildcardPattern, listPattern, symbolPattern, intPattern, stringPattern, bindingPattern));
+
+  const caseBody: parser<Expr> = fwd(() => either(
+    block(lex("do"), "end"),
+    expr
+  ));
+  const caseBranch = seq(pattern, lex("=>"), caseBody)
+    .map(([pat, _, body]) => ({ pattern: pat, body }));
+  const caseStatement = seq("case", expr, xsep(noop), some(caseBranch), "end")
+    .map(([_case, subject, _sep, branches, _end]): Expr => ({ type: "case", subject, branches }));
+
+  const statement = either(caseStatement, ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
 
   /*
     Blocks

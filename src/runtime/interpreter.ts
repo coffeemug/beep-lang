@@ -1,4 +1,5 @@
 import { parse, type Expr } from "./parser";
+import { matchPattern } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
@@ -393,6 +394,21 @@ export function makeInterpreter(k: BeepContext) {
           return ret(evaluate(expr.else_, scope).value);
         }
         return ret(makeIntObj(0n));
+      }
+
+      case 'case': {
+        const subject = evaluate(expr.subject, scope).value;
+        for (const { pattern, body } of expr.branches) {
+          const result = matchPattern(pattern, subject);
+          if (result.matched) {
+            const matchScope = makeScopeObj(scope);
+            for (const [sym, val] of result.bindings) {
+              defineBinding(sym, val, matchScope);
+            }
+            return ret(evaluate(body, matchScope).value);
+          }
+        }
+        throw new Error("No pattern matched in case expression");
       }
 
       case 'use': {

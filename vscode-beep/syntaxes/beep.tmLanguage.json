@@ -11,6 +11,7 @@
     { "include": "#while-block" },
     { "include": "#for-block" },
     { "include": "#if-block" },
+    { "include": "#case-block" },
     { "include": "#do-block" },
     { "include": "#proto-statement" },
     { "include": "#keywords" },
@@ -160,6 +161,23 @@
         "1": { "name": "keyword.control.if.beep" }
       },
       "patterns": [
+        { "include": "$self" }
+      ]
+    },
+    "case-block": {
+      "begin": "\\b(case)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.case.beep" }
+      },
+      "end": "\\b(end)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.case.beep" }
+      },
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.beep",
+          "match": "=>"
+        },
         { "include": "$self" }
       ]
     },
