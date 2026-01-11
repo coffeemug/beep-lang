@@ -379,12 +379,14 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const symbolPattern = quotedSymbol.map((qs): Pattern => ({ type: "symbol", sym: qs.sym }));
   const intPattern = intLit.map((lit): Pattern => ({ type: "int", value: lit.value }));
   const stringPattern = strLit.map((lit): Pattern => ({ type: "string", value: lit.value }));
-  const bindingPattern = lex(seq(peek(not(reserved)), symbol))
-    .map(([_, sym]): Pattern => ({ type: "binding", sym }));
+  const dynamicBindingPattern = lex(seq("$", symbol))
+    .map(([_, sym]): Pattern => ({ type: "binding", sym, scope: 'dynamic' }));
+  const lexicalBindingPattern = lex(seq(peek(not(reserved)), symbol))
+    .map(([_, sym]): Pattern => ({ type: "binding", sym, scope: 'lexical' }));
   const listPattern: parser<Pattern> = fwd(() =>
     seq("[", sepBy(pattern, ","), "]").map(([_, elements, __]): Pattern => ({ type: "list", elements })));
   const pattern: parser<Pattern> = fwd(() =>
-    either(wildcardPattern, listPattern, symbolPattern, intPattern, stringPattern, bindingPattern));
+    either(wildcardPattern, listPattern, symbolPattern, intPattern, stringPattern, dynamicBindingPattern, lexicalBindingPattern));
 
   const caseBody: parser<Expr> = fwd(() => either(
     block(lex("do"), "end"),

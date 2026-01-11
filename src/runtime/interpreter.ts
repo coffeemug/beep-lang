@@ -395,10 +395,22 @@ export function makeInterpreter(k: BeepContext) {
           const result = matchPattern(pattern, subject);
           if (result.matched) {
             const matchScope = makeScopeObj(scope);
-            for (const [sym, val] of result.bindings) {
-              defineBinding(sym, val, matchScope);
+            const matchDynamicScope = makeScopeObj(k.dynamicScope);
+            const savedDynamicScope = k.dynamicScope;
+            k.dynamicScope = matchDynamicScope;
+
+            for (const binding of result.bindings) {
+              if (binding.scope === 'dynamic') {
+                defineBinding(binding.sym, binding.value, matchDynamicScope);
+                matchScope.dynamicIntros.add(binding.sym.id);
+              } else {
+                defineBinding(binding.sym, binding.value, matchScope);
+              }
             }
-            return ret(evaluate(body, matchScope).value);
+
+            const bodyResult = evaluate(body, matchScope).value;
+            k.dynamicScope = savedDynamicScope;
+            return ret(bodyResult);
           }
         }
         throw new Error("No pattern matched in case expression");
