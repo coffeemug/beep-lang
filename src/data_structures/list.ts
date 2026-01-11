@@ -4,6 +4,7 @@ import type { RuntimeObj } from "../runtime_objects";
 import { defineBinding } from "../bootstrap/scope";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { IntObj } from "./int";
+import type { StringObj } from "./string";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -193,5 +194,19 @@ export function initListMethods(k: BeepContext) {
       throw new Error(`gte requires a list, got ${k.show(other)}`);
     }
     return compareLists(thisObj, other as ListObj) >= 0 ? k.trueObj : k.falseObj;
+  });
+
+  defMethod('join', 1, (thisObj, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`join separator must be a string, got ${show(args[0])}`);
+    }
+    const separator = (args[0] as StringObj).value;
+    const joined = thisObj.elements.map(e => {
+      if (e.tag !== 'StringObj') {
+        throw new Error(`join requires all elements to be strings, got ${show(e)}`);
+      }
+      return (e as StringObj).value;
+    }).join(separator);
+    return makeStringObj(joined);
   });
 }

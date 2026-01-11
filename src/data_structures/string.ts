@@ -80,4 +80,13 @@ export function initStringMethods(k: BeepContext) {
     }
     return thisObj.value >= (other as StringObj).value ? k.trueObj : k.falseObj;
   });
+
+  defMethod('trim', 0, thisObj =>
+    makeStringObj(thisObj.value.trim()));
+
+  defMethod('triml', 0, thisObj =>
+    makeStringObj(thisObj.value.trimStart()));
+
+  defMethod('trimr', 0, thisObj =>
+    makeStringObj(thisObj.value.trimEnd()));
 }

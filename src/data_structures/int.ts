@@ -2,6 +2,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { defineBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { BeepContext } from "../bootstrap/bootload";
+import type { StringObj } from "./string";
 
 export type IntTypeObj =
   & RuntimeObjMixin<'IntTypeObj', RootTypeObj>
@@ -108,5 +109,15 @@ export function initIntMethods(k: BeepContext) {
       throw new Error(`gte requires an integer, got ${k.show(other)}`);
     }
     return thisObj.value >= (other as IntObj).value ? k.trueObj : k.falseObj;
+  });
+
+  const defOwnMethod = makeDefNative<IntTypeObj>(k.kernelModule.toplevelScope, intTypeObj, 'own');
+
+  defOwnMethod('from', 1, (_thisObj, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`int.from requires a string, got ${k.show(args[0])}`);
+    }
+    const str = (args[0] as StringObj).value;
+    return makeIntObj(BigInt(str));
   });
 }

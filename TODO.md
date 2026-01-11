@@ -2,6 +2,10 @@
 # KNOWN BUGS
 
 # NEXT
+- Pattern matching for dicts
+- Spread pattern in dicts/lists
+- Implicit tuples (e.g. `for x, y in some_map do ...`)
+- `while let`? I really dislike this, but there is a better way maybe?
 
 # TODO (high risk):
 - Variants
@@ -12,7 +16,6 @@
 - good ffi
 - gensym (and wellknowns for protocol use?)
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
-- mixins (e.g. to auto-add enumeration methods based on `each`)
 - protocols/contracts
 - decide on `coerce` vs `add`/`radd` approach
 - If I define `int/foo` I can't say `int.foo` and get an unbound method. Also, `1.methods()` returns unbound methods. All this is conceptually right but empirically confusing.
@@ -48,6 +51,7 @@ class objects and build methods on top of that.
 - Loops
 - Get FizzBuzz working
 - Iterators now supported on lists/ranges and in for loops
+- mixins (e.g. to auto-add enumeration methods based on `each`)
 - Add mixin support so all iterables get methods like `map`
 - Possibly add `protocol` abstraction (ended up being `prototype`)
 - Add some more methods to `enumerate` prototype (`filter`, `take_while`, etc.)
