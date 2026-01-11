@@ -4,7 +4,7 @@
 # NEXT
 
 # TODO (high risk):
-- Variants and pattern matching
+- Variants
 - Type system!
 - require ! label to permit mutation in functions
 - async/await
@@ -55,4 +55,4 @@ class objects and build methods on top of that.
 - Support for importing modules (and bindings generally)
 - Support for algebraic operators
 - Support boolean operators, and conditionals
-
+- Basic pattern matching machinery
