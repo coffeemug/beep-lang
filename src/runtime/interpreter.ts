@@ -260,7 +260,7 @@ export function makeInterpreter(k: BeepContext) {
       case 'block': {
         const savedDynamicScope = k.dynamicScope;
         try {
-          let result: RuntimeObj = makeIntObj(0n);
+          let result: RuntimeObj = k.unitObj;
           let innerScope = scope;
           for (const e of expr.exprs) {
             const evalResult = evaluate(e, innerScope);
@@ -402,7 +402,7 @@ export function makeInterpreter(k: BeepContext) {
       case 'for': {
         const iterable = evaluate(expr.iterable, scope).value;
         const iter = callMethod(iterable, k.makeIterSymbol, []);
-        let result: RuntimeObj = makeIntObj(0n);
+        let result: RuntimeObj = k.unitObj;
 
         try {
           while (true) {
@@ -426,7 +426,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'while': {
-        let result: RuntimeObj = makeIntObj(0n);
+        let result: RuntimeObj = k.unitObj;
         try {
           while (true) {
             const cond = evaluate(expr.cond, scope).value;
@@ -463,7 +463,7 @@ export function makeInterpreter(k: BeepContext) {
         if (expr.else_) {
           return ret(evaluate(expr.else_, scope).value);
         }
-        return ret(makeIntObj(0n));
+        return ret(k.unitObj);
       }
 
       case 'case': {
@@ -526,12 +526,12 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'break': {
-        const value = expr.value ? evaluate(expr.value, scope).value : makeIntObj(0n);
+        const value = expr.value ? evaluate(expr.value, scope).value : k.unitObj;
         throw new BreakSignal(value);
       }
 
       case 'return': {
-        const value = expr.value ? evaluate(expr.value, scope).value : makeIntObj(0n);
+        const value = expr.value ? evaluate(expr.value, scope).value : k.unitObj;
         throw new ReturnSignal(value);
       }
     }

@@ -41,6 +41,7 @@ export type BeepContext = {
   // Other well-known objects
   trueObj: RuntimeObj,
   falseObj: RuntimeObj,
+  unitObj: RuntimeObj,
 
   // Well-known symbols
   thisSymbol: SymbolObj,
@@ -334,8 +335,10 @@ function initPrelude(k: BeepContext) {
   });
   defineBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
 
+  // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);
   k.trueObj = makeIntObj(1n);
+  k.unitObj = makeIntObj(0n);
 }
 
 function initDynamicScope(k: BeepContext) {
