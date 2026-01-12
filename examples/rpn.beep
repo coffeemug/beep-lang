@@ -1,7 +1,7 @@
 
 use stdlib/io
 
-def main()
+def rpn()
   let stack = []
   let line = io.readline()
 
@@ -10,9 +10,9 @@ def main()
     if ['+', '-', '*'].includes?(line)
       let [i, j] = [stack.pop!(), stack.pop!()]
       case line
-        '+' => stack.push!(i + j)
-        '-' => stack.push!(i - j)
-        '*' => stack.push!(i * j)
+        '+' => stack.push!(j + i)
+        '-' => stack.push!(j - i)
+        '*' => stack.push!(j * i)
       end
     elif line == 'quit'
       break
