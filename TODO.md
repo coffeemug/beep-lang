@@ -2,6 +2,10 @@
 # KNOWN BUGS
 
 # NEXT
+- Parser error on `let x = case ...` or on assignments in cases.
+- Add known unit value to beep context
+- Some things should return nothing, like rpn/[main]. I.e. unit can't be 0.
+- Implement division
 
 # TODO (high risk):
 - Variants

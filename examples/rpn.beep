@@ -1,0 +1,30 @@
+
+use stdlib/io
+
+def main()
+  let stack = []
+  let line = io.readline()
+
+  while line
+    line = line.trim()
+    if ['+', '-', '*'].includes?(line)
+      let [i, j] = [stack.pop!(), stack.pop!()]
+      case line
+        '+' => stack.push!(i + j)
+        '-' => stack.push!(i - j)
+        '*' => stack.push!(i * j)
+      end
+    elif line == 'quit'
+      break
+    else
+      stack.push!(int.from(line))
+    end
+
+    line = io.readline()
+  end
+
+  while !stack.empty?()
+    io.print(stack.pop!().show())
+  end
+end
+

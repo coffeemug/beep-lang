@@ -57,12 +57,12 @@ export function initListMethods(k: BeepContext) {
     return thisObj;
   });
 
-  defMethod('pop', 0, thisObj =>
-    makeListObj(thisObj.elements.slice(0, -1)));
-
   defMethod('pop!', 0, thisObj => {
-    thisObj.elements.pop();
-    return thisObj;
+    const x = thisObj.elements.pop();
+    if (!x) {
+      throw new Error("Cannot pop from empty array.");
+    }
+    return x;
   });
 
   defMethod('push_front', 1, (thisObj, args) =>
@@ -73,12 +73,12 @@ export function initListMethods(k: BeepContext) {
     return thisObj;
   });
 
-  defMethod('pop_front', 0, thisObj =>
-    makeListObj(thisObj.elements.slice(1)));
-
   defMethod('pop_front!', 0, thisObj => {
-    thisObj.elements.shift();
-    return thisObj;
+    const x = thisObj.elements.shift();
+    if (!x) {
+      throw new Error("Cannot pop from the front of empty array.");
+    }
+    return x;
   });
 
   defMethod('len', 0, thisObj =>

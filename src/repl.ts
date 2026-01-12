@@ -1,4 +1,4 @@
-import * as readline from "readline";
+import * as readline from "readline/promises";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join, dirname } from "path";
@@ -9,7 +9,7 @@ const MAX_HISTORY = 1000;
 function loadHistory(): string[] {
   if (existsSync(HISTORY_FILE)) {
     const content = readFileSync(HISTORY_FILE, "utf-8");
-    return content.split("\n").filter((line) => line.length > 0);
+    return content.split("\n").filter((line) => line.length > 0).reverse();
   }
   return [];
 }
@@ -19,7 +19,7 @@ function saveHistory(history: string[]): void {
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
-  writeFileSync(HISTORY_FILE, history.join("\n") + "\n");
+  writeFileSync(HISTORY_FILE, [...history].reverse().join("\n") + "\n");
 }
 
 // Check if input has unmatched block starters (def/struct/for/if/while/case) vs ends
@@ -36,19 +36,51 @@ function isInsideBlock(input: string): boolean {
   return defCount + structCount + forCount + whileCount + ifCount + caseCount > endCount;
 }
 
-export async function repl(
-  run: (input: string) => string,
-  complete: (expr: string) => string[],
-  getPrompt: () => string,
-  commands: Record<string, (arg: string) => string | void>
-): Promise<void> {
-  const history = loadHistory().slice(-MAX_HISTORY);
+async function readBuffer_(
+  rl: readline.Interface,
+  getPrompt: () => string
+): Promise<string | null> {
   let buffer = "";
 
+  while (true) {
+    const prompt = buffer ? "... " : getPrompt();
+    let line: string;
+
+    try {
+      line = await rl.question(prompt);
+    } catch {
+      return null;
+    }
+
+    buffer += (buffer ? "\n" : "") + line;
+
+    if (isInsideBlock(buffer)) {
+      continue;
+    }
+
+    const trimmed = buffer.trim();
+    if (trimmed.length === 0) {
+      buffer = "";
+      continue;
+    }
+
+    return trimmed;
+  }
+}
+
+async function readBuffer(
+  complete: (expr: string) => string[],
+  getPrompt: () => string
+): Promise<string | null> {
+  const history = loadHistory().slice(-MAX_HISTORY);
+  const collectedHistory: string[] = [...history];
+
+  // For now we have to create and teardown readline interface on every REPL read,
+  // otherwise io.readline() doesn't work. Once io and async/wait business shakes
+  // out, we can possibly create readline interface once and tear it down at the end.
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: getPrompt(),
     history: history,
     historySize: MAX_HISTORY,
     completer: (line: string): [string[], string] => {
@@ -58,10 +90,8 @@ export async function repl(
         try {
           const methods = complete(expr);
           if (methods.length > 0) {
-            // Print completions manually on single TAB
             process.stdout.write('\n' + methods.join('  ') + '\n');
-            // Redraw the prompt with the current line
-            rl.prompt(true);
+            process.stdout.write(getPrompt() + line);
           }
         } catch {
           // ignore
@@ -71,32 +101,33 @@ export async function repl(
     }
   });
 
-  rl.prompt();
+  const input = await readBuffer_(rl, getPrompt);
+  if (input) {
+    collectedHistory.unshift(input);
+  }
 
-  rl.on("line", (line) => {
-    buffer += (buffer ? "\n" : "") + line;
+  saveHistory(collectedHistory.slice(0, MAX_HISTORY));
+  rl.close();
+  return input;
+}
 
-    // If inside a block, continue accumulating
-    if (isInsideBlock(buffer)) {
-      rl.setPrompt("... ");
-      rl.prompt();
-      return;
-    }
-
-    const trimmed = buffer.trim();
-    buffer = "";
-
-    if (trimmed.length === 0) {
-      rl.setPrompt(getPrompt());
-      rl.prompt();
-      return;
+export async function repl(
+  run: (input: string) => string,
+  complete: (expr: string) => string[],
+  getPrompt: () => string,
+  commands: Record<string, (arg: string) => string | void>
+): Promise<void> {
+  while (true) {
+    const input = await readBuffer(complete, getPrompt);
+    if (input === null) {
+      break;
     }
 
     // Handle commands
-    if (trimmed.startsWith("/")) {
-      const spaceIdx = trimmed.indexOf(" ");
-      const cmd = spaceIdx === -1 ? trimmed.slice(1) : trimmed.slice(1, spaceIdx);
-      const arg = spaceIdx === -1 ? "" : trimmed.slice(spaceIdx + 1).trim();
+    if (input.startsWith("/")) {
+      const spaceIdx = input.indexOf(" ");
+      const cmd = spaceIdx === -1 ? input.slice(1) : input.slice(1, spaceIdx);
+      const arg = spaceIdx === -1 ? "" : input.slice(spaceIdx + 1).trim();
       const handler = commands[cmd];
       if (handler) {
         try {
@@ -112,13 +143,11 @@ export async function repl(
       } else {
         console.log(`Unknown command: ${cmd}`);
       }
-      rl.setPrompt(getPrompt());
-      rl.prompt();
-      return;
+      continue;
     }
 
     try {
-      const result = run(trimmed);
+      const result = run(input);
       console.log(result);
     } catch (e) {
       if (e instanceof Error) {
@@ -127,17 +156,5 @@ export async function repl(
         console.log("Unknown error");
       }
     }
-
-    rl.setPrompt(getPrompt());
-    rl.prompt();
-  });
-
-  rl.on("close", () => {
-    const currentHistory = (rl as any).history as string[] | undefined;
-    if (currentHistory) {
-      saveHistory([...currentHistory].slice(-MAX_HISTORY));
-    }
-    console.log();
-    process.exit(0);
-  });
+  }
 }
