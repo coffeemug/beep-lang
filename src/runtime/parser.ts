@@ -225,7 +225,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     name,
   }));
 
-  const indexAccessSuffix = seq("[", expr, "]").map(([_lb, index, _rb]): Suffix => ({
+  const indexAccessSuffix = seq(lexMode("keep_newlines", seq(peek(not("\n")), "[")), expr, "]").map(([_lb, index, _rb]): Suffix => ({
     type: "indexAccess",
     index,
   }));
