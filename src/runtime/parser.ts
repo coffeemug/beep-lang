@@ -252,7 +252,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   ));
 
   const mulExpr = binop(
-    str("*"),
+    either(str("//"), str("*")),
     notExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );

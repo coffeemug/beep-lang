@@ -358,6 +358,12 @@ export function makeInterpreter(k: BeepContext) {
             return ret(callMethod(left, k.mulSymbol, [right]));
           }
 
+          case '//': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(callMethod(left, k.floordivSymbol, [right]));
+          }
+
           case '<': {
             const left = evaluate(expr.left, scope).value;
             const right = evaluate(expr.right, scope).value;

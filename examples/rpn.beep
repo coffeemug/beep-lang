@@ -7,12 +7,13 @@ def rpn()
 
   while line
     line = line.trim()
-    if ['+', '-', '*'].includes?(line)
+    if ['+', '-', '*', '/'].includes?(line)
       let [i, j] = [stack.pop!(), stack.pop!()]
       case line
         '+' => stack.push!(j + i)
         '-' => stack.push!(j - i)
         '*' => stack.push!(j * i)
+        '/' => stack.push!(j // i)
       end
     elif line == 'quit'
       break

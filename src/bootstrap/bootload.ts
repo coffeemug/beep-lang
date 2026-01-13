@@ -55,6 +55,7 @@ export type BeepContext = {
   addSymbol: SymbolObj,
   subSymbol: SymbolObj,
   mulSymbol: SymbolObj,
+  floordivSymbol: SymbolObj,
   setItemSymbol: SymbolObj,
   setMemberSymbol: SymbolObj,
   ltSymbol: SymbolObj,
@@ -168,6 +169,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.addSymbol = k.intern!('add');
   k.subSymbol = k.intern!('sub');
   k.mulSymbol = k.intern!('mul');
+  k.floordivSymbol = k.intern!('floordiv');
   k.setItemSymbol = k.intern!('set_item');
   k.setMemberSymbol = k.intern!('set_member');
   k.ltSymbol = k.intern!('lt');

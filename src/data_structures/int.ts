@@ -52,7 +52,7 @@ export function initIntMethods(k: BeepContext) {
     if (other.tag !== 'IntObj') {
       throw new Error(`mod requires an integer, got ${k.show(other)}`);
     }
-    return makeIntObj(thisObj.value % (other as IntObj).value);
+    return makeIntObj(floormod(thisObj.value, other.value));
   });
 
   defMethod('add', 1, (thisObj, args) => {
@@ -77,6 +77,14 @@ export function initIntMethods(k: BeepContext) {
       throw new Error(`mul requires an integer, got ${k.show(other)}`);
     }
     return makeIntObj(thisObj.value * (other as IntObj).value);
+  });
+
+  defMethod('floordiv', 1, (thisObj, args) => {
+    const other = args[0];
+    if (other.tag !== 'IntObj') {
+      throw new Error(`floordiv requires an integer, got ${k.show(other)}`);
+    }
+    return makeIntObj(floordiv(thisObj.value, other.value));
   });
 
   defMethod('lt', 1, (thisObj, args) => {
@@ -120,4 +128,21 @@ export function initIntMethods(k: BeepContext) {
     const str = (args[0] as StringObj).value;
     return makeIntObj(BigInt(str));
   });
+}
+
+function floormod(a: bigint, b: bigint): bigint {
+    const r = a % b;
+    if (r !== 0n && (a < 0n) !== (b < 0n)) {
+        return r + b;
+    }
+    return r;
+}
+
+function floordiv(a: bigint, b: bigint): bigint {
+    const q = a / b;
+    const r = a % b;
+    if (r !== 0n && (a < 0n) !== (b < 0n)) {
+        return q - 1n;
+    }
+    return q;
 }
