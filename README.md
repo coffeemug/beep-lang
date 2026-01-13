@@ -8,8 +8,8 @@ Stubborn attachments:
 2. Minimize useless indentation
 3. Data structures are central, algorithms are peripheral
 4. "What do I need here?" beats "what, philosophically, is this thing?"
-5. Nominal data types, structural interfaces
-6. Interfaces should be safe, legal and rare
+5. Nominal data types, structural interfaces (I think)
+6. Interfaces should be safe and rare
 7. Discourage nerd-sniping
 8. Clearly label mutation and blocking 
 
