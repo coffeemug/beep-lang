@@ -2,29 +2,30 @@
 # KNOWN BUGS
 
 # NEXT
-- Parser error on `let x = case ...` or on assignments in cases.
-- Add known unit value to beep context
-- Some things should return nothing, like rpn/[main]. I.e. unit can't be 0.
-- Implement division
+- Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
+- Implicit tuples (e.g. `for x, y in some_map do ...`)
+- Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.
+- Lambda lists-- pattern matching, keyword/optional/vararg parameters, arity overloading
+- The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
+- Multidimensional arrays syntax (for the tic-tac-toe problem)
 
 # TODO (high risk):
-- Variants
 - Type system!
 - require ! label to permit mutation in functions
 - async/await
-- label-based error handling
+- label-based error handling?
 - good ffi
 - gensym (and wellknowns for protocol use?)
 - internal APIs kinda dirty; functions not exposed to beep; object relationship should be cleaner. I.e. struct list of fields should probably be a real Beep list. All this should be super clean.
 - protocols/contracts
 - decide on `coerce` vs `add`/`radd` approach
 - If I define `int/foo` I can't say `int.foo` and get an unbound method. Also, `1.methods()` returns unbound methods. All this is conceptually right but empirically confusing.
-- possibly maybe overloading mechanics.
 - `while let`? I really dislike this, but there is a better way maybe?
-- Implicit tuples (e.g. `for x, y in some_map do ...`)
-- However errors are handle, need a signal system to implement `break`/`return` in interpreters
+- However errors are handled, need a signal system to implement `break`/`return` in interpreters
+- Implement division
 
 # TODO (low risk):
+- Parser error on `let x = case ...` or on assignments in cases.
 - Support for struct splicing, struct<->map integration
 - Support booleans
 - Types should be sealed or copy on write when changed outside defining module
@@ -35,12 +36,9 @@ class objects and build methods on top of that.
 - `structure.new(:foo, [:a, :b])` should work (though currently no way to set a binding at module toplevel.)
 - Make iterators enumerable (requires some function rewrites to not consume extra elements)
 - Add comments support to make visual grouping possible
-- optional, keyword, rest arguments.
 - clean up O(N^2) impelementations in `enum`
 - add own method definition syntax (e.g. `def list/@@zip() ...`)
 - repl support to reload modules (in an actually usable way)
-- Pattern matching for dicts
-- Spread pattern in dicts/lists
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
@@ -66,3 +64,4 @@ class objects and build methods on top of that.
 - Support boolean operators, and conditionals
 - Basic pattern matching machinery
 - break, return
+- Add known unit value to beep context
