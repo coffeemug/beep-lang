@@ -198,8 +198,8 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_lb, names, _rb]) => names);
   
   const useImport = either(
-    seq(ident, "as", ident).map(([name, _, alias]) => ({ name, alias })),
-    ident.map(name => ({ name, alias: null }))
+    seq(symbolName, "as", symbolName).map(([name, _, alias]) => ({ name, alias })),
+    symbolName.map(name => ({ name, alias: null }))
   );
 
   // mix foo into bar
