@@ -123,6 +123,9 @@ export async function repl(
       break;
     }
 
+    // For piped input, exit after processing
+    const shouldExit = !process.stdin.isTTY;
+
     // Handle commands
     if (input.startsWith("/")) {
       const spaceIdx = input.indexOf(" ");
@@ -156,5 +159,7 @@ export async function repl(
         console.log("Unknown error");
       }
     }
+
+    if (shouldExit) break;
   }
 }
