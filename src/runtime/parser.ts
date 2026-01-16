@@ -1,4 +1,4 @@
-import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, noop, err, toParser } from "@spakhm/ts-parsec";
+import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, type stream, type result, type parser_error, noop, err, toParser } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { isAssignable, type Pattern } from "./pattern";
@@ -315,23 +315,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq(assignablePattern, "=", expr).map(([target, _, value]): Expr =>
       ({ type: "assign", target, value })));
 
-  // Index assignment: obj[index] = value
-  const indexAssign = seq(primary, "[", expr, "]", "=", expr)
-    .map(([receiver, _lb, index, _rb, _eq, value]): Expr => ({
-      type: "indexAssign", receiver, index, value
-    }));
-
-  // Field assignment: obj.field = value
-  const fieldAssign = seq(primary, ".", symbol, "=", expr)
-    .map(([receiver, _dot, fieldName, _eq, value]): Expr => ({
-      type: "fieldAssign", receiver, fieldName, value
-    }));
-
-  // Member assignment: @field = value
-  const memberAssign = seq(memberVar, "=", expr)
-    .map(([member, _eq, value]): Expr => ({
-      type: "memberAssign", fieldName: member.fieldName, value
-    }));
+  // Index/field/member assignment: obj[index] = value, obj.field = value, @field = value, etc.
+  const postfixAssign: parser<Expr> = toParser((source: stream): result<Expr, parser_error> => {
+    const res = seq(postfixExpr, "=", expr)(source);
+    if (res.type === 'err') return res;
+    const [target, _eq, value] = res.res;
+    if (target.type === "indexAccess") {
+      return { type: 'ok', res: { type: "indexAssign", receiver: target.receiver, index: target.index, value } };
+    } else if (target.type === "fieldAccess") {
+      return { type: 'ok', res: { type: "fieldAssign", receiver: target.receiver, fieldName: target.fieldName, value } };
+    } else if (target.type === "memberVar") {
+      return { type: 'ok', res: { type: "memberAssign", fieldName: target.fieldName, value } };
+    }
+    return err(source.row, source.col, "Invalid assignment target");
+  });
 
 
   const lexicalBlock = fwd(() => block("do", "end"));
@@ -418,7 +415,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   const returnStatement = seq(keyword("return"), maybe(expr))
     .map(([_, value]): Expr => ({ type: "return", value: value ?? null }));
 
-  const statement = either(breakStatement, returnStatement, caseStatement, ifStatement, forLoop, whileLoop, vardecl, indexAssign, fieldAssign, memberAssign, assign, lexicalBlock);
+  const statement = either(breakStatement, returnStatement, caseStatement, ifStatement, forLoop, whileLoop, vardecl, postfixAssign, assign, lexicalBlock);
 
   /*
     Blocks
