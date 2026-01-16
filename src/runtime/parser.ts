@@ -287,7 +287,7 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   );
 
   const comparisonExpr = binop(
-    str("=="),
+    either(str("=="), str("!=")),
     orderingExpr,
     (op, left, right): Expr => ({ type: "binOp", op, left, right })
   );

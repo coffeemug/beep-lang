@@ -333,6 +333,11 @@ export function makeInterpreter(k: BeepContext) {
             const right = evaluate(expr.right, scope).value;
             return ret(k.isEqual(left, right) ? k.trueObj : k.falseObj);
           }
+          case '!=': {
+            const left = evaluate(expr.left, scope).value;
+            const right = evaluate(expr.right, scope).value;
+            return ret(k.isEqual(left, right) ? k.falseObj : k.trueObj);
+          }
 
           case '%': {
             const left = evaluate(expr.left, scope).value;
