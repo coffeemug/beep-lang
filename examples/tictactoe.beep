@@ -1,0 +1,73 @@
+use stdlib/io/[print]
+
+def game_over?(board)
+  'horizontal'
+  for i in 0..=2
+    if (board[i][0] != '.'
+        and board[i][0] == board[i][1]
+        and board[i][1] == board[i][2])
+      return 1
+    end
+  end
+
+  'vertical'
+  for j in 0..=2
+    if (board[0][j] != '.'
+        and board[0][j] == board[1][j]
+        and board[1][j] == board[2][j])
+      return 1
+    end
+  end
+
+  'diagonal'
+  if (board[0][0] != '.'
+      and board[0][0] == board[1][1]
+      and board[1][1] == board[2][2])
+      return 1
+  end
+
+  if (board[0][2] != '.'
+      and board[0][2] == board[1][1]
+      and board[1][1] == board[2][0])
+      return 1
+  end
+
+  'tie'
+  let alldone = 1
+  for i in 0..3
+    for j in 0..3
+      if board[i][j] == '.'
+        alldone = 0
+      end
+    end
+  end
+
+  return alldone
+end
+
+let game_count = 0
+
+def play(board, next_move)
+  if game_over?(board)
+    game_count = game_count + 1
+    return
+  end
+
+  for i in 0..3
+    for j in 0..3
+      if board[i][j] == '.'
+        board[i][j] = next_move
+        play(board, if next_move == 'x' then 'o' else 'x' end)
+        board[i][j] = '.'
+      end
+    end
+  end
+end
+
+def main()
+  let board = [['.', '.', '.'],
+               ['.', '.', '.'],
+               ['.', '.', '.']]
+  play(board, 'x')
+  print(game_count.show())
+end
