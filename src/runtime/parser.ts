@@ -140,8 +140,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
       body,
     }));
 
+  const ifExpr: parser<Expr> = fwd(() => ifStatement);
+
   const primary = either(
-    lambdaExpr, parenExpr, mapLit, listLit, quotedSymbol, strLit, intLit,
+    ifExpr, lambdaExpr, parenExpr, mapLit, listLit, quotedSymbol, strLit, intLit,
     memberVar, dynamicVar, lexicalVar);
 
   /*
