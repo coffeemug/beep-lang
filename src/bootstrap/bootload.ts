@@ -46,22 +46,26 @@ export type BeepContext = {
   // Well-known symbols
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
-  getMemberSymbol: SymbolObj,
-  getItemSymbol: SymbolObj,
   modulesSymbol: SymbolObj,
-  eqSymbol: SymbolObj,
-  modSymbol: SymbolObj,
   listSymbol: SymbolObj,
+
+  getFieldSymbol: SymbolObj,
+  setFieldSymbol: SymbolObj,
+  getItemSymbol: SymbolObj,
+  setItemSymbol: SymbolObj,
+
   addSymbol: SymbolObj,
   subSymbol: SymbolObj,
   mulSymbol: SymbolObj,
   floordivSymbol: SymbolObj,
-  setItemSymbol: SymbolObj,
-  setMemberSymbol: SymbolObj,
+  modSymbol: SymbolObj,
+
+  eqSymbol: SymbolObj,
   ltSymbol: SymbolObj,
   lteSymbol: SymbolObj,
   gtSymbol: SymbolObj,
   gteSymbol: SymbolObj,
+
   makeIterSymbol: SymbolObj,
   nextSymbol: SymbolObj,
   okSymbol: SymbolObj,
@@ -162,21 +166,25 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
   k.modulesSymbol = k.intern!('modules');
-  k.getMemberSymbol = k.intern!('get_member');
-  k.getItemSymbol = k.intern!('get_item');
-  k.eqSymbol = k.intern!('eq');
-  k.modSymbol = k.intern!('mod');
   k.listSymbol = k.intern!('list');
+
+  k.getFieldSymbol = k.intern!('get_field');
+  k.setFieldSymbol = k.intern!('set_field');
+  k.getItemSymbol = k.intern!('get_item');
+  k.setItemSymbol = k.intern!('set_item');
+
+  k.modSymbol = k.intern!('mod');
   k.addSymbol = k.intern!('add');
   k.subSymbol = k.intern!('sub');
   k.mulSymbol = k.intern!('mul');
   k.floordivSymbol = k.intern!('floordiv');
-  k.setItemSymbol = k.intern!('set_item');
-  k.setMemberSymbol = k.intern!('set_member');
+
   k.ltSymbol = k.intern!('lt');
   k.lteSymbol = k.intern!('lte');
   k.gtSymbol = k.intern!('gt');
   k.gteSymbol = k.intern!('gte');
+  k.eqSymbol = k.intern!('eq');
+
   k.makeIterSymbol = k.intern!('make_iter');
   k.nextSymbol = k.intern!('next');
   k.okSymbol = k.intern!('ok');
@@ -266,26 +274,26 @@ export function registerDefaultMethods(k: BeepContext, receiverType: TypeObj) {
   defMethod('type', 0, thisObj => thisObj.type);
   defMethod('methods', 0, thisObj =>
     k.makeListObj!(thisObj.type.methods.values().toArray()));
-  defMethod('get_member', 1, (thisObj, args) => {
+  defMethod('get_field', 1, (thisObj, args) => {
     if (args[0].tag !== 'SymbolObj') {
-      throw new Error(`Member name must be a symbol, got ${k.show!(args[0])}`);
+      throw new Error(`Field name must be a symbol, got ${k.show!(args[0])}`);
     }
-    const memberName = args[0] as SymbolObj;
+    const fieldName = args[0] as SymbolObj;
 
-    const method = thisObj.type.methods.get(memberName);
+    const method = thisObj.type.methods.get(fieldName);
     if (method) {
       return k.bindMethod!(method, thisObj);
     }
 
     if ("ownMethods" in thisObj) {
       thisObj = thisObj as TypeObj;
-      const ownMethod = thisObj.ownMethods.get(memberName);
+      const ownMethod = thisObj.ownMethods.get(fieldName);
       if (ownMethod) {
         return ownMethod;
       }
     }
 
-    throw new Error(`No member ${memberName.name} on ${k.show!(thisObj.type)}`);
+    throw new Error(`No field ${fieldName.name} on ${k.show!(thisObj.type)}`);
   });
 }
 

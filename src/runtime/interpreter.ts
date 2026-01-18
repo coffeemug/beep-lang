@@ -169,7 +169,7 @@ export function makeInterpreter(k: BeepContext) {
         if (!receiver) {
           throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
         }
-        return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));
+        return ret(callMethod(receiver, k.getFieldSymbol, [expr.fieldName]));
       }
 
       case 'methodDef': {
@@ -225,7 +225,7 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'fieldAccess': {
         const receiver = evaluate(expr.receiver, scope).value;
-        return ret(callMethod(receiver, k.getMemberSymbol, [expr.fieldName]));
+        return ret(callMethod(receiver, k.getFieldSymbol, [expr.fieldName]));
       }
 
       case 'indexAccess': {
@@ -244,7 +244,7 @@ export function makeInterpreter(k: BeepContext) {
       case 'fieldAssign': {
         const receiver = evaluate(expr.receiver, scope).value;
         const value = evaluate(expr.value, scope).value;
-        return ret(callMethod(receiver, k.setMemberSymbol, [expr.fieldName, value]));
+        return ret(callMethod(receiver, k.setFieldSymbol, [expr.fieldName, value]));
       }
 
       case 'memberAssign': {
@@ -253,7 +253,7 @@ export function makeInterpreter(k: BeepContext) {
           throw new Error(`Cannot use @${expr.fieldName.name} outside of a method`);
         }
         const value = evaluate(expr.value, scope).value;
-        return ret(callMethod(receiver, k.setMemberSymbol, [expr.fieldName, value]));
+        return ret(callMethod(receiver, k.setFieldSymbol, [expr.fieldName, value]));
       }
 
       case 'funcall': {
@@ -539,8 +539,8 @@ export function makeInterpreter(k: BeepContext) {
         if (!target) {
           throw new Error(`Unbound symbol ${show(expr.target)}`);
         }
-        // mix_into is an own method, so we need to get it via get_member
-        const mixIntoMethod = callMethod(prototype, k.getMemberSymbol, [k.intern('mix_into')]);
+        // mix_into is an own method, so we need to get it via get_field
+        const mixIntoMethod = callMethod(prototype, k.getFieldSymbol, [k.intern('mix_into')]);
         return ret(callBoundMethod(mixIntoMethod as BoundMethodObj, [target]));
       }
 

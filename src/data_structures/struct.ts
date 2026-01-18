@@ -46,28 +46,28 @@ export function initStruct(k: BeepContext) {
     };
     registerDefaultMethods(k, namedStructType);
 
-    // Save the default get_member before overriding
-    const defaultGetMember = namedStructType.methods.get(k.getMemberSymbol)!;
+    // Save the default get_field before overriding
+    const defaultGetField = namedStructType.methods.get(k.getFieldSymbol)!;
     const defInstanceMethod = k.makeDefNative<NamedStructObj>(k.kernelModule.toplevelScope, namedStructType);
 
-    // Override get_member to check struct fields first, then fall back to default
-    defInstanceMethod('get_member', 1, (thisObj, args) => {
-      const memberName = args[0] as SymbolObj;
-      const structField = thisObj.fields.get(memberName);
+    // Override get_field to check struct fields first, then fall back to default
+    defInstanceMethod('get_field', 1, (thisObj, args) => {
+      const fieldName = args[0] as SymbolObj;
+      const structField = thisObj.fields.get(fieldName);
       if (structField !== undefined) {
         return structField;
       }
       // Fall back to default (methods, own methods)
-      return k.callBoundMethod(k.bindMethod(defaultGetMember, thisObj), args);
+      return k.callBoundMethod(k.bindMethod(defaultGetField, thisObj), args);
     });
 
-    // set_member sets a struct field (not methods)
-    defInstanceMethod('set_member', 2, (thisObj, args) => {
-      const memberName = args[0] as SymbolObj;
-      if (!thisObj.fields.has(memberName)) {
-        throw new Error(`Cannot set member ${memberName.name} on struct ${namedStructType.name.name} (not a field)`);
+    // set_field sets a struct field (not methods)
+    defInstanceMethod('set_field', 2, (thisObj, args) => {
+      const fieldName = args[0] as SymbolObj;
+      if (!thisObj.fields.has(fieldName)) {
+        throw new Error(`Cannot set field ${fieldName.name} on struct ${namedStructType.name.name} (not a field)`);
       }
-      thisObj.fields.set(memberName, args[1]);
+      thisObj.fields.set(fieldName, args[1]);
       return args[1];
     });
 
