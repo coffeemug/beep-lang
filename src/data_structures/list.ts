@@ -42,7 +42,41 @@ export function initListMethods(k: BeepContext) {
     show, makeDefNative
   } = k;
 
-  const defMethod = makeDefNative<ListObj>(k.kernelModule.toplevelScope, listTypeObj)
+  const defMethod = makeDefNative<ListObj>(k.kernelModule.toplevelScope, listTypeObj);
+  const defOwnMethod = makeDefNative<ListTypeObj>(k.kernelModule.toplevelScope, listTypeObj, 'own');
+
+  // list.new([3, 3], 0) creates a 3x3 array filled with 0
+  defOwnMethod('new', 2, (_thisObj, args) => {
+    const dims = args[0];
+    const fill = args[1];
+    if (dims.tag !== 'ListObj') {
+      throw new Error(`list.new requires a list of dimensions, got ${show(dims)}`);
+    }
+    const dimList = (dims as ListObj).elements;
+    if (dimList.length === 0) {
+      throw new Error('list.new requires at least one dimension');
+    }
+    for (const d of dimList) {
+      if (d.tag !== 'IntObj') {
+        throw new Error(`list.new dimensions must be integers, got ${show(d)}`);
+      }
+    }
+
+    const buildArray = (dimIndex: number): ListObj => {
+      const size = Number((dimList[dimIndex] as IntObj).value);
+      const elements: RuntimeObj[] = [];
+      for (let i = 0; i < size; i++) {
+        if (dimIndex < dimList.length - 1) {
+          elements.push(buildArray(dimIndex + 1));
+        } else {
+          elements.push(fill);
+        }
+      }
+      return makeListObj(elements);
+    };
+
+    return buildArray(0);
+  })
 
   defMethod('show', 0, thisObj => {
     const items = thisObj.elements.map(e => show(e)).join(', ');
