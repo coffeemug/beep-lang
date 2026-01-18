@@ -89,6 +89,7 @@ export type BeepContext = {
 
   // More well-known functions
   evaluate(expr: Expr, scope: ScopeObj): EvalResult,
+  loadModule: (filepath: string, force?: boolean) => ModuleObj,
   show: (obj: RuntimeObj) => string,
   callBoundMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
   callMethod: (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]) => RuntimeObj,
@@ -337,6 +338,15 @@ function initPrelude(k: BeepContext) {
   });
   defineBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
 
+  // load_module: loads a module from a filepath
+  const loadModuleMethod = defMethod('load_module', 1, (_, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`load_module requires a string filepath, got ${k.show(args[0])}`);
+    }
+    return k.loadModule((args[0] as StringObj).value);
+  });
+  defineBinding(intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule), scope);
+
   // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);
   k.trueObj = makeIntObj(1n);
@@ -358,9 +368,10 @@ function importNativeStdlib(k: BeepContext) {
 }
 
 function importStdlib(k: BeepContext) {
-  const stdlibModules: string[] = ['stdlib/list', 'stdlib/range', 'stdlib/map', 'stdlib/string'];
-  for (const modulePath of stdlibModules) {
-    const useExpr: Expr = { type: 'use', path: modulePath, alias: null };
-    k.evaluate(useExpr, k.kernelModule.toplevelScope);
+  // These modules add methods to built-in types (e.g., iterators).
+  // We just load them for side effects, no need to bind them.
+  const stdlibModules: string[] = ['stdlib/list.beep', 'stdlib/range.beep', 'stdlib/map.beep', 'stdlib/string.beep'];
+  for (const filepath of stdlibModules) {
+    k.loadModule(filepath);
   }
 }

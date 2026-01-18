@@ -54,6 +54,10 @@ export function initModule(k: BeepContext) {
       toplevelScope: k.makeScopeObj(),
     }
 
+    // TODO: copying bindings like we do below pollutes the toplevel scope of
+    // every module. Module users should not see these bindings, only the code
+    // executing in the module should.
+
     // Copy bindings from kernel module as it always gets star imported by default
     getBindings(k.kernelModule.toplevelScope).forEach(binding => {
       const [symId, value] = binding;

@@ -65,9 +65,7 @@ def play(board, next_move)
 end
 
 def main()
-  let board = [['.', '.', '.'],
-               ['.', '.', '.'],
-               ['.', '.', '.']]
+  let board = list.new([3, 3], '.')
   play(board, 'x')
   print(game_count.show())
 end
