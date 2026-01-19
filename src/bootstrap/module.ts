@@ -1,6 +1,6 @@
 import type { BeepContext } from "./bootload";
 import { findSymbolById } from "./symbol_space";
-import { defineBinding, getBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
+import { addBinding, getBinding, getBindings, makeBootstrapScope, type ScopeObj, type ScopeTypeObj } from "./scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
@@ -34,8 +34,8 @@ export function initKernelModule(k: BeepContext, rootTypeObj: RootTypeObj, scope
     name: intern('kernel'),
     toplevelScope: makeBootstrapScope(scopeTypeObj),
   };
-  defineBinding(moduleTypeObj.name, moduleTypeObj, k.kernelModule.toplevelScope);
-  defineBinding(intern("this"), k.kernelModule, k.kernelModule.toplevelScope);
+  addBinding(moduleTypeObj.name, moduleTypeObj, k.kernelModule.toplevelScope);
+  addBinding(intern("this"), k.kernelModule, k.kernelModule.toplevelScope);
 
   return k.kernelModule;
 }
@@ -61,9 +61,9 @@ export function initModule(k: BeepContext) {
     // Copy bindings from kernel module as it always gets star imported by default
     getBindings(k.kernelModule.toplevelScope).forEach(binding => {
       const [symId, value] = binding;
-      defineBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, moduleObj.toplevelScope);
+      addBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, moduleObj.toplevelScope);
     });
-    defineBinding(k.thisSymbol, moduleObj, moduleObj.toplevelScope);
+    addBinding(k.thisSymbol, moduleObj, moduleObj.toplevelScope);
 
     modules.kv.set(name, moduleObj);
 

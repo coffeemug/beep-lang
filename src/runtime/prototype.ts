@@ -1,5 +1,5 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
-import { defineBinding } from "../bootstrap/scope";
+import { addBinding } from "../bootstrap/scope";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import { type BeepContext, registerDefaultMethods } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
@@ -24,7 +24,7 @@ export function initPrototype(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  defineBinding(prototypeTypeObj.name, prototypeTypeObj, k.kernelModule.toplevelScope);
+  addBinding(prototypeTypeObj.name, prototypeTypeObj, k.kernelModule.toplevelScope);
 
   k.prototypeTypeObj = prototypeTypeObj;
   k.defineNamedPrototype = (name: SymbolObj): NamedPrototypeTypeObj => {

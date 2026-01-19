@@ -2,7 +2,7 @@ import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_s
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
 import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj } from "./module";
-import { defineBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
+import { addBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
 import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "./symbol";
@@ -141,9 +141,9 @@ function bootstrapKernelModule(k: Partial<BeepContext>) {
   const kernelModule = initKernelModule(k as BeepContext, rootTypeObj, k.scopeTypeObj);
 
   // Bind type names in the kernel module
-  defineBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
-  defineBinding(symbolTypeObj.name, symbolTypeObj, kernelModule.toplevelScope);
-  defineBinding(symbolSpaceTypeObj.name, symbolSpaceTypeObj, kernelModule.toplevelScope);
+  addBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
+  addBinding(symbolTypeObj.name, symbolTypeObj, kernelModule.toplevelScope);
+  addBinding(symbolSpaceTypeObj.name, symbolSpaceTypeObj, kernelModule.toplevelScope);
 
   k.symbolTypeObj = symbolTypeObj;
   k.kernelModule = kernelModule;
@@ -205,9 +205,9 @@ function initWellKnownFunctions(k: BeepContext) {
     }
 
     let callScope = k.makeScopeObj(method.scopeClosure);
-    defineBinding(thisSymbol, method.receiverInstance, callScope);
+    addBinding(thisSymbol, method.receiverInstance, callScope);
     for (let i = 0; i < method.argNames.length; i++) {
-      defineBinding(method.argNames[i], args[i], callScope);
+      addBinding(method.argNames[i], args[i], callScope);
     }
     try {
       return k.evaluate(method.body, callScope).value;
@@ -335,7 +335,7 @@ function initPrelude(k: BeepContext) {
   // ref_eq: compares two objects by reference using ===
   // TODO: add booleans
   const refEqMethod = defMethod('ref_eq', 2, (_, args) => args[0] === args[1] ? k.trueObj : k.falseObj);
-  defineBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
+  addBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
 
   // intern: takes a string and returns an interned symbol
   const internMethod = defMethod('intern', 1, (_, args) => {
@@ -344,7 +344,7 @@ function initPrelude(k: BeepContext) {
     }
     return intern((args[0] as StringObj).value);
   });
-  defineBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
+  addBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
 
   // load_module: loads a module from a filepath
   const loadModuleMethod = defMethod('load_module', 1, (_, args) => {
@@ -353,7 +353,7 @@ function initPrelude(k: BeepContext) {
     }
     return k.loadModule((args[0] as StringObj).value);
   });
-  defineBinding(intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule), scope);
+  addBinding(intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule), scope);
 
   // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);
@@ -363,12 +363,12 @@ function initPrelude(k: BeepContext) {
 
 function initDynamicScope(k: BeepContext) {
   k.dynamicScope = k.makeScopeObj();
-  defineBinding(k.modulesSymbol, k.makeMapObj([
+  addBinding(k.modulesSymbol, k.makeMapObj([
     [k.intern("kernel"), k.kernelModule],
   ]), k.dynamicScope);
 
-  defineBinding(k.intern("symbols"), k.symbolSpaceObj, k.dynamicScope);
-  defineBinding(k.intern("loadpath"), k.makeListObj([k.makeStringObj(process.cwd())]), k.dynamicScope);
+  addBinding(k.intern("symbols"), k.symbolSpaceObj, k.dynamicScope);
+  addBinding(k.intern("loadpath"), k.makeListObj([k.makeStringObj(process.cwd())]), k.dynamicScope);
 }
 
 function importNativeStdlib(k: BeepContext) {

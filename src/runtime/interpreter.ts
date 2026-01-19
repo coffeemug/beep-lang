@@ -2,7 +2,7 @@ import { parse, type Expr } from "./parser";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { matchPattern, type Binding } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { defineBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
+import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
@@ -78,10 +78,10 @@ export function makeInterpreter(k: BeepContext) {
     k.dynamicScope = makeScopeObj(k.dynamicScope);
     for (const binding of bindings) {
       if (binding.scope === 'dynamic') {
-        defineBinding(binding.sym, binding.value, k.dynamicScope);
+        addBinding(binding.sym, binding.value, k.dynamicScope);
         newScope.dynamicIntros.add(binding.sym.id);
       } else {
-        defineBinding(binding.sym, binding.value, newScope);
+        addBinding(binding.sym, binding.value, newScope);
       }
     }
     return newScope;
@@ -203,7 +203,7 @@ export function makeInterpreter(k: BeepContext) {
           targetScope = targetScope.parent;
         }
 
-        defineBinding(methodObj.name, methodObj, targetScope);
+        addBinding(methodObj.name, methodObj, targetScope);
         return ret(methodObj);
       }
 
@@ -320,7 +320,7 @@ export function makeInterpreter(k: BeepContext) {
         while (targetScope.parent) {
           targetScope = targetScope.parent;
         }
-        defineBinding(expr.name, structType, targetScope);
+        addBinding(expr.name, structType, targetScope);
         return ret(structType);
       }
 
@@ -330,7 +330,7 @@ export function makeInterpreter(k: BeepContext) {
         while (targetScope.parent) {
           targetScope = targetScope.parent;
         }
-        defineBinding(expr.name, prototypeType, targetScope);
+        addBinding(expr.name, prototypeType, targetScope);
         return ret(prototypeType);
       }
 
@@ -508,7 +508,7 @@ export function makeInterpreter(k: BeepContext) {
           ? k.intern(expr.alias)
           : k.intern(expr.path.split('/').pop()!);
 
-        defineBinding(bindingName, moduleObj, scope);
+        addBinding(bindingName, moduleObj, scope);
         return ret(moduleObj);
       }
 
@@ -523,7 +523,7 @@ export function makeInterpreter(k: BeepContext) {
             throw new Error(`Cannot import '${name}' from module ${expr.path}: not found`);
           }
           const bindingName = k.intern(alias ?? name);
-          defineBinding(bindingName, value, scope);
+          addBinding(bindingName, value, scope);
           imported.push(value);
         }
 

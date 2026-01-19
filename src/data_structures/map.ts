@@ -1,7 +1,7 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { RuntimeObj } from "../runtime_objects";
-import { defineBinding } from "../bootstrap/scope";
+import { addBinding } from "../bootstrap/scope";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
 
@@ -25,7 +25,7 @@ export function initMap(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  defineBinding(mapTypeObj.name, mapTypeObj, k.kernelModule.toplevelScope);
+  addBinding(mapTypeObj.name, mapTypeObj, k.kernelModule.toplevelScope);
 
   k.mapTypeObj = mapTypeObj;
   k.makeMapObj = (pairs: [SymbolObj, RuntimeObj][]): MapObj => ({

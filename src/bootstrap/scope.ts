@@ -49,7 +49,7 @@ export function makeBootstrapScope(scopeTypeObj: ScopeTypeObj, parent?: ScopeObj
 export function initScope(k: BeepContext) {
   const { kernelModule, scopeTypeObj } = k;
 
-  defineBinding(scopeTypeObj.name, scopeTypeObj, kernelModule.toplevelScope);
+  addBinding(scopeTypeObj.name, scopeTypeObj, kernelModule.toplevelScope);
 
   k.makeScopeObj = (parent?: ScopeObj): ScopeObj => ({
     tag: 'ScopeObj',
@@ -81,7 +81,7 @@ export function initScopeMethods(k: BeepContext) {
 /*
   Managing bindings
 */
-export function defineBinding(name: SymbolObj, value: RuntimeObj, scope: ScopeObj) {
+export function addBinding(name: SymbolObj, value: RuntimeObj, scope: ScopeObj) {
   scope.bindings.set(name.id, value);
 }
 
