@@ -32,6 +32,11 @@ type Procedure =
 
 export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
+export type DefNativeOpts = {
+  binding?: 'instance' | 'own',
+  scope?: ScopeObj,
+}
+
 export function initUnboundMethod(k: BeepContext) {
   const { rootTypeObj, kernelModule, intern } = k;
 
@@ -80,10 +85,14 @@ export function initUnboundMethod(k: BeepContext) {
     return unboundMethod;
   };
 
-  k.makeDefNative = <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding: 'instance' | 'own' = 'instance') =>
+  k.makeDefNative = <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => {
+      const {
+        binding = 'instance',
+        scope = k.makeScopeObj(),
+      } = opts ?? {};
       const internedName = k.intern(name);
-      const method = makeUnboundNativeMethodObj(scopeClosure, receiverType, internedName, argCount, nativeFn);
+      const method = makeUnboundNativeMethodObj(scope, receiverType, internedName, argCount, nativeFn);
       if (binding == 'instance') {
         receiverType.methods.set(internedName, method);
         return method;
@@ -99,7 +108,7 @@ export function initUnboundMethodMethods(k: BeepContext) {
   const {
     bindMethod, makeStringObj, unboundMethodTypeObj, makeDefNative,
    } = k;
-  const defMethod = makeDefNative<UnboundMethodObj>(k.kernelModule.toplevelScope, unboundMethodTypeObj);
+  const defMethod = makeDefNative<UnboundMethodObj>(unboundMethodTypeObj);
 
   defMethod('bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0]));

@@ -62,7 +62,7 @@ export function initScope(k: BeepContext) {
 
 export function initScopeMethods(k: BeepContext) {
   const { makeDefNative, scopeTypeObj, makeStringObj, makeListObj, symbolSpaceObj } = k;
-  const defMethod = makeDefNative<ScopeObj>(k.kernelModule.toplevelScope, scopeTypeObj);
+  const defMethod = makeDefNative<ScopeObj>(scopeTypeObj);
 
   defMethod('show', 0, _thisObj => makeStringObj('<scope>'));
 

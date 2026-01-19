@@ -37,7 +37,7 @@ export function initInt(k: BeepContext) {
 export function initIntMethods(k: BeepContext) {
   const { makeStringObj, makeDefNative, intTypeObj, makeIntObj } = k;
 
-  const defMethod = makeDefNative<IntObj>(k.kernelModule.toplevelScope, intTypeObj);
+  const defMethod = makeDefNative<IntObj>(intTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(thisObj.value.toString()));
 
@@ -119,7 +119,7 @@ export function initIntMethods(k: BeepContext) {
     return thisObj.value >= (other as IntObj).value ? k.trueObj : k.falseObj;
   });
 
-  const defOwnMethod = makeDefNative<IntTypeObj>(k.kernelModule.toplevelScope, intTypeObj, 'own');
+  const defOwnMethod = makeDefNative<IntTypeObj>(intTypeObj, { binding: 'own' });
 
   defOwnMethod('from', 1, (_thisObj, args) => {
     if (args[0].tag !== 'StringObj') {

@@ -5,6 +5,7 @@ import { defineBinding } from "../bootstrap/scope";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { IntObj } from "./int";
 import type { StringObj } from "./string";
+import { binding } from "process";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -42,8 +43,8 @@ export function initListMethods(k: BeepContext) {
     show, makeDefNative
   } = k;
 
-  const defMethod = makeDefNative<ListObj>(k.kernelModule.toplevelScope, listTypeObj);
-  const defOwnMethod = makeDefNative<ListTypeObj>(k.kernelModule.toplevelScope, listTypeObj, 'own');
+  const defMethod = makeDefNative<ListObj>(listTypeObj);
+  const defOwnMethod = makeDefNative<ListTypeObj>(listTypeObj, { binding: 'own' });
 
   // list.new([3, 3], 0) creates a 3x3 array filled with 0
   defOwnMethod('new', 2, (_thisObj, args) => {

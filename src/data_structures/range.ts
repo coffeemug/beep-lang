@@ -40,7 +40,7 @@ export function initRange(k: BeepContext) {
 export function initRangeMethods(k: BeepContext) {
   const { makeStringObj, makeListObj, rangeTypeObj, makeIntObj, makeDefNative } = k;
 
-  const defMethod = makeDefNative<RangeObj>(k.kernelModule.toplevelScope, rangeTypeObj);
+  const defMethod = makeDefNative<RangeObj>(rangeTypeObj);
 
   defMethod('show', 0, thisObj => {
     const op = thisObj.mode === 'exclusive' ? '..' : '..=';

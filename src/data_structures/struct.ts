@@ -48,7 +48,7 @@ export function initStruct(k: BeepContext) {
 
     // Save the default get_field before overriding
     const defaultGetField = namedStructType.methods.get(k.getFieldSymbol)!;
-    const defInstanceMethod = k.makeDefNative<NamedStructObj>(k.kernelModule.toplevelScope, namedStructType);
+    const defInstanceMethod = k.makeDefNative<NamedStructObj>(namedStructType);
 
     // Override get_field to check struct fields first, then fall back to default
     defInstanceMethod('get_field', 1, (thisObj, args) => {
@@ -72,7 +72,7 @@ export function initStruct(k: BeepContext) {
     });
 
     // Add 'new' own method for instantiation: Person.new('Alice', 30)
-    const defOwnMethod = k.makeDefNative<NamedStructTypeObj>(k.kernelModule.toplevelScope, namedStructType, 'own');
+    const defOwnMethod = k.makeDefNative<NamedStructTypeObj>(namedStructType, { binding: 'own' });
     defOwnMethod('new', fields.length, (thisObj, args) => {
       return k.instantiateNamedStruct(thisObj, args);
     });
@@ -115,7 +115,7 @@ export function initStruct(k: BeepContext) {
 }
 
 export function initStructMethods(k: BeepContext) {
-  const defMethod = k.makeDefNative<NamedStructTypeObj>(k.kernelModule.toplevelScope, k.structTypeObj);
+  const defMethod = k.makeDefNative<NamedStructTypeObj>(k.structTypeObj);
   defMethod('show', 0, thisObj => k.makeStringObj(`<type ${thisObj.name.name}>`));
   defMethod('fields', 0, thisObj => k.makeListObj(thisObj.fields));
 }

@@ -8,7 +8,7 @@ export function initIO(k: BeepContext) {
   const { makeModuleObj, intern, makeDefNative, moduleTypeObj, bindMethod, makeStringObj, makeIntObj } = k;
 
   const ioModule = makeModuleObj(intern('stdlib/io'));
-  const defMethod = makeDefNative<typeof ioModule>(ioModule.toplevelScope, moduleTypeObj);
+  const defMethod = makeDefNative<typeof ioModule>(moduleTypeObj);
 
   // readline: reads a single line from stdin synchronously
   const readlineMethod = defMethod('readline', 0, () => {

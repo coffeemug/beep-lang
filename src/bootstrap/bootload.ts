@@ -1,6 +1,6 @@
 import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_structures/int";
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
-import { initUnboundMethod, initUnboundMethodMethods, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
+import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
 import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj } from "./module";
 import { defineBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
@@ -87,7 +87,7 @@ export type BeepContext = {
   defineNamedPrototype: (name: SymbolObj) => NamedPrototypeTypeObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
-  makeDefNative: <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, binding?: 'instance' | 'own') =>
+  makeDefNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => BoundMethodObj | UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
 
@@ -270,7 +270,7 @@ function initWellKnownFunctions(k: BeepContext) {
 
 export function registerDefaultMethods(k: BeepContext, receiverType: TypeObj) {
   const scope = k.kernelModule!.toplevelScope;
-  const defMethod = k.makeDefNative!(scope, receiverType);
+  const defMethod = k.makeDefNative!(receiverType);
   defMethod('type', 0, thisObj => thisObj.type);
   defMethod('methods', 0, thisObj =>
     k.makeListObj!(thisObj.type.methods.values().toArray()));
@@ -330,7 +330,7 @@ function initPrelude(k: BeepContext) {
   const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
 
   const scope = k.kernelModule.toplevelScope;
-  const defMethod = makeDefNative<RuntimeObj>(scope, moduleTypeObj);
+  const defMethod = makeDefNative<RuntimeObj>(moduleTypeObj);
 
   // ref_eq: compares two objects by reference using ===
   // TODO: add booleans

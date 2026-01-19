@@ -40,7 +40,7 @@ export function initMapMethods(k: BeepContext) {
     makeStringObj, mapTypeObj, show, makeDefNative, makeListObj
   } = k;
 
-  const defMethod = makeDefNative<MapObj>(k.kernelModule.toplevelScope, mapTypeObj)
+  const defMethod = makeDefNative<MapObj>(mapTypeObj)
 
   defMethod('show', 0, thisObj => {
     const items = thisObj.kv.entries().map(e =>

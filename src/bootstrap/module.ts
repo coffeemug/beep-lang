@@ -77,7 +77,7 @@ export function initModuleMethods(k: BeepContext) {
   const moduleName = (module: ModuleObj) =>
     module.name.name.split('/').pop()!
 
-  const defMethod = makeDefNative<ModuleObj>(k.kernelModule.toplevelScope, moduleTypeObj);
+  const defMethod = makeDefNative<ModuleObj>(moduleTypeObj);
 
   defMethod('show', 0, thisObj => makeStringObj(`<module ${show(intern(moduleName(thisObj)))}>`));
   defMethod('scope', 0, thisObj => thisObj.toplevelScope);
@@ -85,6 +85,6 @@ export function initModuleMethods(k: BeepContext) {
   defMethod('name', 0, thisObj =>
     k.intern(moduleName(thisObj)));
 
-  const defOwnMethod = makeDefNative<ModuleObj>(k.kernelModule.toplevelScope, moduleTypeObj, 'own');
+  const defOwnMethod = makeDefNative<ModuleObj>(moduleTypeObj, { binding: 'own' });
   defOwnMethod('new', 1, (_, args) => makeModuleObj(args[0] as SymbolObj));
 }

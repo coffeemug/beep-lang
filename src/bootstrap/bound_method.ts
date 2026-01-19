@@ -33,7 +33,7 @@ export function initBoundMethod(k: BeepContext) {
 export function initBoundMethodMethods(k: BeepContext) {
   const { makeDefNative, makeStringObj, makeIntObj, boundMethodTypeObj, scopeTypeObj } = k;
 
-  const defMethod = makeDefNative<BoundMethodObj>(k.kernelModule.toplevelScope, boundMethodTypeObj);
+  const defMethod = makeDefNative<BoundMethodObj>(boundMethodTypeObj);
 
   defMethod('show', 0, thisObj =>
     thisObj.receiverType == scopeTypeObj ?

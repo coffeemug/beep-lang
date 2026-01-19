@@ -42,7 +42,7 @@ export function makeSymbolSpaceObj(typeObj: SymbolSpaceTypeObj): SymbolSpaceObj 
 
 export function initSymbolSpaceMethods(k: BeepContext) {
   const { makeStringObj, makeDefNative, symbolSpaceTypeObj, makeListObj } = k;
-  const defMethod = makeDefNative<SymbolSpaceObj>(k.kernelModule.toplevelScope, symbolSpaceTypeObj);
+  const defMethod = makeDefNative<SymbolSpaceObj>(symbolSpaceTypeObj);
   defMethod('show', 0, () => makeStringObj("<symbol_space>"));
   defMethod('list', 0, thisObj => makeListObj(thisObj.indexedTable.values().toArray()));
   defMethod('find_by_name', 1, (thisObj, args) => findSymbolByName((args[0] as StringObj).value, thisObj)!);

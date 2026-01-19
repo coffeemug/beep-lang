@@ -38,7 +38,7 @@ export function initPrototype(k: BeepContext) {
     registerDefaultMethods(k, namedPrototypeType);
 
     // Add 'mix_into' own method: MyProto.mix_into(SomeType)
-    const defOwnMethod = k.makeDefNative<NamedPrototypeTypeObj>(k.kernelModule.toplevelScope, namedPrototypeType, 'own');
+    const defOwnMethod = k.makeDefNative<NamedPrototypeTypeObj>(namedPrototypeType, { binding: 'own' });
     defOwnMethod('mix_into', 1, (thisObj, args) => {
       const targetType = args[0] as TypeObj;
       // Copy all methods from this prototype to the target type
@@ -56,6 +56,6 @@ export function initPrototype(k: BeepContext) {
 }
 
 export function initPrototypeMethods(k: BeepContext) {
-  const defMethod = k.makeDefNative<NamedPrototypeTypeObj>(k.kernelModule.toplevelScope, k.prototypeTypeObj);
+  const defMethod = k.makeDefNative<NamedPrototypeTypeObj>(k.prototypeTypeObj);
   defMethod('show', 0, thisObj => k.makeStringObj(`<prototype ${thisObj.name.name}>`));
 }
