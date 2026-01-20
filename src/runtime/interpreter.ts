@@ -84,17 +84,9 @@ export function makeInterpreter(k: BeepContext) {
 
     // Copy bindings from kernel module as it always gets star imported by default
     copyExportsToScope(k.kernelModule, scope, k.symbolSpaceObj);
+    addBinding(thisSymbol, moduleObj, scope)
 
-    // Set $module to the current module during evaluation
-    const savedDynamicScope = k.dynamicScope;
-    k.dynamicScope = makeScopeObj(k.dynamicScope);
-    addBinding(k.moduleSymbol, moduleObj, k.dynamicScope);
-
-    try {
-      evaluate(ast, scope);
-    } finally {
-      k.dynamicScope = savedDynamicScope;
-    }
+    evaluate(ast, scope);
 
     return moduleObj;
   }
@@ -131,8 +123,8 @@ export function makeInterpreter(k: BeepContext) {
     return result;
   }
 
-  function getCurrentModule(): ModuleObj {
-    return getBinding(k.moduleSymbol, k.dynamicScope) as ModuleObj;
+  function getCurrentModule(scope: ScopeObj): ModuleObj {
+    return getBinding(thisSymbol, scope) as ModuleObj;
   }
 
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
@@ -241,7 +233,7 @@ export function makeInterpreter(k: BeepContext) {
         }
 
         addBinding(methodObj.name, methodObj, targetScope);
-        exportBinding(getCurrentModule(), methodObj.name, methodObj)
+        exportBinding(getCurrentModule(scope), methodObj.name, methodObj)
         return ret(methodObj);
       }
 
@@ -359,7 +351,7 @@ export function makeInterpreter(k: BeepContext) {
           targetScope = targetScope.parent;
         }
         addBinding(expr.name, structType, targetScope);
-        exportBinding(getCurrentModule(), expr.name, structType)
+        exportBinding(getCurrentModule(scope), expr.name, structType)
         return ret(structType);
       }
 
@@ -370,7 +362,7 @@ export function makeInterpreter(k: BeepContext) {
           targetScope = targetScope.parent;
         }
         addBinding(expr.name, prototypeType, targetScope);
-        exportBinding(getCurrentModule(), expr.name, prototypeType)
+        exportBinding(getCurrentModule(scope), expr.name, prototypeType)
 
         return ret(prototypeType);
       }

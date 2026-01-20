@@ -5,7 +5,7 @@ import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 import { copyExportsToScope, type ModuleObj } from "./bootstrap/module";
-import { getBinding, upsertBinding, type ScopeObj } from "./bootstrap/scope";
+import { addBinding, getBinding, type ScopeObj } from "./bootstrap/scope";
 import type { MapObj } from "./data_structures/map";
 import type { RuntimeObj } from "./runtime_objects";
 
@@ -33,11 +33,10 @@ async function main(): Promise<void> {
       copyExportsToScope(ctx.kernelModule, scope, ctx.symbolSpaceObj);
       copyExportsToScope(module, scope, ctx.symbolSpaceObj);
 
+      addBinding(ctx.thisSymbol, module, scope)
+
       moduleScopes.set(module, scope);
     }
-
-    // Update $module in dynamic scope
-    upsertBinding(ctx.moduleSymbol, module, ctx.dynamicScope);
   }
 
   const getCurrentScope = () => moduleScopes.get(activeModule)!;

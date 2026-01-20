@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- `$module` is no good, it's the module we're evaluating from, not one where code is defined. Needs to be lexical scope. Maybe `module.this`?
 - These two are related
   - Functions as methods bound to scopes is silly. Maybe have functions as first 
 class objects and build methods on top of that.
