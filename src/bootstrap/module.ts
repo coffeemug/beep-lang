@@ -80,13 +80,16 @@ export function initModuleMethods(k: BeepContext) {
     }
     return k.makeMapObj(pairs);
   });
+  // Save the default get_field before overriding
+  const defaultGetField = moduleTypeObj.methods.get(k.getFieldSymbol)!;
   defMethod('get_field', 1, (thisObj, args) => {
     const fieldName = args[0] as SymbolObj;
     const value = getExportBinding(thisObj, fieldName);
-    if (value === null) {
-      throw new Error(`Export ${fieldName.name} not found in module ${thisObj.name.name}`);
+    if (value !== null) {
+      return value;
     }
-    return value;
+    // Fall back to default (methods, own methods)
+    return k.callBoundMethod(k.bindMethod(defaultGetField, thisObj), args);
   });
 
   const defOwnMethod = makeDefNative<ModuleObj>(moduleTypeObj, { binding: 'own' });
