@@ -9,10 +9,9 @@ import type { ListObj } from "../data_structures/list";
 import type { IntObj } from "../data_structures/int";
 import type { StringObj } from "../data_structures/string";
 import type { MapObj } from "../data_structures/map";
-import { exportBinding, getExportBinding, getExports, type ModuleObj } from "../bootstrap/module";
+import { copyExportsToScope, exportBinding, getExportBinding, type ModuleObj } from "../bootstrap/module";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import { findSymbolById } from "../bootstrap/symbol_space";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
@@ -67,10 +66,7 @@ export function makeInterpreter(k: BeepContext) {
     let scope = makeScopeObj();
 
     // Copy bindings from kernel module as it always gets star imported by default
-    getExports(k.kernelModule).forEach(binding => {
-      const [symId, value] = binding;
-      addBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, scope);
-    });
+    copyExportsToScope(k.kernelModule, scope, k.symbolSpaceObj);
 
     // Set $module to the current module during evaluation
     const savedDynamicScope = k.dynamicScope;

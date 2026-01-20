@@ -1,6 +1,6 @@
 import type { BeepContext } from "./bootload";
 import { findSymbolById, findSymbolByName, type SymbolId, type SymbolSpaceObj } from "./symbol_space";
-import { getBinding, type ScopeTypeObj } from "./scope";
+import { addBinding, getBinding, type ScopeObj, type ScopeTypeObj } from "./scope";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
@@ -111,4 +111,11 @@ export function getExportBinding(module: ModuleObj, symbol: SymbolObj) {
 export function getExportByName<T extends RuntimeObj>(name: string, module: ModuleObj, space: SymbolSpaceObj): T | null {
   const sym = findSymbolByName(name, space);
   return sym && getExportBinding(module, sym) as T;
+}
+
+export function copyExportsToScope(module: ModuleObj, scope: ScopeObj, space: SymbolSpaceObj): void {
+  for (const [symId, value] of module.exports) {
+    const sym = findSymbolById(symId, space);
+    if (sym) addBinding(sym, value, scope);
+  }
 }

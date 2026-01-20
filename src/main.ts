@@ -4,7 +4,7 @@ import { makeBeepContext } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
-import type { ModuleObj } from "./bootstrap/module";
+import { copyExportsToScope, type ModuleObj } from "./bootstrap/module";
 import { getBinding, upsertBinding, type ScopeObj } from "./bootstrap/scope";
 import type { MapObj } from "./data_structures/map";
 import type { RuntimeObj } from "./runtime_objects";
@@ -27,7 +27,13 @@ async function main(): Promise<void> {
   function switchModule(module: ModuleObj): void {
     activeModule = module;
     if (!moduleScopes.has(module)) {
-      moduleScopes.set(module, ctx.makeScopeObj());
+      const scope = ctx.makeScopeObj();
+
+      // Copy kernel exports and module exports into the new scope
+      copyExportsToScope(ctx.kernelModule, scope, ctx.symbolSpaceObj);
+      copyExportsToScope(module, scope, ctx.symbolSpaceObj);
+      
+      moduleScopes.set(module, scope);
     }
 
     // Update $module in dynamic scope
