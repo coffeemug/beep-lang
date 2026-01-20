@@ -62,7 +62,8 @@ export function makeInterpreter(k: BeepContext) {
     }
 
     if (!foundPath) {
-      throw new Error(`Cannot find module: ${relpath}`);
+      const modulePath = relpath.replace(/\.beep$/, '');
+      throw new Error(`Cannot find module: ${modulePath}`);
     }
 
     return loadModuleFromFullpath(foundPath, force);
