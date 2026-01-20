@@ -30,16 +30,23 @@ export function makeInterpreter(k: BeepContext) {
     defineNamedStruct, defineNamedPrototype, makeRangeObj, bindMethod
    } = k;
 
-  function loadModule(filepath: string, force: boolean = false): ModuleObj {
-    // filepath should include .beep extension
-    // Module name is the path without extension
-    const modulePath = filepath.replace(/\.beep$/, '');
+  function getLoadedModule(relpath: string): ModuleObj | null {
+    const modulePath = relpath.replace(/\.beep$/, '');
     const moduleName = k.intern(modulePath);
     const modules = getBinding(k.modulesSymbol, k.dynamicScope) as MapObj;
 
     // Return existing module if already loaded (unless force reload)
-    if (!force && modules.kv.has(moduleName)) {
+    if (modules.kv.has(moduleName)) {
       return modules.kv.get(moduleName)! as ModuleObj;
+    } else {
+      return null;
+    }
+  }
+
+  function findAndLoadModule(relpath: string, force: boolean = false): ModuleObj {
+    const loaded = getLoadedModule(relpath);
+    if (loaded && !force) {
+      return loaded;
     }
 
     const loadpath = getBinding(k.intern('loadpath'), k.dynamicScope) as ListObj;
@@ -47,7 +54,7 @@ export function makeInterpreter(k: BeepContext) {
     let foundPath: string | null = null;
     for (const pathObj of loadpath.elements) {
       const basePath = (pathObj as StringObj).value;
-      const fullPath = join(basePath, filepath);
+      const fullPath = join(basePath, relpath);
       if (existsSync(fullPath)) {
         foundPath = fullPath;
         break;
@@ -55,14 +62,24 @@ export function makeInterpreter(k: BeepContext) {
     }
 
     if (!foundPath) {
-      throw new Error(`Cannot find module: ${filepath}`);
+      throw new Error(`Cannot find module: ${relpath}`);
     }
 
-    const moduleObj = k.makeModuleObj(moduleName);
+    return loadModuleFromFullpath(foundPath, force);
+  }
 
-    const source = readFileSync(foundPath, 'utf-8');
+  function loadModuleFromFullpath(fullpath: string, force: boolean = false): ModuleObj {
+    const loaded = getLoadedModule(fullpath);
+    if (loaded && !force) {
+      return loaded;
+    }
+
+    const source = readFileSync(fullpath, 'utf-8');
     const ast = parse(source, k.intern);
 
+    const modulePath = fullpath.replace(/\.beep$/, '');
+    const moduleName = k.intern(modulePath);
+    const moduleObj = k.makeModuleObj(moduleName);
     let scope = makeScopeObj();
 
     // Copy bindings from kernel module as it always gets star imported by default
@@ -85,7 +102,8 @@ export function makeInterpreter(k: BeepContext) {
   // TODO: it's off that we set this up here. The right approach is to have a
   // proper InterpreterObj that we expose to the user, and bootload should load
   // it at the right time.
-  k.loadModule = loadModule;
+  k.loadModuleFromFullpath = loadModuleFromFullpath;
+  k.findAndLoadModule = findAndLoadModule;
 
   // Creates a new scope with pattern bindings defined
   function scopedBindings(bindings: Binding[], parentScope: ScopeObj): ScopeObj {
@@ -524,7 +542,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'use': {
-        const moduleObj = loadModule(expr.path + '.beep');
+        const moduleObj = findAndLoadModule(expr.path + '.beep');
 
         // Use alias if provided, otherwise use the last part of path
         const bindingName = expr.alias
@@ -536,7 +554,7 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'useNames': {
-        const moduleObj = loadModule(expr.path + '.beep');
+        const moduleObj = findAndLoadModule(expr.path + '.beep');
 
         const imported: RuntimeObj[] = [];
         for (const { name, alias } of expr.names) {

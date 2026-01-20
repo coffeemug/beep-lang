@@ -6,6 +6,7 @@ import type { RootTypeObj } from "./root_type";
 import type { SymbolObj } from "./symbol";
 import type { MapObj } from "../data_structures/map";
 import type { RuntimeObj } from "../runtime_objects";
+import type { StringObj } from "../data_structures/string";
 
 export type ModuleTypeObj =
   & RuntimeObjMixin<'ModuleTypeObj', RootTypeObj>
@@ -94,6 +95,12 @@ export function initModuleMethods(k: BeepContext) {
 
   const defOwnMethod = makeDefNative<ModuleObj>(moduleTypeObj, { binding: 'own' });
   defOwnMethod('new', 1, (_, args) => makeModuleObj(args[0] as SymbolObj));
+  defOwnMethod('load', 1, (_, args) => {
+    if (args[0].tag !== 'StringObj') {
+      throw new Error(`module.load requires a string filepath, got ${show(args[0])}`);
+    }
+    return k.loadModuleFromFullpath((args[0] as StringObj).value);
+  });
 }
 
 export function exportBinding(module: ModuleObj, name: SymbolObj, value: RuntimeObj) {

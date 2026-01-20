@@ -2,7 +2,7 @@ import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_s
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
 import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj, exportBinding, getExportByName } from "./module";
-import { addBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
+import { addBinding, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
 import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "./symbol";
@@ -94,7 +94,8 @@ export type BeepContext = {
 
   // More well-known functions
   evaluate(expr: Expr, scope: ScopeObj): EvalResult,
-  loadModule: (filepath: string, force?: boolean) => ModuleObj,
+  loadModuleFromFullpath: (fullpath: string, force?: boolean) => ModuleObj,
+  findAndLoadModule: (fullpath: string, force?: boolean) => ModuleObj,
   show: (obj: RuntimeObj) => string,
   callBoundMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
   callMethod: (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]) => RuntimeObj,
@@ -345,15 +346,6 @@ function initPrelude(k: BeepContext) {
   });
   exportBinding(k.kernelModule, intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule));
 
-  // load_module: loads a module from a filepath
-  const loadModuleMethod = defMethod('load_module', 1, (_, args) => {
-    if (args[0].tag !== 'StringObj') {
-      throw new Error(`load_module requires a string filepath, got ${k.show(args[0])}`);
-    }
-    return k.loadModule((args[0] as StringObj).value);
-  });
-  exportBinding(k.kernelModule, intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule));
-
   // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);
   k.trueObj = makeIntObj(1n);
@@ -379,6 +371,6 @@ function importStdlib(k: BeepContext) {
   // We just load them for side effects, no need to bind them.
   const stdlibModules: string[] = ['stdlib/list.beep', 'stdlib/range.beep', 'stdlib/map.beep', 'stdlib/string.beep'];
   for (const filepath of stdlibModules) {
-    k.loadModule(filepath);
+    k.findAndLoadModule(filepath);
   }
 }

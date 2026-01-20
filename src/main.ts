@@ -1,5 +1,5 @@
 import { repl } from "./repl";
-import { parse, type Expr } from "./runtime/parser";
+import { parse } from "./runtime/parser";
 import { makeBeepContext } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
       // Copy kernel exports and module exports into the new scope
       copyExportsToScope(ctx.kernelModule, scope, ctx.symbolSpaceObj);
       copyExportsToScope(module, scope, ctx.symbolSpaceObj);
-      
+
       moduleScopes.set(module, scope);
     }
 
