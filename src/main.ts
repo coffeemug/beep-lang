@@ -5,7 +5,7 @@ import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";
 import type { UnboundMethodObj } from "./bootstrap/unbound_method";
 import type { ModuleObj } from "./bootstrap/module";
-import { getBinding, type ScopeObj } from "./bootstrap/scope";
+import { getBinding, upsertBinding, type ScopeObj } from "./bootstrap/scope";
 import type { MapObj } from "./data_structures/map";
 import type { RuntimeObj } from "./runtime_objects";
 
@@ -27,8 +27,11 @@ async function main(): Promise<void> {
   function switchModule(module: ModuleObj): void {
     activeModule = module;
     if (!moduleScopes.has(module)) {
-      moduleScopes.set(module, module.toplevelScope);
+      moduleScopes.set(module, ctx.makeScopeObj());
     }
+
+    // Update $module in dynamic scope
+    upsertBinding(ctx.moduleSymbol, module, ctx.dynamicScope);
   }
 
   const getCurrentScope = () => moduleScopes.get(activeModule)!;
@@ -57,7 +60,7 @@ async function main(): Promise<void> {
   function complete(input: string): string[] {
     try {
       const ast = parse(input, intern);
-      const { value: obj } = evaluate(ast, activeModule.toplevelScope);
+      const { value: obj } = evaluate(ast, getCurrentScope());
 
       // Get the methods method from the object's type
       const methodsMethod = obj.type.methods.get(methodsSym);
@@ -80,7 +83,7 @@ async function main(): Promise<void> {
 
   function inCmdHandler(arg_: string) {
     const ast = parse(arg_, intern);
-    const { value: arg } = evaluate(ast, activeModule.toplevelScope);
+    const { value: arg } = evaluate(ast, getCurrentScope());
     if (arg.tag == 'ModuleObj') {
       switchModule(arg as ModuleObj);
     } else if (arg.tag == 'SymbolObj') {

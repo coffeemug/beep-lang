@@ -1,5 +1,5 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
-import { addBinding } from "../bootstrap/scope";
+import { exportBinding } from "../bootstrap/module";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import { type BeepContext, registerDefaultMethods } from "../bootstrap/bootload";
 import type { SymbolObj } from "../bootstrap/symbol";
@@ -32,7 +32,7 @@ export function initStruct(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(structTypeObj.name, structTypeObj, k.kernelModule.toplevelScope);
+  exportBinding(k.kernelModule, structTypeObj.name, structTypeObj);
 
   k.structTypeObj = structTypeObj;
   k.defineNamedStruct = (name: SymbolObj, fields: SymbolObj[]): NamedStructTypeObj => {

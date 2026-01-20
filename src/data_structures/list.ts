@@ -1,11 +1,10 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { RuntimeObj } from "../runtime_objects";
-import { addBinding } from "../bootstrap/scope";
+import { exportBinding } from "../bootstrap/module";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { IntObj } from "./int";
 import type { StringObj } from "./string";
-import { binding } from "process";
 
 export type ListTypeObj =
   & RuntimeObjMixin<'ListTypeObj', RootTypeObj>
@@ -27,7 +26,7 @@ export function initList(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(listTypeObj.name, listTypeObj, k.kernelModule.toplevelScope);
+  exportBinding(k.kernelModule, listTypeObj.name, listTypeObj);
 
   k.listTypeObj = listTypeObj;
   k.makeListObj = (elements: RuntimeObj[]): ListObj => ({

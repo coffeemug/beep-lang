@@ -1,5 +1,5 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
-import { addBinding } from "../bootstrap/scope";
+import { exportBinding } from "../bootstrap/module";
 import { type RootTypeObj } from "../bootstrap/root_type"
 import type { BeepContext } from "../bootstrap/bootload";
 
@@ -23,7 +23,7 @@ export function initString(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(stringTypeObj.name, stringTypeObj, k.kernelModule.toplevelScope);
+  exportBinding(k.kernelModule, stringTypeObj.name, stringTypeObj);
 
   k.stringTypeObj = stringTypeObj;
   k.makeStringObj = (value: string): StringObj => ({

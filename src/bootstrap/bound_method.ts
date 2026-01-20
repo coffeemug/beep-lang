@@ -1,9 +1,9 @@
 import type { RuntimeObj } from "../runtime_objects";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { addBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import { type MethodObjBase } from "./unbound_method";
 import type { BeepContext } from "./bootload";
+import { exportBinding } from "./module";
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>
@@ -25,7 +25,7 @@ export function initBoundMethod(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(boundMethodTypeObj.name, boundMethodTypeObj, k.kernelModule.toplevelScope);
+  exportBinding(k.kernelModule, boundMethodTypeObj.name, boundMethodTypeObj);
 
   k.boundMethodTypeObj = boundMethodTypeObj;
 }

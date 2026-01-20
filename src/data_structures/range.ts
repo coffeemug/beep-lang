@@ -1,6 +1,6 @@
 import type { RuntimeObjMixin, TypeObjMixin } from "../bootstrap/object_mixins";
 import { type RootTypeObj } from "../bootstrap/root_type"
-import { addBinding } from "../bootstrap/scope";
+import { exportBinding } from "../bootstrap/module";
 import type { BeepContext } from "../bootstrap/bootload";
 
 export type RangeTypeObj =
@@ -25,7 +25,7 @@ export function initRange(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(rangeTypeObj.name, rangeTypeObj, k.kernelModule.toplevelScope);
+  exportBinding(k.kernelModule, rangeTypeObj.name, rangeTypeObj);
 
   k.rangeTypeObj = rangeTypeObj;
   k.makeRangeObj = (start: bigint, end: bigint, mode: 'exclusive' | 'inclusive'): RangeObj => ({

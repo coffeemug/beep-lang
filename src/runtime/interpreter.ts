@@ -9,9 +9,10 @@ import type { ListObj } from "../data_structures/list";
 import type { IntObj } from "../data_structures/int";
 import type { StringObj } from "../data_structures/string";
 import type { MapObj } from "../data_structures/map";
-import type { ModuleObj } from "../bootstrap/module";
+import { exportBinding, getExportBinding, getExports, type ModuleObj } from "../bootstrap/module";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { findSymbolById } from "../bootstrap/symbol_space";
 
 export type EvalResult = { value: RuntimeObj; scope: ScopeObj };
 
@@ -62,7 +63,25 @@ export function makeInterpreter(k: BeepContext) {
 
     const source = readFileSync(foundPath, 'utf-8');
     const ast = parse(source, k.intern);
-    evaluate(ast, moduleObj.toplevelScope);
+
+    let scope = makeScopeObj();
+
+    // Copy bindings from kernel module as it always gets star imported by default
+    getExports(k.kernelModule).forEach(binding => {
+      const [symId, value] = binding;
+      addBinding(findSymbolById(symId, k.symbolSpaceObj)!, value, scope);
+    });
+
+    // Set $module to the current module during evaluation
+    const savedDynamicScope = k.dynamicScope;
+    k.dynamicScope = makeScopeObj(k.dynamicScope);
+    addBinding(k.moduleSymbol, moduleObj, k.dynamicScope);
+
+    try {
+      evaluate(ast, scope);
+    } finally {
+      k.dynamicScope = savedDynamicScope;
+    }
 
     return moduleObj;
   }
@@ -96,6 +115,10 @@ export function makeInterpreter(k: BeepContext) {
       result.push(next.elements[1]);
     }
     return result;
+  }
+
+  function getCurrentModule(): ModuleObj {
+    return getBinding(k.moduleSymbol, k.dynamicScope) as ModuleObj;
   }
 
   function evaluate(expr: Expr, scope: ScopeObj): EvalResult {
@@ -204,6 +227,7 @@ export function makeInterpreter(k: BeepContext) {
         }
 
         addBinding(methodObj.name, methodObj, targetScope);
+        exportBinding(getCurrentModule(), methodObj.name, methodObj)
         return ret(methodObj);
       }
 
@@ -321,6 +345,7 @@ export function makeInterpreter(k: BeepContext) {
           targetScope = targetScope.parent;
         }
         addBinding(expr.name, structType, targetScope);
+        exportBinding(getCurrentModule(), expr.name, structType)
         return ret(structType);
       }
 
@@ -331,6 +356,8 @@ export function makeInterpreter(k: BeepContext) {
           targetScope = targetScope.parent;
         }
         addBinding(expr.name, prototypeType, targetScope);
+        exportBinding(getCurrentModule(), expr.name, prototypeType)
+
         return ret(prototypeType);
       }
 
@@ -514,11 +541,10 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'useNames': {
         const moduleObj = loadModule(expr.path + '.beep');
-        const moduleScope = (moduleObj as { toplevelScope: ScopeObj }).toplevelScope;
 
         const imported: RuntimeObj[] = [];
         for (const { name, alias } of expr.names) {
-          const value = getBinding(k.intern(name), moduleScope);
+          const value = getExportBinding(moduleObj, k.intern(name));
           if (!value) {
             throw new Error(`Cannot import '${name}' from module ${expr.path}: not found`);
           }

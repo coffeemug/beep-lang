@@ -2,10 +2,10 @@ import type { TypeObj, RuntimeObj } from "../runtime_objects";
 import type { ScopeObj } from "./scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
-import { addBinding } from "./scope";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
 import type { BeepContext } from "./bootload";
+import { exportBinding } from "./module";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
@@ -47,7 +47,7 @@ export function initUnboundMethod(k: BeepContext) {
     methods: new Map(),
     ownMethods: new Map(),
   };
-  addBinding(unboundMethodTypeObj.name, unboundMethodTypeObj, kernelModule.toplevelScope);
+  exportBinding(kernelModule, unboundMethodTypeObj.name, unboundMethodTypeObj);
   k.unboundMethodTypeObj = unboundMethodTypeObj;
 
   k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {

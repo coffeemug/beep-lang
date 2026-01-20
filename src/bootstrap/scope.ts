@@ -4,6 +4,7 @@ import type { SymbolObj } from './symbol';
 import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
 import type { RootTypeObj } from './root_type';
 import type { BeepContext } from './bootload';
+import { exportBinding } from './module';
 
 /*
   Type definitions
@@ -33,23 +34,13 @@ export function makeScopeTypeObj(k: BeepContext): ScopeTypeObj {
   };
 }
 
-export function makeBootstrapScope(scopeTypeObj: ScopeTypeObj, parent?: ScopeObj): ScopeObj {
-  return {
-    tag: 'ScopeObj',
-    type: scopeTypeObj,
-    bindings: new Map(),
-    dynamicIntros: new Set(),
-    parent: parent ?? null,
-  };
-}
-
 /*
   Initialization
 */
 export function initScope(k: BeepContext) {
   const { kernelModule, scopeTypeObj } = k;
 
-  addBinding(scopeTypeObj.name, scopeTypeObj, kernelModule.toplevelScope);
+  exportBinding(kernelModule, scopeTypeObj.name, scopeTypeObj);
 
   k.makeScopeObj = (parent?: ScopeObj): ScopeObj => ({
     tag: 'ScopeObj',
@@ -117,6 +108,12 @@ export function setBinding(symbol: SymbolObj, value: RuntimeObj, scope: ScopeObj
     current = current.parent;
   }
   return false;
+}
+
+export function upsertBinding(symbol: SymbolObj, value: RuntimeObj, scope: ScopeObj): void {
+  if (!setBinding(symbol, value, scope)) {
+    addBinding(symbol, value, scope);
+  }
 }
 
 export function hasDynamicIntro(symbol: SymbolObj, scope: ScopeObj): boolean {

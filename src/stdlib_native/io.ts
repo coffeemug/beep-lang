@@ -1,5 +1,5 @@
 import type { BeepContext } from "../bootstrap/bootload";
-import { addBinding } from "../bootstrap/scope";
+import { exportBinding } from "../bootstrap/module";
 import type { UnboundMethodObj } from "../bootstrap/unbound_method";
 import type { StringObj } from "../data_structures/string";
 import { readSync } from "fs";
@@ -31,7 +31,7 @@ export function initIO(k: BeepContext) {
 
     return makeStringObj(line);
   });
-  addBinding(intern('readline'), bindMethod(readlineMethod as UnboundMethodObj, ioModule), ioModule.toplevelScope);
+  exportBinding(ioModule, intern('readline'), bindMethod(readlineMethod as UnboundMethodObj, ioModule));
 
   // print: prints a string to stdout
   const printMethod = defMethod('print', 1, (_, args) => {
@@ -42,5 +42,5 @@ export function initIO(k: BeepContext) {
     process.stdout.write(`${str}\n`);
     return makeIntObj(0n);
   });
-  addBinding(intern('print'), bindMethod(printMethod as UnboundMethodObj, ioModule), ioModule.toplevelScope);
+  exportBinding(ioModule, intern('print'), bindMethod(printMethod as UnboundMethodObj, ioModule));
 }

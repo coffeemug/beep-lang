@@ -1,7 +1,7 @@
 import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_structures/int";
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
 import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
-import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj } from "./module";
+import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj, exportBinding, getExportByName } from "./module";
 import { addBinding, getBindingByName, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
 import { initString, initStringMethods, type StringObj, type StringTypeObj } from "../data_structures/string";
@@ -47,6 +47,7 @@ export type BeepContext = {
   thisSymbol: SymbolObj,
   showSymbol: SymbolObj,
   modulesSymbol: SymbolObj,
+  moduleSymbol: SymbolObj,
   listSymbol: SymbolObj,
 
   getFieldSymbol: SymbolObj,
@@ -141,9 +142,9 @@ function bootstrapKernelModule(k: Partial<BeepContext>) {
   const kernelModule = initKernelModule(k as BeepContext, rootTypeObj, k.scopeTypeObj);
 
   // Bind type names in the kernel module
-  addBinding(rootTypeObj.name, rootTypeObj, kernelModule.toplevelScope);
-  addBinding(symbolTypeObj.name, symbolTypeObj, kernelModule.toplevelScope);
-  addBinding(symbolSpaceTypeObj.name, symbolSpaceTypeObj, kernelModule.toplevelScope);
+  exportBinding(kernelModule, rootTypeObj.name, rootTypeObj);
+  exportBinding(kernelModule, symbolTypeObj.name, symbolTypeObj);
+  exportBinding(kernelModule, symbolSpaceTypeObj.name, symbolSpaceTypeObj);
 
   k.symbolTypeObj = symbolTypeObj;
   k.kernelModule = kernelModule;
@@ -166,6 +167,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
   k.modulesSymbol = k.intern!('modules');
+  k.moduleSymbol = k.intern!('module');
   k.listSymbol = k.intern!('list');
 
   k.getFieldSymbol = k.intern!('get_field');
@@ -269,7 +271,6 @@ function initWellKnownFunctions(k: BeepContext) {
 }
 
 export function registerDefaultMethods(k: BeepContext, receiverType: TypeObj) {
-  const scope = k.kernelModule!.toplevelScope;
   const defMethod = k.makeDefNative!(receiverType);
   defMethod('type', 0, thisObj => thisObj.type);
   defMethod('methods', 0, thisObj =>
@@ -303,10 +304,9 @@ function initPreludeTypeMethods(k: BeepContext) {
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
     'module', 'scope', 'map', 'structure', 'prototype', 'range',
   ];
-  const scope = k.kernelModule!.toplevelScope;
 
   for (const typeName of typeNames) {
-    const receiverType = getBindingByName<TypeObj>(typeName, scope, k.symbolSpaceObj)!;
+    const receiverType = getExportByName<TypeObj>(typeName, k.kernelModule, k.symbolSpaceObj)!;
     registerDefaultMethods(k, receiverType);
   }
 
@@ -329,13 +329,12 @@ function initPreludeTypeMethods(k: BeepContext) {
 function initPrelude(k: BeepContext) {
   const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
 
-  const scope = k.kernelModule.toplevelScope;
   const defMethod = makeDefNative<RuntimeObj>(moduleTypeObj);
 
   // ref_eq: compares two objects by reference using ===
   // TODO: add booleans
   const refEqMethod = defMethod('ref_eq', 2, (_, args) => args[0] === args[1] ? k.trueObj : k.falseObj);
-  addBinding(intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule), scope);
+  exportBinding(k.kernelModule, intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule));
 
   // intern: takes a string and returns an interned symbol
   const internMethod = defMethod('intern', 1, (_, args) => {
@@ -344,7 +343,7 @@ function initPrelude(k: BeepContext) {
     }
     return intern((args[0] as StringObj).value);
   });
-  addBinding(intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule), scope);
+  exportBinding(k.kernelModule, intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule));
 
   // load_module: loads a module from a filepath
   const loadModuleMethod = defMethod('load_module', 1, (_, args) => {
@@ -353,7 +352,7 @@ function initPrelude(k: BeepContext) {
     }
     return k.loadModule((args[0] as StringObj).value);
   });
-  addBinding(intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule), scope);
+  exportBinding(k.kernelModule, intern('load_module'), bindMethod(loadModuleMethod as UnboundMethodObj, k.kernelModule));
 
   // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);

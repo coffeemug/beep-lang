@@ -2,20 +2,12 @@
 # KNOWN BUGS
 
 # NEXT
-- Drop `topLevelScope` field in `module`. Everything defined in a module should
-  have a scope, but export bindings should go to a separate dict on the module (??)
-- Modules should expose `get_field`. Possibly ability to list bindings. `scope`
-  is not a useful object, maybe don't expose it or curtail it. Note `io` module
-  adds `print` and `readline` to `ModuleTypeObj` making these methods shared
-  across all modules-- an obvious bug. Where as defining a function on a module
-  in Beep userspace doesn't permit `m.foo` to work.
-- `get_member` and `get_item` are confusing names. Which is which?
+- Currently `io` module adds `print` and `readline` to `ModuleTypeObj` making these methods shared across all modules-- an obvious bug.
 - Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
 - Implicit tuples (e.g. `for x, y in some_map do ...`)
 - Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.
 - Lambda lists-- pattern matching, keyword/optional/vararg parameters, arity overloading
 - The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
-- Multidimensional arrays syntax (for the tic-tac-toe problem)
 
 # TODO (high risk):
 - Type system!
@@ -73,3 +65,5 @@ class objects and build methods on top of that.
 - Basic pattern matching machinery
 - break, return
 - Add known unit value to beep context
+- Modules should expose `get_field` and ability to list bindings.
+- Multidimensional arrays syntax (for the tic-tac-toe problem)
