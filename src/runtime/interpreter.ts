@@ -4,6 +4,7 @@ import { matchPattern, type Binding } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
+import type { FunctionObj } from "../bootstrap/function";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ListObj } from "../data_structures/list";
 import type { IntObj } from "../data_structures/int";
@@ -27,7 +28,7 @@ export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
     makeUnboundMethodObj, show, callBoundMethod, callMethod, makeScopeObj,
-    defineNamedStruct, defineNamedPrototype, makeRangeObj, bindMethod
+    defineNamedStruct, defineNamedPrototype, makeRangeObj
    } = k;
 
   function getLoadedModule(relpath: string): ModuleObj | null {
@@ -219,34 +220,31 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'functionDef': {
-        const methodObj_ = makeUnboundMethodObj(
+        const fnObj = k.makeFunctionObj(
           scope,
-          scope.type,
           expr.name,
           expr.params,
           expr.body,
         );
-        const methodObj = bindMethod(methodObj_, scope);
 
         let targetScope = scope;
         while (targetScope.parent) {
           targetScope = targetScope.parent;
         }
 
-        addBinding(methodObj.name, methodObj, targetScope);
-        exportBinding(getCurrentModule(scope), methodObj.name, methodObj)
-        return ret(methodObj);
+        addBinding(fnObj.name!, fnObj, targetScope);
+        exportBinding(getCurrentModule(scope), fnObj.name!, fnObj)
+        return ret(fnObj);
       }
 
       case 'lambda': {
-        const methodObj_ = makeUnboundMethodObj(
+        const fnObj = k.makeFunctionObj(
           scope,
-          scope.type,
-          k.intern('<lambda>'),
+          null,
           expr.params,
           expr.body,
         );
-        return ret(bindMethod(methodObj_, scope));
+        return ret(fnObj);
       }
 
       case 'not': {
@@ -288,12 +286,16 @@ export function makeInterpreter(k: BeepContext) {
       }
 
       case 'funcall': {
-        const fn = evaluate(expr.fn, scope).value as BoundMethodObj;
-        if (fn.tag !== 'BoundMethodObj') {
+        const fn = evaluate(expr.fn, scope).value;
+        const args = expr.args.map(arg => evaluate(arg, scope).value);
+
+        if (fn.tag === 'FunctionObj') {
+          return ret(k.callFunction(fn as FunctionObj, args));
+        } else if (fn.tag === 'BoundMethodObj') {
+          return ret(callBoundMethod(fn as BoundMethodObj, args));
+        } else {
           throw new Error(`Cannot call ${show(fn)}`);
         }
-        const args = expr.args.map(arg => evaluate(arg, scope).value);
-        return ret(callBoundMethod(fn, args));
       }
 
       case 'block': {

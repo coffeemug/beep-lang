@@ -2,6 +2,7 @@
 # KNOWN BUGS
 
 # NEXT
+- Consider adding toplevel defs to toplevel scope and current scope (consider `let f = ...; def f ...`.)
 - These two are related
   - Functions as methods bound to scopes is silly. Maybe have functions as first 
 class objects and build methods on top of that.

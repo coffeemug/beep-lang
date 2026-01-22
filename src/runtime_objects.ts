@@ -6,6 +6,7 @@ import type { RootTypeObj } from "./bootstrap/root_type";
 import type { StringTypeObj, StringObj } from "./data_structures/string";
 import type { SymbolTypeObj, SymbolObj } from "./bootstrap/symbol";
 import type { BoundMethodObj, BoundMethodTypeObj } from "./bootstrap/bound_method";
+import type { FunctionObj, FunctionTypeObj } from "./bootstrap/function";
 import type { ScopeTypeObj, ScopeObj } from "./bootstrap/scope";
 import type { MapObj, MapTypeObj } from "./data_structures/map";
 import type { SymbolSpaceTypeObj, SymbolSpaceObj } from "./bootstrap/symbol_space";
@@ -15,11 +16,11 @@ import type { PrototypeTypeObj, NamedPrototypeTypeObj } from "./runtime/prototyp
 
 export type TypeObj =
   IntTypeObj | ListTypeObj | ModuleTypeObj | RootTypeObj | SymbolTypeObj
-  | UnboundMethodTypeObj | BoundMethodTypeObj | StringTypeObj | ScopeTypeObj
+  | UnboundMethodTypeObj | BoundMethodTypeObj | FunctionTypeObj | StringTypeObj | ScopeTypeObj
   | MapTypeObj | SymbolSpaceTypeObj | StructTypeObj | NamedStructTypeObj
   | RangeTypeObj | PrototypeTypeObj | NamedPrototypeTypeObj;
 
 export type RuntimeObj =
   IntObj | ListObj | ModuleObj | SymbolObj | UnboundMethodObj
-  | BoundMethodObj | StringObj | ScopeObj | MapObj | SymbolSpaceObj | TypeObj
+  | BoundMethodObj | FunctionObj | StringObj | ScopeObj | MapObj | SymbolSpaceObj | TypeObj
   | NamedStructObj | RangeObj;

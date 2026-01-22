@@ -15,6 +15,7 @@ import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_s
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
 import { initPrototype, initPrototypeMethods, type PrototypeTypeObj, type NamedPrototypeTypeObj } from "../runtime/prototype";
+import { initFunction, initFunctionMethods, type FunctionObj, type FunctionTypeObj } from "./function";
 import { initIO } from "../stdlib_native/io";
 
 export type BeepContext = {
@@ -36,6 +37,7 @@ export type BeepContext = {
   rangeTypeObj: RangeTypeObj,
   unboundMethodTypeObj: UnboundMethodTypeObj,
   boundMethodTypeObj: BoundMethodTypeObj,
+  functionTypeObj: FunctionTypeObj,
   scopeTypeObj: ScopeTypeObj,
 
   // Other well-known objects
@@ -88,9 +90,11 @@ export type BeepContext = {
   defineNamedPrototype: (name: SymbolObj) => NamedPrototypeTypeObj,
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
+  makeFunctionObj: (scopeClosure: ScopeObj, name: SymbolObj | null, argNames: SymbolObj[], body: Expr) => FunctionObj,
   makeDefNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => BoundMethodObj | UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
+  callFunction: (fn: FunctionObj, args: RuntimeObj[]) => RuntimeObj,
 
   // More well-known functions
   evaluate(expr: Expr, scope: ScopeObj): EvalResult,
@@ -164,6 +168,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
   initScope(k as BeepContext);
   initStruct(k as BeepContext);
   initPrototype(k as BeepContext);
+  initFunction(k as BeepContext);
 
   k.thisSymbol = k.intern!('this');
   k.showSymbol = k.intern!('show');
@@ -214,6 +219,30 @@ function initWellKnownFunctions(k: BeepContext) {
     }
     try {
       return k.evaluate(method.body, callScope).value;
+    } catch (e) {
+      if (e instanceof ReturnSignal) return e.value;
+      throw e;
+    }
+  }
+
+  k.callFunction = (fn: FunctionObj, args: RuntimeObj[]): RuntimeObj => {
+    const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
+    if (args.length !== expectedCount) {
+      const fnName = fn.name ? fn.name.name : '<function>';
+      throw new Error(`${fnName} expects ${expectedCount} args, got ${args.length}`);
+    }
+
+    if (fn.mode === 'native') {
+      return fn.nativeFn(args);
+    }
+
+    let callScope = k.makeScopeObj(fn.scopeClosure);
+    for (let i = 0; i < fn.argNames.length; i++) {
+      addBinding(fn.argNames[i], args[i], callScope);
+    }
+
+    try {
+      return k.evaluate(fn.body, callScope).value;
     } catch (e) {
       if (e instanceof ReturnSignal) return e.value;
       throw e;
@@ -303,7 +332,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   // Register `type` and `methods` methods for all types
   const typeNames = [
     'type', 'symbol', 'symbol_space', 'int', 'list', 'unbound_method', 'method', 'string',
-    'module', 'scope', 'map', 'structure', 'prototype', 'range',
+    'module', 'scope', 'map', 'structure', 'prototype', 'range', 'function',
   ];
 
   for (const typeName of typeNames) {
@@ -325,6 +354,7 @@ function initPreludeTypeMethods(k: BeepContext) {
   initStructMethods(k);
   initPrototypeMethods(k);
   initRangeMethods(k);
+  initFunctionMethods(k);
 }
 
 function initPrelude(k: BeepContext) {
