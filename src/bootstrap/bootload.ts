@@ -1,6 +1,6 @@
 import { initInt, initIntMethods, type IntObj, type IntTypeObj } from "../data_structures/int";
 import { initList, initListMethods, type ListObj, type ListTypeObj } from "../data_structures/list";
-import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeFn, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
+import { initUnboundMethod, initUnboundMethodMethods, type DefNativeOpts, type NativeMethod, type UnboundMethodObj, type UnboundMethodTypeObj } from "./unbound_method";
 import { initModule, initModuleMethods, initKernelModule, type ModuleTypeObj, type ModuleObj, exportBinding, getExportByName } from "./module";
 import { addBinding, initScope, initScopeMethods, makeScopeTypeObj, type ScopeObj, type ScopeTypeObj } from "./scope";
 import { makeRootTypeObj, initRootTypeMethods, type RootTypeObj } from "./root_type";
@@ -93,7 +93,7 @@ export type BeepContext = {
   makeFunctionObj: (scopeClosure: ScopeObj, name: SymbolObj | null, argNames: SymbolObj[], body: Expr) => FunctionObj,
   makeNativeFunctionObj: (name: SymbolObj | null, argCount: number, nativeFn: FunctionNativeFn, scopeClosure?: ScopeObj) => FunctionObj,
   makeDefMethodNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
-    (name: string, argCount: number, nativeFn: NativeFn<T>) => BoundMethodObj | UnboundMethodObj,
+    (name: string, argCount: number, nativeFn: NativeMethod<T>) => BoundMethodObj | UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
   callFunction: (fn: FunctionObj, args: RuntimeObj[]) => RuntimeObj,
 
@@ -103,7 +103,7 @@ export type BeepContext = {
   findAndLoadModule: (fullpath: string, force?: boolean) => ModuleObj,
   show: (obj: RuntimeObj) => string,
   callBoundMethod: (method: BoundMethodObj, args: RuntimeObj[]) => RuntimeObj,
-  callMethod: (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]) => RuntimeObj,
+  callBoundMethodByName: (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]) => RuntimeObj,
   isEqual: (a: RuntimeObj, b: RuntimeObj) => boolean,
 }
 
@@ -201,30 +201,7 @@ function initPreludeTypes(k: Partial<BeepContext>) {
 }
 
 function initWellKnownFunctions(k: BeepContext) {
-  const { bindMethod, showSymbol, thisSymbol } = k;
-
-  k.callBoundMethod = (method: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
-    const expectedCount = method.mode === 'native' ? method.argCount : method.argNames.length;
-    if (args.length !== expectedCount) {
-      throw new Error(`${method.name.name} expects ${expectedCount} args, got ${args.length}`);
-    }
-
-    if (method.mode === 'native') {
-      return method.nativeFn(method.receiverInstance, args);
-    }
-
-    let callScope = k.makeScopeObj(method.scopeClosure);
-    addBinding(thisSymbol, method.receiverInstance, callScope);
-    for (let i = 0; i < method.argNames.length; i++) {
-      addBinding(method.argNames[i], args[i], callScope);
-    }
-    try {
-      return k.evaluate(method.body, callScope).value;
-    } catch (e) {
-      if (e instanceof ReturnSignal) return e.value;
-      throw e;
-    }
-  }
+  const { bindMethod, showSymbol } = k;
 
   k.callFunction = (fn: FunctionObj, args: RuntimeObj[]): RuntimeObj => {
     const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
@@ -250,7 +227,11 @@ function initWellKnownFunctions(k: BeepContext) {
     }
   }
 
-  k.callMethod = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {
+  k.callBoundMethod = (boundMethod: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
+    return k.callFunction(boundMethod.method.fn, [boundMethod.receiverInstance, ...args]);
+  }
+
+  k.callBoundMethodByName = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {
     const method = obj.type.methods.get(methodName);
     if (!method) {
       throw new Error(`No ${methodName.name} method on ${k.show(obj)}`);

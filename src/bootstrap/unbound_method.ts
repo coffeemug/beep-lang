@@ -6,31 +6,22 @@ import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
 import type { BeepContext } from "./bootload";
 import { exportBinding } from "./module";
+import type { FunctionObj, NativeFn } from "./function";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
   & TypeObjMixin
   & {}
 
-export type UnboundMethodObj = MethodObjBase & {
-  tag: 'UnboundMethodObj',
-  type: UnboundMethodTypeObj,
-};
-
-export type MethodObjBase =
-  & Omit<RuntimeObjMixin<'__dummy_tag', never>, 'tag' | 'type'>
-  & Procedure
+export type UnboundMethodObj =
+  & RuntimeObjMixin<'UnboundMethodObj', UnboundMethodTypeObj>
   & {
     receiverType: TypeObj,
-    name: SymbolObj,
-    scopeClosure: ScopeObj,
+    fn: FunctionObj,
   }
 
-type Procedure =
-  | { mode: 'interpreted', argNames: SymbolObj[], body: Expr }
-  | { mode: 'native', argCount: number, nativeFn: NativeFn };
-
-export type NativeFn<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
+// NativeMethod has thisObj as first param (for method definitions)
+export type NativeMethod<T extends RuntimeObj = RuntimeObj> = (thisObj: T, args: RuntimeObj[]) => RuntimeObj;
 
 export type DefNativeOpts = {
   binding?: 'instance' | 'own',
@@ -50,49 +41,54 @@ export function initUnboundMethod(k: BeepContext) {
   exportBinding(kernelModule, unboundMethodTypeObj.name, unboundMethodTypeObj);
   k.unboundMethodTypeObj = unboundMethodTypeObj;
 
-  k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => {
-    const unboundMethod: UnboundMethodObj = {
-      tag: 'UnboundMethodObj',
-      type: unboundMethodTypeObj,
-      receiverType,
-      name,
-      mode: 'interpreted',
-      argNames,
-      body,
-      scopeClosure,
-    }
-    return unboundMethod;
-  };
+  // Interpreted methods - create FunctionObj with the body
+  // Prepend `this` to argNames so callFunction can bind it uniformly
+  k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => ({
+    tag: 'UnboundMethodObj',
+    type: unboundMethodTypeObj,
+    receiverType,
+    fn: k.makeFunctionObj(scopeClosure, name, [k.thisSymbol, ...argNames], body),
+  });
 
   k.bindMethod = (method: UnboundMethodObj, receiverInstance: RuntimeObj) => ({
-    ...method,
     tag: 'BoundMethodObj',
     type: k.boundMethodTypeObj,
     receiverInstance,
+    method,
   });
 
-  const makeUnboundNativeMethodObj = <T extends RuntimeObj>(scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argCount: number, nativeFn: NativeFn<T>): UnboundMethodObj => {
-    const unboundMethod: UnboundMethodObj = {
+  // Native methods - wrap NativeMethod into NativeFn
+  // The wrapper prepends `this` to args, so the FunctionObj stores argCount + 1
+  const makeUnboundNativeMethodObj = <T extends RuntimeObj>(
+    scopeClosure: ScopeObj,
+    receiverType: TypeObj,
+    name: SymbolObj,
+    argCount: number,
+    nativeMethod: NativeMethod<T>
+  ): UnboundMethodObj => {
+    // Wrap the method: FunctionObj's nativeFn receives [this, ...args]
+    const wrappedFn: NativeFn = (allArgs) => {
+      const thisObj = allArgs[0] as T;
+      const args = allArgs.slice(1);
+      return nativeMethod(thisObj, args);
+    };
+
+    return {
       tag: 'UnboundMethodObj',
       type: unboundMethodTypeObj,
       receiverType,
-      name,
-      mode: 'native',
-      argCount,
-      nativeFn: nativeFn as NativeFn,
-      scopeClosure,
+      fn: k.makeNativeFunctionObj(name, argCount + 1, wrappedFn, scopeClosure),
     };
-    return unboundMethod;
   };
 
   k.makeDefMethodNative = <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
-    (name: string, argCount: number, nativeFn: NativeFn<T>) => {
+    (name: string, argCount: number, nativeMethod: NativeMethod<T>) => {
       const {
         binding = 'instance',
         scope = k.makeScopeObj(),
       } = opts ?? {};
       const internedName = k.intern(name);
-      const method = makeUnboundNativeMethodObj(scope, receiverType, internedName, argCount, nativeFn);
+      const method = makeUnboundNativeMethodObj(scope, receiverType, internedName, argCount, nativeMethod);
       if (binding == 'instance') {
         receiverType.methods.set(internedName, method);
         return method;
@@ -113,6 +109,8 @@ export function initUnboundMethodMethods(k: BeepContext) {
   defMethod('bind', 1, (thisObj, args) =>
     bindMethod(thisObj, args[0]));
 
-  defMethod('show', 0, thisObj =>
-    makeStringObj(`<unbound_method ${thisObj.receiverType.name.name}/${thisObj.name.name}>`));
+  defMethod('show', 0, thisObj => {
+    const name = thisObj.fn.name;
+    return makeStringObj(`<unbound_method ${thisObj.receiverType.name.name}/${name ? name.name : '<lambda>'}>`);
+  });
 }

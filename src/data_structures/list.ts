@@ -156,9 +156,9 @@ export function initListMethods(k: BeepContext) {
   defMethod('flatten', 0, thisObj => makeListObj(deepFlatten(thisObj.elements)));
 
   const compareElements = (a: RuntimeObj, b: RuntimeObj): number => {
-    const ltResult = k.callMethod(a, k.ltSymbol, [b]);
+    const ltResult = k.callBoundMethodByName(a, k.ltSymbol, [b]);
     if (k.isEqual(ltResult, k.trueObj)) return -1;
-    const gtResult = k.callMethod(a, k.gtSymbol, [b]);
+    const gtResult = k.callBoundMethodByName(a, k.gtSymbol, [b]);
     if (k.isEqual(gtResult, k.trueObj)) return 1;
     return 0;
   };
@@ -190,9 +190,9 @@ export function initListMethods(k: BeepContext) {
       const aEl = a.elements[i];
       const bEl = b.elements[i];
       // Use lt method to compare elements
-      const ltResult = k.callMethod(aEl, k.ltSymbol, [bEl]);
+      const ltResult = k.callBoundMethodByName(aEl, k.ltSymbol, [bEl]);
       if (k.isEqual(ltResult, k.trueObj)) return -1;
-      const gtResult = k.callMethod(aEl, k.gtSymbol, [bEl]);
+      const gtResult = k.callBoundMethodByName(aEl, k.gtSymbol, [bEl]);
       if (k.isEqual(gtResult, k.trueObj)) return 1;
     }
     return a.elements.length - b.elements.length;

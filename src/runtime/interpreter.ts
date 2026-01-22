@@ -27,7 +27,7 @@ export class ReturnSignal {
 export function makeInterpreter(k: BeepContext) {
   const {
     thisSymbol, makeIntObj, makeStringObj, makeListObj, makeMapObj,
-    makeUnboundMethodObj, show, callBoundMethod, callMethod, makeScopeObj,
+    makeUnboundMethodObj, show, callBoundMethod, callBoundMethodByName: callMethod, makeScopeObj,
     defineNamedStruct, defineNamedPrototype, makeRangeObj
    } = k;
 
@@ -215,7 +215,7 @@ export function makeInterpreter(k: BeepContext) {
           expr.params,
           expr.body,
         );
-        receiverType.methods.set(methodObj.name, methodObj);
+        receiverType.methods.set(methodObj.fn.name!, methodObj);
         return ret(methodObj);
       }
 

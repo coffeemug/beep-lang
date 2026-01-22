@@ -76,7 +76,7 @@ async function main(): Promise<void> {
       const result = callMethod(boundMethod, []) as ListObj;
 
       // Extract method names from the returned list
-      return result.elements.map(m => (m as UnboundMethodObj).name.name);
+      return result.elements.map(m => (m as UnboundMethodObj).fn.name?.name ?? '<lambda>');
     } catch {
       return [];
     }

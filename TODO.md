@@ -3,10 +3,6 @@
 
 # NEXT
 - Consider adding toplevel defs to toplevel scope and current scope (consider `let f = ...; def f ...`.)
-- These two are related
-  - Functions as methods bound to scopes is silly. Maybe have functions as first 
-class objects and build methods on top of that.
-  - Currently `io` module adds `print` and `readline` to `ModuleTypeObj` making these methods shared across all modules-- an obvious bug.
 - Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
 - Implicit tuples (e.g. `for x, y in some_map do ...`)
 - Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.
