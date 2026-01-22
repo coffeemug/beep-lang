@@ -48,10 +48,20 @@ export function initFunction(k: BeepContext) {
     body,
     scopeClosure,
   });
+
+  k.makeNativeFunctionObj = (name: SymbolObj | null, argCount: number, nativeFn: NativeFn, scopeClosure?: ScopeObj): FunctionObj => ({
+    tag: 'FunctionObj',
+    type: functionTypeObj,
+    name,
+    mode: 'native',
+    argCount,
+    nativeFn,
+    scopeClosure: scopeClosure ?? k.makeScopeObj(),
+  });
 }
 
 export function initFunctionMethods(k: BeepContext) {
-  const { makeStringObj, functionTypeObj, makeDefNative } = k;
+  const { makeStringObj, functionTypeObj, makeDefMethodNative: makeDefNative } = k;
   const defMethod = makeDefNative<FunctionObj>(functionTypeObj);
 
   defMethod('show', 0, thisObj =>

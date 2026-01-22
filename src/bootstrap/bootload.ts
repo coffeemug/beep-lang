@@ -15,7 +15,7 @@ import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_s
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
 import { initPrototype, initPrototypeMethods, type PrototypeTypeObj, type NamedPrototypeTypeObj } from "../runtime/prototype";
-import { initFunction, initFunctionMethods, type FunctionObj, type FunctionTypeObj } from "./function";
+import { initFunction, initFunctionMethods, type FunctionObj, type FunctionTypeObj, type NativeFn as FunctionNativeFn } from "./function";
 import { initIO } from "../stdlib_native/io";
 
 export type BeepContext = {
@@ -91,7 +91,8 @@ export type BeepContext = {
 
   makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
   makeFunctionObj: (scopeClosure: ScopeObj, name: SymbolObj | null, argNames: SymbolObj[], body: Expr) => FunctionObj,
-  makeDefNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
+  makeNativeFunctionObj: (name: SymbolObj | null, argCount: number, nativeFn: FunctionNativeFn, scopeClosure?: ScopeObj) => FunctionObj,
+  makeDefMethodNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => BoundMethodObj | UnboundMethodObj,
   bindMethod(method: UnboundMethodObj, receiverInstance: RuntimeObj): BoundMethodObj,
   callFunction: (fn: FunctionObj, args: RuntimeObj[]) => RuntimeObj,
@@ -301,7 +302,7 @@ function initWellKnownFunctions(k: BeepContext) {
 }
 
 export function registerDefaultMethods(k: BeepContext, receiverType: TypeObj) {
-  const defMethod = k.makeDefNative!(receiverType);
+  const defMethod = k.makeDefMethodNative!(receiverType);
   defMethod('type', 0, thisObj => thisObj.type);
   defMethod('methods', 0, thisObj =>
     k.makeListObj!(thisObj.type.methods.values().toArray()));
@@ -358,23 +359,29 @@ function initPreludeTypeMethods(k: BeepContext) {
 }
 
 function initPrelude(k: BeepContext) {
-  const { makeDefNative, moduleTypeObj, bindMethod, intern, makeIntObj } = k;
-
-  const defMethod = makeDefNative<RuntimeObj>(moduleTypeObj);
+  const { intern, makeIntObj, makeNativeFunctionObj } = k;
 
   // ref_eq: compares two objects by reference using ===
   // TODO: add booleans
-  const refEqMethod = defMethod('ref_eq', 2, (_, args) => args[0] === args[1] ? k.trueObj : k.falseObj);
-  exportBinding(k.kernelModule, intern('ref_eq'), bindMethod(refEqMethod as UnboundMethodObj, k.kernelModule));
+  const refEqFn = makeNativeFunctionObj(
+    intern('ref_eq'),
+    2,
+    (args) => args[0] === args[1] ? k.trueObj : k.falseObj
+  );
+  exportBinding(k.kernelModule, intern('ref_eq'), refEqFn);
 
   // intern: takes a string and returns an interned symbol
-  const internMethod = defMethod('intern', 1, (_, args) => {
-    if (args[0].tag !== 'StringObj') {
-      throw new Error(`intern requires a string, got ${k.show(args[0])}`);
+  const internFn = makeNativeFunctionObj(
+    intern('intern'),
+    1,
+    (args) => {
+      if (args[0].tag !== 'StringObj') {
+        throw new Error(`intern requires a string, got ${k.show(args[0])}`);
+      }
+      return intern((args[0] as StringObj).value);
     }
-    return intern((args[0] as StringObj).value);
-  });
-  exportBinding(k.kernelModule, intern('intern'), bindMethod(internMethod as UnboundMethodObj, k.kernelModule));
+  );
+  exportBinding(k.kernelModule, intern('intern'), internFn);
 
   // TODO: add proper objects for these
   k.falseObj = makeIntObj(0n);

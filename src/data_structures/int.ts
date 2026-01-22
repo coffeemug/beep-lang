@@ -35,7 +35,7 @@ export function initInt(k: BeepContext) {
 }
 
 export function initIntMethods(k: BeepContext) {
-  const { makeStringObj, makeDefNative, intTypeObj, makeIntObj } = k;
+  const { makeStringObj, makeDefMethodNative: makeDefNative, intTypeObj, makeIntObj } = k;
 
   const defMethod = makeDefNative<IntObj>(intTypeObj);
 

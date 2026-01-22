@@ -37,7 +37,7 @@ export function initMap(k: BeepContext) {
 
 export function initMapMethods(k: BeepContext) {
   const {
-    makeStringObj, mapTypeObj, show, makeDefNative, makeListObj
+    makeStringObj, mapTypeObj, show, makeDefMethodNative: makeDefNative, makeListObj
   } = k;
 
   const defMethod = makeDefNative<MapObj>(mapTypeObj)

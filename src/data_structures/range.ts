@@ -38,7 +38,7 @@ export function initRange(k: BeepContext) {
 }
 
 export function initRangeMethods(k: BeepContext) {
-  const { makeStringObj, makeListObj, rangeTypeObj, makeIntObj, makeDefNative } = k;
+  const { makeStringObj, makeListObj, rangeTypeObj, makeIntObj, makeDefMethodNative: makeDefNative } = k;
 
   const defMethod = makeDefNative<RangeObj>(rangeTypeObj);
 

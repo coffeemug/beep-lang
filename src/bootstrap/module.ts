@@ -62,7 +62,7 @@ export function initModule(k: BeepContext) {
 }
 
 export function initModuleMethods(k: BeepContext) {
-  const { makeDefNative, moduleTypeObj, makeModuleObj, makeStringObj, intern, show } = k;
+  const { makeDefMethodNative: makeDefNative, moduleTypeObj, makeModuleObj, makeStringObj, intern, show } = k;
 
   const moduleName = (module: ModuleObj) =>
     module.name.name.split('/').pop()!

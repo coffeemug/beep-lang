@@ -85,7 +85,7 @@ export function initUnboundMethod(k: BeepContext) {
     return unboundMethod;
   };
 
-  k.makeDefNative = <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
+  k.makeDefMethodNative = <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeFn<T>) => {
       const {
         binding = 'instance',
@@ -106,7 +106,7 @@ export function initUnboundMethod(k: BeepContext) {
 
 export function initUnboundMethodMethods(k: BeepContext) {
   const {
-    bindMethod, makeStringObj, unboundMethodTypeObj, makeDefNative,
+    bindMethod, makeStringObj, unboundMethodTypeObj, makeDefMethodNative: makeDefNative,
    } = k;
   const defMethod = makeDefNative<UnboundMethodObj>(unboundMethodTypeObj);
 

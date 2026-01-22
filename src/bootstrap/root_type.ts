@@ -22,7 +22,7 @@ export function makeRootTypeObj(): Omit<RootTypeObj, 'name' | 'bindingModule'> {
 }
 
 export function initRootTypeMethods(k: BeepContext) {
-  const { makeDefNative, makeStringObj, rootTypeObj, makeListObj } = k;
+  const { makeDefMethodNative: makeDefNative, makeStringObj, rootTypeObj, makeListObj } = k;
 
   const defMethod = makeDefNative<RootTypeObj>(rootTypeObj);
 

@@ -1,17 +1,15 @@
 import type { BeepContext } from "../bootstrap/bootload";
 import { exportBinding } from "../bootstrap/module";
-import type { UnboundMethodObj } from "../bootstrap/unbound_method";
 import type { StringObj } from "../data_structures/string";
 import { readSync } from "fs";
 
 export function initIO(k: BeepContext) {
-  const { makeModuleObj, intern, makeDefNative, moduleTypeObj, bindMethod, makeStringObj, makeIntObj } = k;
+  const { makeModuleObj, intern, makeNativeFunctionObj, makeStringObj, makeIntObj } = k;
 
   const ioModule = makeModuleObj(intern('stdlib/io'));
-  const defMethod = makeDefNative<typeof ioModule>(moduleTypeObj);
 
   // readline: reads a single line from stdin synchronously
-  const readlineMethod = defMethod('readline', 0, () => {
+  const readlineFn = makeNativeFunctionObj(intern('readline'), 0, () => {
     const buf = Buffer.alloc(1024);
     let line = '';
     let bytesRead: number;
@@ -31,10 +29,10 @@ export function initIO(k: BeepContext) {
 
     return makeStringObj(line);
   });
-  exportBinding(ioModule, intern('readline'), bindMethod(readlineMethod as UnboundMethodObj, ioModule));
+  exportBinding(ioModule, intern('readline'), readlineFn);
 
   // print: prints a string to stdout
-  const printMethod = defMethod('print', 1, (_, args) => {
+  const printFn = makeNativeFunctionObj(intern('print'), 1, (args) => {
     if (args[0].tag !== 'StringObj') {
       throw new Error(`print requires a string, got ${k.show(args[0])}`);
     }
@@ -42,5 +40,5 @@ export function initIO(k: BeepContext) {
     process.stdout.write(`${str}\n`);
     return makeIntObj(0n);
   });
-  exportBinding(ioModule, intern('print'), bindMethod(printMethod as UnboundMethodObj, ioModule));
+  exportBinding(ioModule, intern('print'), printFn);
 }

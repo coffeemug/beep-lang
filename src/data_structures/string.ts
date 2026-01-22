@@ -34,7 +34,7 @@ export function initString(k: BeepContext) {
 }
 
 export function initStringMethods(k: BeepContext) {
-  const { makeStringObj, stringTypeObj, makeListObj, makeDefNative } = k;
+  const { makeStringObj, stringTypeObj, makeListObj, makeDefMethodNative: makeDefNative } = k;
   const defMethod = makeDefNative<StringObj>(stringTypeObj);
 
   defMethod('show', 0, thisObj =>

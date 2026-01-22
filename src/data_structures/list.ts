@@ -39,7 +39,7 @@ export function initList(k: BeepContext) {
 export function initListMethods(k: BeepContext) {
   const {
     makeStringObj, makeListObj, listTypeObj, makeIntObj,
-    show, makeDefNative
+    show, makeDefMethodNative: makeDefNative
   } = k;
 
   const defMethod = makeDefNative<ListObj>(listTypeObj);
