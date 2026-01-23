@@ -66,3 +66,4 @@
 - Add known unit value to beep context
 - Modules should expose `get_field` and ability to list bindings.
 - Multidimensional arrays syntax (for the tic-tac-toe problem)
+- Added `{a, b // 2 }` form of pattern matching.

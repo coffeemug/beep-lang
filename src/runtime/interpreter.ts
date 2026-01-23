@@ -317,7 +317,7 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'let': {
         const value = evaluate(expr.value, scope).value;
-        const result = matchPattern(expr.pattern, value);
+        const result = matchPattern(expr.pattern, value, k, scope);
         if (!result.matched) {
           throw new Error(`Pattern match failed in let binding`);
         }
@@ -327,7 +327,7 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'assign': {
         const value = evaluate(expr.value, scope).value;
-        const result = matchPattern(expr.target, value);
+        const result = matchPattern(expr.target, value, k, scope);
         if (!result.matched) {
           throw new Error(`Pattern match failed in assignment`);
         }
@@ -461,7 +461,7 @@ export function makeInterpreter(k: BeepContext) {
             if (k.isEqual(tag, k.doneSymbol)) break;
 
             const item = next.elements[1];
-            const matchResult = matchPattern(expr.binding, item);
+            const matchResult = matchPattern(expr.binding, item, k, scope);
             if (!matchResult.matched) {
               throw new Error(`Pattern match failed in for loop`);
             }
@@ -519,7 +519,7 @@ export function makeInterpreter(k: BeepContext) {
       case 'case': {
         const subject = evaluate(expr.subject, scope).value;
         for (const { pattern, body } of expr.branches) {
-          const result = matchPattern(pattern, subject);
+          const result = matchPattern(pattern, subject, k, scope);
           if (result.matched) {
             const savedDynamicScope = k.dynamicScope;
             const matchScope = scopedBindings(result.bindings, scope);

@@ -1,7 +1,7 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, type stream, type result, type parser_error, noop, err, toParser } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
-import { isAssignable, type Pattern } from "./pattern";
+import { isAssignable, type Pattern, type MapPatternField } from "./pattern";
 
 const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");
@@ -390,8 +390,34 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_, sym]): Pattern => ({ type: "binding", sym, scope: 'lexical' }));
   const listPattern: parser<Pattern> = fwd(() =>
     seq("[", sepBy(pattern, ","), "]").map(([_, elements, __]): Pattern => ({ type: "list", elements })));
+
+  // Map pattern: { a, b // default, c: pattern }
+  // - `a` binds key `a` to variable `a`
+  // - `a // default` binds key `a` with default if missing
+  // - `a: pattern` matches key `a` against pattern (can be literal)
+  // - `a: pattern // default` matches with default
+  const mapPatternField: parser<MapPatternField> = fwd(() => either(
+    // key: pattern // default  or  key: pattern
+    seq(symbol, ":", pattern, maybe(seq("//", expr)))
+      .map(([key, _, pat, defaultPart]): MapPatternField => ({
+        key,
+        pattern: pat,
+        default_: defaultPart ? defaultPart[1] : null,
+      })),
+    // key // default  or  just key (shorthand for key: key)
+    seq(symbol, maybe(seq("//", expr)))
+      .map(([key, defaultPart]): MapPatternField => ({
+        key,
+        pattern: { type: "binding", sym: key, scope: 'lexical' },
+        default_: defaultPart ? defaultPart[1] : null,
+      }))
+  ));
+  const mapPattern: parser<Pattern> = fwd(() =>
+    seq("{", sepBy(mapPatternField, ","), "}")
+      .map(([_, fields, __]): Pattern => ({ type: "map", fields })));
+
   const pattern: parser<Pattern> = fwd(() =>
-    either(wildcardPattern, listPattern, symbolPattern, intPattern, stringPattern, dynamicBindingPattern, lexicalBindingPattern));
+    either(wildcardPattern, listPattern, mapPattern, symbolPattern, intPattern, stringPattern, dynamicBindingPattern, lexicalBindingPattern));
 
   const assignablePattern: parser<Pattern> = toParser((source) => {
     const result = pattern(source);
