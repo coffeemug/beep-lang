@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Consider adding toplevel defs to toplevel scope and current scope (consider `let f = ...; def f ...`.)
 - Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
 - Implicit tuples (e.g. `for x, y in some_map do ...`)
 - Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.

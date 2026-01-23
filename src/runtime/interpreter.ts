@@ -2,7 +2,7 @@ import { parse, type Expr } from "./parser";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { matchPattern, type Binding } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj } from "../bootstrap/scope";
+import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj, addToplevelBinding } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { FunctionObj } from "../bootstrap/function";
 import type { BeepContext } from "../bootstrap/bootload";
@@ -126,6 +126,11 @@ export function makeInterpreter(k: BeepContext) {
   }
 
   function getCurrentModule(scope: ScopeObj): ModuleObj {
+    let topLevelscope = scope;
+    while (topLevelscope.parent) {
+      topLevelscope = topLevelscope.parent;
+    }
+
     return getBinding(thisSymbol, scope) as ModuleObj;
   }
 
@@ -227,14 +232,10 @@ export function makeInterpreter(k: BeepContext) {
           expr.body,
         );
 
-        let targetScope = scope;
-        while (targetScope.parent) {
-          targetScope = targetScope.parent;
-        }
-
-        addBinding(fnObj.name!, fnObj, targetScope);
-        exportBinding(getCurrentModule(scope), fnObj.name!, fnObj)
-        return ret(fnObj);
+        const fndefScope = makeScopeObj(scope);
+        addToplevelBinding(fnObj.name!, fnObj, fndefScope);
+        exportBinding(getCurrentModule(fndefScope), fnObj.name!, fnObj)
+        return { value: fnObj, scope: fndefScope };
       }
 
       case 'lambda': {
@@ -349,25 +350,19 @@ export function makeInterpreter(k: BeepContext) {
 
       case 'structDef': {
         const structType = defineNamedStruct(expr.name, expr.fields);
-        let targetScope = scope;
-        while (targetScope.parent) {
-          targetScope = targetScope.parent;
-        }
-        addBinding(expr.name, structType, targetScope);
-        exportBinding(getCurrentModule(scope), expr.name, structType)
-        return ret(structType);
+        const structScope = makeScopeObj(scope);
+        addToplevelBinding(expr.name, structType, structScope);
+        exportBinding(getCurrentModule(structScope), expr.name, structType)
+        return { value: structType, scope: structScope };
       }
 
       case 'prototypeDef': {
         const prototypeType = defineNamedPrototype(expr.name);
-        let targetScope = scope;
-        while (targetScope.parent) {
-          targetScope = targetScope.parent;
-        }
-        addBinding(expr.name, prototypeType, targetScope);
-        exportBinding(getCurrentModule(scope), expr.name, prototypeType)
+        const protoScope = makeScopeObj(scope);
+        addToplevelBinding(expr.name, prototypeType, protoScope);
+        exportBinding(getCurrentModule(protoScope), expr.name, prototypeType)
 
-        return ret(prototypeType);
+        return { value: prototypeType, scope: protoScope };
       }
 
       case 'binOp': {

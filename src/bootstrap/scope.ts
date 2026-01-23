@@ -72,6 +72,15 @@ export function initScopeMethods(k: BeepContext) {
 /*
   Managing bindings
 */
+export function addToplevelBinding(name: SymbolObj, value: RuntimeObj, scope: ScopeObj) {
+  let topLevelScope = scope;
+  while (topLevelScope.parent) {
+    topLevelScope = topLevelScope.parent;
+  }
+  addBinding(name, value, topLevelScope);
+  addBinding(name, value, scope);
+}
+
 export function addBinding(name: SymbolObj, value: RuntimeObj, scope: ScopeObj) {
   scope.bindings.set(name.id, value);
 }
