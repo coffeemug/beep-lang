@@ -2,13 +2,13 @@
 # KNOWN BUGS
 
 # NEXT
-- Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
-- Implicit tuples (e.g. `for x, y in some_map do ...`)
-- Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.
-- Lambda lists-- pattern matching, keyword/optional/vararg parameters, arity overloading
-- The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
+- Better function definition/calling
+  - Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
+  - Lambda lists (positional, optional, keyword args)
+  - Combine contiguous function definitions into pattern matching cases
 
 # TODO (high risk):
+- The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
 - Type system!
 - require ! label to permit mutation in functions
 - async/await
@@ -24,6 +24,8 @@
 - Implement division
 
 # TODO (low risk):
+- Implicit tuples (e.g. `for x, y in some_map do ...`)
+- Have an actual `unit/()` object. Some things should return nothing, like `rpn/[main]`. I.e. unit can't be 0.
 - Parser error on `let x = case ...` or on assignments in cases.
 - Support for struct splicing, struct<->map integration
 - Support booleans

@@ -1,17 +1,15 @@
+use stdlib/io
 
 def fizzbuzz(n)
-  let res = []
   for x in 1..n
     if x % 3 == 0 and x % 5 == 0
-      res.push!('FizzBuzz')
+      io.print('FizzBuzz')
     elif x % 3 == 0
-      res.push!('Fizz')
+      io.print('Fizz')
     elif x % 5 == 0
-      res.push!('Buzz')
+      io.print('Buzz')
     else
-      res.push!(x)
+      io.print(x.show())
     end
   end
-
-  res
 end
