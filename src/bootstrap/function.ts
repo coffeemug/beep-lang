@@ -1,11 +1,12 @@
 import type { RuntimeObj } from "../runtime_objects";
-import type { ScopeObj } from "./scope";
+import { addBinding, type ScopeObj } from "./scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";
 import type { BeepContext } from "./bootload";
 import { exportBinding } from "./module";
+import { ReturnSignal } from "../runtime/interpreter";
 
 export type FunctionTypeObj =
   & RuntimeObjMixin<'FunctionTypeObj', RootTypeObj>
@@ -58,6 +59,30 @@ export function initFunction(k: BeepContext) {
     nativeFn,
     scopeClosure: scopeClosure ?? k.makeScopeObj(),
   });
+
+  k.callFunction = (fn: FunctionObj, args: RuntimeObj[]): RuntimeObj => {
+    const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
+    if (args.length !== expectedCount) {
+      const fnName = fn.name ? fn.name.name : '<function>';
+      throw new Error(`${fnName} expects ${expectedCount} args, got ${args.length}`);
+    }
+
+    if (fn.mode === 'native') {
+      return fn.nativeFn(args);
+    }
+
+    let callScope = k.makeScopeObj(fn.scopeClosure);
+    for (let i = 0; i < fn.argNames.length; i++) {
+      addBinding(fn.argNames[i], args[i], callScope);
+    }
+
+    try {
+      return k.evaluate(fn.body, callScope).value;
+    } catch (e) {
+      if (e instanceof ReturnSignal) return e.value;
+      throw e;
+    }
+  }
 }
 
 export function initFunctionMethods(k: BeepContext) {

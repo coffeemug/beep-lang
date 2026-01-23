@@ -4,6 +4,7 @@ import { type RootTypeObj } from "./root_type"
 import type { UnboundMethodObj } from "./unbound_method";
 import type { BeepContext } from "./bootload";
 import { exportBinding } from "./module";
+import type { SymbolObj } from "./symbol";
 
 export type BoundMethodTypeObj =
   & RuntimeObjMixin<'BoundMethodTypeObj', RootTypeObj>
@@ -18,7 +19,7 @@ export type BoundMethodObj =
   }
 
 export function initBoundMethod(k: BeepContext) {
-  const { rootTypeObj, intern } = k;
+  const { rootTypeObj, intern, bindMethod } = k;
   const boundMethodTypeObj: BoundMethodTypeObj = {
     tag: 'BoundMethodTypeObj',
     type: rootTypeObj,
@@ -29,6 +30,18 @@ export function initBoundMethod(k: BeepContext) {
   exportBinding(k.kernelModule, boundMethodTypeObj.name, boundMethodTypeObj);
 
   k.boundMethodTypeObj = boundMethodTypeObj;
+
+  k.callBoundMethod = (boundMethod: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
+    return k.callFunction(boundMethod.method.fn, [boundMethod.receiverInstance, ...args]);
+  }
+
+  k.callBoundMethodByName = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {
+    const method = obj.type.methods.get(methodName);
+    if (!method) {
+      throw new Error(`No ${methodName.name} method on ${k.show(obj)}`);
+    }
+    return k.callBoundMethod(bindMethod(method, obj), args);
+  }
 }
 
 export function initBoundMethodMethods(k: BeepContext) {

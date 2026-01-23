@@ -10,7 +10,7 @@ import { makeSymbolSpaceTypeObj, makeSymbolSpaceObj, intern, initSymbolSpaceMeth
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { makeInterpreter, type EvalResult, ReturnSignal } from "../runtime/interpreter";
+import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
 import { initStruct, initStructMethods, type StructTypeObj, type NamedStructTypeObj, type NamedStructObj } from "../data_structures/struct";
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
@@ -202,42 +202,6 @@ function initPreludeTypes(k: Partial<BeepContext>) {
 
 function initWellKnownFunctions(k: BeepContext) {
   const { bindMethod, showSymbol } = k;
-
-  k.callFunction = (fn: FunctionObj, args: RuntimeObj[]): RuntimeObj => {
-    const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
-    if (args.length !== expectedCount) {
-      const fnName = fn.name ? fn.name.name : '<function>';
-      throw new Error(`${fnName} expects ${expectedCount} args, got ${args.length}`);
-    }
-
-    if (fn.mode === 'native') {
-      return fn.nativeFn(args);
-    }
-
-    let callScope = k.makeScopeObj(fn.scopeClosure);
-    for (let i = 0; i < fn.argNames.length; i++) {
-      addBinding(fn.argNames[i], args[i], callScope);
-    }
-
-    try {
-      return k.evaluate(fn.body, callScope).value;
-    } catch (e) {
-      if (e instanceof ReturnSignal) return e.value;
-      throw e;
-    }
-  }
-
-  k.callBoundMethod = (boundMethod: BoundMethodObj, args: RuntimeObj[]): RuntimeObj => {
-    return k.callFunction(boundMethod.method.fn, [boundMethod.receiverInstance, ...args]);
-  }
-
-  k.callBoundMethodByName = (obj: RuntimeObj, methodName: SymbolObj, args: RuntimeObj[]): RuntimeObj => {
-    const method = obj.type.methods.get(methodName);
-    if (!method) {
-      throw new Error(`No ${methodName.name} method on ${k.show(obj)}`);
-    }
-    return k.callBoundMethod(bindMethod(method, obj), args);
-  }
 
   k.show = (obj: RuntimeObj): string  => {
     const showMethod = obj.type.methods.get(showSymbol);
