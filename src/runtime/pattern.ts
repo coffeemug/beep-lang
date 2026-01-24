@@ -20,8 +20,8 @@ export type Pattern =
   | { type: "symbol"; sym: SymbolObj }
   | { type: "int"; value: bigint }
   | { type: "string"; value: string }
-  | { type: "list"; elements: Pattern[] }
-  | { type: "map"; fields: MapPatternField[] }
+  | { type: "list"; elements: Pattern[]; spread: Pattern | null }
+  | { type: "map"; fields: MapPatternField[]; spread: Pattern | null }
 
 export type Binding = { sym: SymbolObj; value: RuntimeObj; scope: 'lexical' | 'dynamic' };
 
@@ -39,9 +39,11 @@ export function isAssignable(pattern: Pattern): boolean {
     case 'binding':
       return true;
     case 'list':
-      return pattern.elements.every(isAssignable);
+      return pattern.elements.every(isAssignable)
+        && (pattern.spread === null || isAssignable(pattern.spread));
     case 'map':
-      return pattern.fields.every(f => isAssignable(f.pattern));
+      return pattern.fields.every(f => isAssignable(f.pattern))
+        && (pattern.spread === null || isAssignable(pattern.spread));
     case 'symbol':
     case 'int':
     case 'string':
@@ -85,13 +87,33 @@ export function matchPattern(
     case 'list': {
       if (value.tag !== 'ListObj') return { matched: false };
       const list = value as ListObj;
-      if (list.elements.length !== pattern.elements.length) return { matched: false };
+
+      // Without spread: exact length match required
+      if (pattern.spread === null) {
+        if (list.elements.length !== pattern.elements.length) return { matched: false };
+      } else {
+        // With spread: at least pattern.elements.length items required
+        if (list.elements.length < pattern.elements.length) return { matched: false };
+      }
+
       const listBindings: Binding[] = [];
+
+      // Match fixed elements
       for (let i = 0; i < pattern.elements.length; i++) {
         const result = matchPattern(pattern.elements[i], list.elements[i], ctx, scope);
         if (!result.matched) return { matched: false };
         listBindings.push(...result.bindings);
       }
+
+      // Match spread (collect remaining elements into a new list)
+      if (pattern.spread !== null) {
+        const restElements = list.elements.slice(pattern.elements.length);
+        const restList = ctx.makeListObj(restElements);
+        const result = matchPattern(pattern.spread, restList, ctx, scope);
+        if (!result.matched) return { matched: false };
+        listBindings.push(...result.bindings);
+      }
+
       return { matched: true, bindings: listBindings };
     }
 
@@ -99,14 +121,15 @@ export function matchPattern(
       if (value.tag !== 'MapObj') return { matched: false };
       const map = value as MapObj;
       const mapBindings: Binding[] = [];
+      const matchedKeys = new Set<SymbolObj>();
+
+      // Match specified fields
       for (const field of pattern.fields) {
+        matchedKeys.add(field.key);
         const mapValue = map.kv.get(field.key);
         if (mapValue === undefined) {
           // Key not present - use default if available
           if (field.default_ !== null) {
-            if (!ctx || !scope) {
-              throw new Error('Map pattern with default requires context and scope');
-            }
             const defaultValue = ctx.evaluate(field.default_, scope).value;
             const result = matchPattern(field.pattern, defaultValue, ctx, scope);
             if (!result.matched) return { matched: false };
@@ -120,6 +143,21 @@ export function matchPattern(
           mapBindings.push(...result.bindings);
         }
       }
+
+      // Match spread (collect unmatched keys into a new map)
+      if (pattern.spread !== null) {
+        const restPairs: [SymbolObj, RuntimeObj][] = [];
+        for (const [key, val] of map.kv.entries()) {
+          if (!matchedKeys.has(key)) {
+            restPairs.push([key, val]);
+          }
+        }
+        const restMap = ctx.makeMapObj(restPairs);
+        const result = matchPattern(pattern.spread, restMap, ctx, scope);
+        if (!result.matched) return { matched: false };
+        mapBindings.push(...result.bindings);
+      }
+
       return { matched: true, bindings: mapBindings };
     }
 

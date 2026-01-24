@@ -388,8 +388,19 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     .map(([_, sym]): Pattern => ({ type: "binding", sym, scope: 'dynamic' }));
   const lexicalBindingPattern = lex(seq(peek(not(reserved)), symbol))
     .map(([_, sym]): Pattern => ({ type: "binding", sym, scope: 'lexical' }));
+  // Spread pattern: ...pattern
+  const spreadPattern: parser<Pattern> = fwd(() =>
+    seq("...", pattern).map(([_, pat]) => pat));
+
+  // List pattern: [elements..., ...spread?]
+  // Handle both [a, b, ...rest] and [...rest] cases
   const listPattern: parser<Pattern> = fwd(() =>
-    seq("[", sepBy(pattern, ","), "]").map(([_, elements, __]): Pattern => ({ type: "list", elements })));
+    seq("[", sepBy(pattern, ",", "leave"), maybe(either(seq(",", spreadPattern), spreadPattern)), "]")
+      .map(([_, elements, spreadPart, __]): Pattern => ({
+        type: "list",
+        elements,
+        spread: spreadPart ? (Array.isArray(spreadPart) ? spreadPart[1] : spreadPart) : null,
+      })));
 
   // Map pattern: { a, b // default, c: pattern }
   // - `a` binds key `a` to variable `a`
@@ -412,9 +423,15 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
         default_: defaultPart ? defaultPart[1] : null,
       }))
   ));
+  // Map pattern: {fields..., ...spread?}
+  // Handle both {a, b, ...rest} and {...rest} cases
   const mapPattern: parser<Pattern> = fwd(() =>
-    seq("{", sepBy(mapPatternField, ","), "}")
-      .map(([_, fields, __]): Pattern => ({ type: "map", fields })));
+    seq("{", sepBy(mapPatternField, ",", "leave"), maybe(either(seq(",", spreadPattern), spreadPattern)), "}")
+      .map(([_, fields, spreadPart, __]): Pattern => ({
+        type: "map",
+        fields,
+        spread: spreadPart ? (Array.isArray(spreadPart) ? spreadPart[1] : spreadPart) : null,
+      })));
 
   const pattern: parser<Pattern> = fwd(() =>
     either(wildcardPattern, listPattern, mapPattern, symbolPattern, intPattern, stringPattern, dynamicBindingPattern, lexicalBindingPattern));

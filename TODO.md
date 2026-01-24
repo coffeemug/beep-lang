@@ -3,7 +3,6 @@
 
 # NEXT
 - Better function definition/calling
-  - Add `[...rest]` and `{a, b // 2, ...rest }` form of pattern matching.
   - Lambda lists (positional, optional, keyword args)
   - Combine contiguous function definitions into pattern matching cases
 
