@@ -70,12 +70,27 @@ export function initFunction(k: BeepContext) {
       return fn.nativeFn(args);
     }
 
+    // Check arg count before pattern matching for better error messages
+    const fnName = fn.name ? fn.name.name : '<function>';
+    const pat = fn.argPattern as { type: 'list', elements: Pattern[], spread: Pattern | null };
+    const expectedCount = pat.elements.length;
+    const hasSpread = pat.spread !== null;
+
+    if (hasSpread) {
+      if (args.length < expectedCount) {
+        throw new Error(`${fnName} expects at least ${expectedCount} args, got ${args.length}`);
+      }
+    } else {
+      if (args.length !== expectedCount) {
+        throw new Error(`${fnName} expects ${expectedCount} args, got ${args.length}`);
+      }
+    }
+
     // Create a list from args and match against argPattern
     const argsList = k.makeListObj(args);
     const matchResult = matchPattern(fn.argPattern, argsList, k, fn.scopeClosure);
 
     if (!matchResult.matched) {
-      const fnName = fn.name ? fn.name.name : '<function>';
       throw new Error(`Argument pattern match failed for ${fnName}`);
     }
 
