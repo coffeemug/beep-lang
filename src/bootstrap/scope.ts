@@ -5,6 +5,7 @@ import type { RuntimeObjMixin, TypeObjMixin } from './object_mixins';
 import type { RootTypeObj } from './root_type';
 import type { BeepContext } from './bootload';
 import { exportBinding } from './module';
+import type { Binding } from '../runtime/pattern';
 
 /*
   Type definitions
@@ -134,4 +135,19 @@ export function hasDynamicIntro(symbol: SymbolObj, scope: ScopeObj): boolean {
     current = current.parent;
   }
   return false;
+}
+
+// Creates a new scope with pattern bindings defined
+export function scopedBindings(bindings: Binding[], parentScope: ScopeObj, k: BeepContext): ScopeObj {
+  const newScope = k.makeScopeObj(parentScope);
+  k.dynamicScope = k.makeScopeObj(k.dynamicScope);
+  for (const binding of bindings) {
+    if (binding.scope === 'dynamic') {
+      addBinding(binding.sym, binding.value, k.dynamicScope);
+      newScope.dynamicIntros.add(binding.sym.id);
+    } else {
+      addBinding(binding.sym, binding.value, newScope);
+    }
+  }
+  return newScope;
 }

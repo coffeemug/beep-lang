@@ -1,8 +1,8 @@
 import { parse, type Expr } from "./parser";
 import type { SymbolObj } from "../bootstrap/symbol";
-import { matchPattern, type Binding } from "./pattern";
+import { matchPattern } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
-import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj, addToplevelBinding } from "../bootstrap/scope";
+import { addBinding, getBinding, setBinding, hasDynamicIntro, type ScopeObj, addToplevelBinding, scopedBindings } from "../bootstrap/scope";
 import type { BoundMethodObj } from "../bootstrap/bound_method";
 import type { FunctionObj } from "../bootstrap/function";
 import type { BeepContext } from "../bootstrap/bootload";
@@ -99,20 +99,6 @@ export function makeInterpreter(k: BeepContext) {
   k.loadModuleFromFullpath = loadModuleFromFullpath;
   k.findAndLoadModule = findAndLoadModule;
 
-  // Creates a new scope with pattern bindings defined
-  function scopedBindings(bindings: Binding[], parentScope: ScopeObj): ScopeObj {
-    const newScope = makeScopeObj(parentScope);
-    k.dynamicScope = makeScopeObj(k.dynamicScope);
-    for (const binding of bindings) {
-      if (binding.scope === 'dynamic') {
-        addBinding(binding.sym, binding.value, k.dynamicScope);
-        newScope.dynamicIntros.add(binding.sym.id);
-      } else {
-        addBinding(binding.sym, binding.value, newScope);
-      }
-    }
-    return newScope;
-  }
 
   function consumeIterable(iterable: RuntimeObj): RuntimeObj[] {
     const iter = callMethod(iterable, k.makeIterSymbol, []);
@@ -321,7 +307,7 @@ export function makeInterpreter(k: BeepContext) {
         if (!result.matched) {
           throw new Error(`Pattern match failed in let binding`);
         }
-        const letScope = scopedBindings(result.bindings, scope);
+        const letScope = scopedBindings(result.bindings, scope, k);
         return { value, scope: letScope };
       }
 
@@ -465,7 +451,7 @@ export function makeInterpreter(k: BeepContext) {
             if (!matchResult.matched) {
               throw new Error(`Pattern match failed in for loop`);
             }
-            const loopScope = scopedBindings(matchResult.bindings, scope);
+            const loopScope = scopedBindings(matchResult.bindings, scope, k);
             result = evaluate(expr.body, loopScope).value;
           }
         } catch (e) {
@@ -522,7 +508,7 @@ export function makeInterpreter(k: BeepContext) {
           const result = matchPattern(pattern, subject, k, scope);
           if (result.matched) {
             const savedDynamicScope = k.dynamicScope;
-            const matchScope = scopedBindings(result.bindings, scope);
+            const matchScope = scopedBindings(result.bindings, scope, k);
             const bodyResult = evaluate(body, matchScope).value;
             k.dynamicScope = savedDynamicScope;
             return ret(bodyResult);

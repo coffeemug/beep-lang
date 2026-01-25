@@ -1,5 +1,5 @@
 import type { RuntimeObj } from "../runtime_objects";
-import { addBinding, type ScopeObj } from "./scope";
+import { type ScopeObj, scopedBindings } from "./scope";
 import type { Expr } from "../runtime/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
@@ -7,6 +7,7 @@ import type { SymbolObj } from "./symbol";
 import type { BeepContext } from "./bootload";
 import { exportBinding } from "./module";
 import { ReturnSignal } from "../runtime/interpreter";
+import { matchPattern, type Pattern } from "../runtime/pattern";
 
 export type FunctionTypeObj =
   & RuntimeObjMixin<'FunctionTypeObj', RootTypeObj>
@@ -22,7 +23,7 @@ export type FunctionObj =
   & FunctionImpl;
 
 type FunctionImpl =
-      { mode: 'interpreted', argNames: SymbolObj[], body: Expr }
+      { mode: 'interpreted', argPattern: Pattern, body: Expr }
     | { mode: 'native', argCount: number, nativeFn: NativeFn };
 
 export type NativeFn = (args: RuntimeObj[]) => RuntimeObj;
@@ -40,12 +41,12 @@ export function initFunction(k: BeepContext) {
   exportBinding(kernelModule, functionTypeObj.name, functionTypeObj);
   k.functionTypeObj = functionTypeObj;
 
-  k.makeFunctionObj = (scopeClosure: ScopeObj, name: SymbolObj | null, argNames: SymbolObj[], body: Expr): FunctionObj => ({
+  k.makeFunctionObj = (scopeClosure: ScopeObj, name: SymbolObj | null, argPattern: Pattern, body: Expr): FunctionObj => ({
     tag: 'FunctionObj',
     type: functionTypeObj,
     name,
     mode: 'interpreted',
-    argNames,
+    argPattern,
     body,
     scopeClosure,
   });
@@ -61,20 +62,24 @@ export function initFunction(k: BeepContext) {
   });
 
   k.callFunction = (fn: FunctionObj, args: RuntimeObj[]): RuntimeObj => {
-    const expectedCount = fn.mode === 'native' ? fn.argCount : fn.argNames.length;
-    if (args.length !== expectedCount) {
-      const fnName = fn.name ? fn.name.name : '<function>';
-      throw new Error(`${fnName} expects ${expectedCount} args, got ${args.length}`);
-    }
-
     if (fn.mode === 'native') {
+      if (args.length !== fn.argCount) {
+        const fnName = fn.name ? fn.name.name : '<function>';
+        throw new Error(`${fnName} expects ${fn.argCount} args, got ${args.length}`);
+      }
       return fn.nativeFn(args);
     }
 
-    let callScope = k.makeScopeObj(fn.scopeClosure);
-    for (let i = 0; i < fn.argNames.length; i++) {
-      addBinding(fn.argNames[i], args[i], callScope);
+    // Create a list from args and match against argPattern
+    const argsList = k.makeListObj(args);
+    const matchResult = matchPattern(fn.argPattern, argsList, k, fn.scopeClosure);
+
+    if (!matchResult.matched) {
+      const fnName = fn.name ? fn.name.name : '<function>';
+      throw new Error(`Argument pattern match failed for ${fnName}`);
     }
+
+    const callScope = scopedBindings(matchResult.bindings, fn.scopeClosure, k);
 
     try {
       return k.evaluate(fn.body, callScope).value;

@@ -40,8 +40,8 @@ export type Expr =
   | { type: "lexicalVar"; sym: SymbolObj }
   | { type: "dynamicVar"; sym: SymbolObj }
   | { type: "memberVar"; fieldName: SymbolObj }
-  | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: SymbolObj[]; body: Expr }
-  | { type: "functionDef"; name: SymbolObj; params: SymbolObj[]; body: Expr }
+  | { type: "methodDef"; receiverType: SymbolObj; name: SymbolObj; params: Pattern; body: Expr }
+  | { type: "functionDef"; name: SymbolObj; params: Pattern; body: Expr }
   | { type: "fieldAccess"; receiver: Expr; fieldName: SymbolObj }
   | { type: "indexAccess"; receiver: Expr; index: Expr }
   | { type: "funcall"; fn: Expr; args: Expr[] }
@@ -61,7 +61,7 @@ export type Expr =
   | { type: "use"; path: string; alias: string | null }
   | { type: "useNames"; path: string; names: { name: string; alias: string | null }[] }
   | { type: "mixInto"; prototype: SymbolObj; target: SymbolObj }
-  | { type: "lambda"; params: SymbolObj[]; body: Expr }
+  | { type: "lambda"; params: Pattern; body: Expr }
   | { type: "not"; expr: Expr }
   | { type: "case"; subject: Expr; branches: { pattern: Pattern; body: Expr }[] }
   | { type: "break"; value: Expr | null }
@@ -133,7 +133,20 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     seq("do", block_, "end").map(([_do, body, _end]) => body),
     expr
   ));
-  const lambdaExpr = seq("\\", sepBy(symbol, ","), "=>", lambdaBody)
+
+  // Helper to build a list pattern from elements + optional spread
+  const toListPattern = ([elements, spreadPart]: [Pattern[], Pattern | unknown[] | null]): Pattern => ({
+    type: "list",
+    elements,
+    spread: spreadPart ? (Array.isArray(spreadPart) ? spreadPart[1] as Pattern : spreadPart) : null,
+  });
+
+  // Pattern list with optional spread: a, b, ...rest
+  const patternListWithSpread: parser<Pattern> = fwd(() =>
+    seq(sepBy(pattern, ",", "leave"), maybe(either(seq(",", spreadPattern), spreadPattern)))
+      .map(toListPattern));
+
+  const lambdaExpr = seq("\\", patternListWithSpread, "=>", lambdaBody)
     .map(([_backslash, params, _arrow, body]): Expr => ({
       type: "lambda",
       params,
@@ -149,7 +162,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Definitions
   */
-  const arglist = seq("(", sepBy(symbol, ","), ")").map(([_lp, params, _rp]) => params);
+  // Arglist returns a list pattern with optional spread: (a, b, ...rest)
+  const arglist: parser<Pattern> = fwd(() =>
+    seq("(", patternListWithSpread, ")")
+      .map(([_, params, __]) => params));
   const fnBody = fwd(() => block(noop, "end"));
 
   const methodDef = seq("def", symbol, "/", symbol, arglist, fnBody)

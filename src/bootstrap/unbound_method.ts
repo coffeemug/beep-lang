@@ -7,6 +7,7 @@ import type { SymbolObj } from "./symbol";
 import type { BeepContext } from "./bootload";
 import { exportBinding } from "./module";
 import type { FunctionObj, NativeFn } from "./function";
+import type { Pattern } from "../runtime/pattern";
 
 export type UnboundMethodTypeObj =
   & RuntimeObjMixin<'UnboundMethodTypeObj', RootTypeObj>
@@ -42,13 +43,23 @@ export function initUnboundMethod(k: BeepContext) {
   k.unboundMethodTypeObj = unboundMethodTypeObj;
 
   // Interpreted methods - create FunctionObj with the body
-  // Prepend `this` to argNames so callFunction can bind it uniformly
-  k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr): UnboundMethodObj => ({
-    tag: 'UnboundMethodObj',
-    type: unboundMethodTypeObj,
-    receiverType,
-    fn: k.makeFunctionObj(scopeClosure, name, [k.thisSymbol, ...argNames], body),
-  });
+  // Prepend `this` binding pattern to argPattern so callFunction can bind it uniformly
+  k.makeUnboundMethodObj = (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argPattern: Pattern, body: Expr): UnboundMethodObj => {
+    // argPattern is a list pattern; prepend 'this' binding to its elements
+    const listPat = argPattern as { type: 'list', elements: Pattern[], spread: Pattern | null };
+    const methodPattern: Pattern = {
+      type: 'list',
+      elements: [{ type: 'binding', sym: k.thisSymbol, scope: 'lexical' }, ...listPat.elements],
+      spread: listPat.spread,
+    };
+
+    return {
+      tag: 'UnboundMethodObj',
+      type: unboundMethodTypeObj,
+      receiverType,
+      fn: k.makeFunctionObj(scopeClosure, name, methodPattern, body),
+    };
+  };
 
   k.bindMethod = (method: UnboundMethodObj, receiverInstance: RuntimeObj) => ({
     tag: 'BoundMethodObj',

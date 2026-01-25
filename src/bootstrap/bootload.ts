@@ -9,6 +9,7 @@ import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeOb
 import { makeSymbolSpaceTypeObj, makeSymbolSpaceObj, intern, initSymbolSpaceMethods, type SymbolSpaceObj, type SymbolSpaceTypeObj } from "./symbol_space";
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
 import type { Expr } from "../runtime/parser";
+import type { Pattern } from "../runtime/pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter, type EvalResult } from "../runtime/interpreter";
 import { initMap, initMapMethods, type MapObj, type MapTypeObj } from "../data_structures/map";
@@ -89,8 +90,8 @@ export type BeepContext = {
   instantiateNamedStruct: (namedStructTypeObj: NamedStructTypeObj, fields: RuntimeObj[]) => NamedStructObj,
   defineNamedPrototype: (name: SymbolObj) => NamedPrototypeTypeObj,
 
-  makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argNames: SymbolObj[], body: Expr) => UnboundMethodObj,
-  makeFunctionObj: (scopeClosure: ScopeObj, name: SymbolObj | null, argNames: SymbolObj[], body: Expr) => FunctionObj,
+  makeUnboundMethodObj: (scopeClosure: ScopeObj, receiverType: TypeObj, name: SymbolObj, argPattern: Pattern, body: Expr) => UnboundMethodObj,
+  makeFunctionObj: (scopeClosure: ScopeObj, name: SymbolObj | null, argPattern: Pattern, body: Expr) => FunctionObj,
   makeNativeFunctionObj: (name: SymbolObj | null, argCount: number, nativeFn: FunctionNativeFn, scopeClosure?: ScopeObj) => FunctionObj,
   makeDefMethodNative: <T extends RuntimeObj>(receiverType: TypeObj, opts?: DefNativeOpts) =>
     (name: string, argCount: number, nativeFn: NativeMethod<T>) => BoundMethodObj | UnboundMethodObj,
