@@ -94,6 +94,7 @@ export function initFunction(k: BeepContext) {
       throw new Error(`Argument pattern match failed for ${fnName}`);
     }
 
+    const savedDynamicScope = k.dynamicScope;
     const callScope = scopedBindings(matchResult.bindings, fn.scopeClosure, k);
 
     try {
@@ -101,6 +102,8 @@ export function initFunction(k: BeepContext) {
     } catch (e) {
       if (e instanceof ReturnSignal) return e.value;
       throw e;
+    } finally {
+      k.dynamicScope = savedDynamicScope;
     }
   }
 }
