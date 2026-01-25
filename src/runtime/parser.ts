@@ -231,12 +231,29 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
   /*
     Compound expressions
   */
+  // Keyword arg: symbol : expr (same as mapPair but for funcall)
+  const kwarg: parser<MapElement> = fwd(() => seq(symbol, ":", expr)
+    .map(([key, _colon, value]): MapElement => ({ kind: "pair", key, value })));
+
+  // Positional arg: an expr that doesn't look like a kwarg
+  // Use peek(not(...)) to ensure we don't consume input on the negative lookahead
+  const positionalArg: parser<Expr> = fwd(() => seq(peek(not(kwarg)), expr).map(([_, e]) => e));
+
+  // Funcall: positional args, then optional kwargs
+  // Handle: foo(), foo(1, 2), foo(a: 1), foo(1, a: 2)
   const funcallSuffix = seq(
-    "(", sepBy(expr, ","), ")"
-  ).map(([_lp, args, _rp]): Suffix => ({
-    type: "funcall",
-    args,
-  }));
+    "(",
+    sepBy(positionalArg, ",", "leave"),
+    seq(maybe(","), sepBy(kwarg, ",")),
+    ")"
+  ).map(([_lp, args, [_, kwargs], _rp]): Suffix => {
+    // If we have kwargs, append a map literal as the last argument
+    if (kwargs.length > 0) {
+      const mapLiteral: Expr = { type: 'map', pairs: kwargs };
+      return { type: "funcall", args: [...args, mapLiteral] };
+    }
+    return { type: "funcall", args };
+  });
 
   const fieldAccessSuffix = seq(".", symbol).map(([_dot, name]): Suffix => ({
     type: "fieldAccess",
