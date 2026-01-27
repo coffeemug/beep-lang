@@ -2,9 +2,8 @@
 # KNOWN BUGS
 
 # NEXT
-- Better function definition/calling
-  - Lambda lists (positional, optional, keyword args)
-  - Combine contiguous function definitions into pattern matching cases
+- Combine contiguous function definitions into pattern matching cases
+- Support optional arguments
 
 # TODO (high risk):
 - The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
@@ -66,3 +65,4 @@
 - Modules should expose `get_field` and ability to list bindings.
 - Multidimensional arrays syntax (for the tic-tac-toe problem)
 - Added `{a, b // 2 }` form of pattern matching.
+- Lambda lists (positional, keyword args, destructuring)
