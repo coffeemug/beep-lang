@@ -141,6 +141,12 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     spread: spreadPart ? (Array.isArray(spreadPart) ? spreadPart[1] as Pattern : spreadPart) : null,
   });
 
+  // Mark map patterns without spread as exhaustive (for kwargs matching)
+  const markMapExhaustive = (pattern: Pattern): Pattern =>
+    (pattern.type === 'map' && pattern.spread === null)
+      ? { ...pattern, exhaustive: true }
+      : pattern;
+
   // Pattern list with optional spread: a, b, ...rest
   const patternListWithSpread: parser<Pattern> = fwd(() =>
     seq(sepBy(pattern, ",", "leave"), maybe(either(seq(",", spreadPattern), spreadPattern)))
@@ -163,9 +169,18 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Definitions
   */
   // Arglist returns a list pattern with optional spread: (a, b, ...rest)
+  // Last map pattern without spread is marked exhaustive for kwargs matching
   const arglist: parser<Pattern> = fwd(() =>
     seq("(", patternListWithSpread, ")")
-      .map(([_, params, __]) => params));
+      .map(([_, params, __]): Pattern => {
+        const list = params as { type: 'list', elements: Pattern[], spread: Pattern | null };
+        if (list.elements.length === 0) return params;
+        const lastIdx = list.elements.length - 1;
+        return {
+          ...list,
+          elements: list.elements.map((el, i) => i === lastIdx ? markMapExhaustive(el) : el),
+        };
+      }));
   const fnBody = fwd(() => block(noop, "end"));
 
   const methodDef = seq("def", symbol, "/", symbol, arglist, fnBody)

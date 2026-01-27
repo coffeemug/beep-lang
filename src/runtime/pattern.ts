@@ -21,7 +21,7 @@ export type Pattern =
   | { type: "int"; value: bigint }
   | { type: "string"; value: string }
   | { type: "list"; elements: Pattern[]; spread: Pattern | null }
-  | { type: "map"; fields: MapPatternField[]; spread: Pattern | null }
+  | { type: "map"; fields: MapPatternField[]; spread: Pattern | null; exhaustive?: boolean }
 
 export type Binding = { sym: SymbolObj; value: RuntimeObj; scope: 'lexical' | 'dynamic' };
 
@@ -156,6 +156,15 @@ export function matchPattern(
         const result = matchPattern(pattern.spread, restMap, ctx, scope);
         if (!result.matched) return { matched: false };
         mapBindings.push(...result.bindings);
+      }
+
+      // Exhaustive matching: fail if value has keys not in pattern
+      if (pattern.exhaustive) {
+        for (const key of map.kv.keys()) {
+          if (!matchedKeys.has(key)) {
+            return { matched: false };
+          }
+        }
       }
 
       return { matched: true, bindings: mapBindings };

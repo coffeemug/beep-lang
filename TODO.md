@@ -4,6 +4,7 @@
 # NEXT
 - Combine contiguous function definitions into pattern matching cases
 - Support optional arguments
+- Consider `def foo(a, { b // 1, c // 2})`-- second arg should be optional
 
 # TODO (high risk):
 - The whole struct/ADT thing. Maybe maps autocast to structs? Or are struct-like? Idk, there's gotta be a good way to do this.
