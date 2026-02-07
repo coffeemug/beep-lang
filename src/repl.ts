@@ -43,15 +43,16 @@ async function readBuffer_(
   let buffer = "";
 
   // Track Ctrl+J (0x0A) vs Enter (0x0D) via raw stdin bytes.
-  // In raw mode, Enter sends \r (0x0D) and Ctrl+J sends \n (0x0A).
+  // Only relevant for TTY — in raw mode, Enter sends \r (0x0D) and Ctrl+J sends \n (0x0A).
+  // For piped input, newlines are \n but shouldn't trigger continuation.
   let lastWasCtrlJ = false;
-  const dataHandler = (chunk: Buffer) => {
+  const dataHandler = process.stdin.isTTY ? (chunk: Buffer) => {
     for (const byte of chunk) {
       if (byte === 0x0A) lastWasCtrlJ = true;
       else if (byte === 0x0D) lastWasCtrlJ = false;
     }
-  };
-  process.stdin.on('data', dataHandler);
+  } : null;
+  if (dataHandler) process.stdin.on('data', dataHandler);
 
   try {
     while (true) {
@@ -82,7 +83,7 @@ async function readBuffer_(
       return trimmed;
     }
   } finally {
-    process.stdin.removeListener('data', dataHandler);
+    if (dataHandler) process.stdin.removeListener('data', dataHandler);
   }
 }
 
