@@ -1,6 +1,6 @@
 import type { RuntimeObj } from "../runtime_objects";
 import { type ScopeObj, scopedBindings } from "./scope";
-import type { Expr } from "../runtime/parser";
+import type { Expr } from "../parser/parser";
 import type { RuntimeObjMixin, TypeObjMixin } from "./object_mixins";
 import { type RootTypeObj } from "./root_type"
 import type { SymbolObj } from "./symbol";

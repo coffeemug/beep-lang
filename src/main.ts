@@ -1,5 +1,5 @@
 import { repl } from "./repl";
-import { parse } from "./runtime/parser";
+import { parse } from "./parser/parser";
 import { makeBeepContext } from "./bootstrap/bootload";
 import { findSymbolByName } from "./bootstrap/symbol_space";
 import type { ListObj } from "./data_structures/list";

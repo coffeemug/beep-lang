@@ -1,7 +1,7 @@
 import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, sepBy1, anych, maybe, some, not, peek, binop, str, type parser, type parserlike, type stream, type result, type parser_error, noop, err, toParser } from "@spakhm/ts-parsec";
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
-import { isAssignable, type Pattern, type MapPatternField } from "./pattern";
+import { isAssignable, type Pattern, type MapPatternField } from "../runtime/pattern";
 
 const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");

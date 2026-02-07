@@ -4,7 +4,7 @@ import type { IntObj } from "../data_structures/int";
 import type { StringObj } from "../data_structures/string";
 import type { ListObj } from "../data_structures/list";
 import type { MapObj } from "../data_structures/map";
-import type { Expr } from "./parser";
+import type { Expr } from "../parser/parser";
 import type { BeepContext } from "../bootstrap/bootload";
 import type { ScopeObj } from "../bootstrap/scope";
 

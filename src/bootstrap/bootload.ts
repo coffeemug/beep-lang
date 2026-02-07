@@ -8,7 +8,7 @@ import { initString, initStringMethods, type StringObj, type StringTypeObj } fro
 import { makeSymbolTypeObj, initSymbolMethods, type SymbolObj, type SymbolTypeObj } from "./symbol";
 import { makeSymbolSpaceTypeObj, makeSymbolSpaceObj, intern, initSymbolSpaceMethods, type SymbolSpaceObj, type SymbolSpaceTypeObj } from "./symbol_space";
 import { initBoundMethod, initBoundMethodMethods, type BoundMethodObj, type BoundMethodTypeObj } from "./bound_method";
-import type { Expr } from "../runtime/parser";
+import type { Expr } from "../parser/parser";
 import type { Pattern } from "../runtime/pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
 import { makeInterpreter, type EvalResult } from "../runtime/interpreter";

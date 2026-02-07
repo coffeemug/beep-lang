@@ -1,4 +1,4 @@
-import { parse, type Expr } from "./parser";
+import { parse, type Expr } from "../parser/parser";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { matchPattern } from "./pattern";
 import type { RuntimeObj, TypeObj } from "../runtime_objects";
