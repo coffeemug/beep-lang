@@ -42,29 +42,47 @@ async function readBuffer_(
 ): Promise<string | null> {
   let buffer = "";
 
-  while (true) {
-    const prompt = buffer ? "... " : getPrompt();
-    let line: string;
-
-    try {
-      line = await rl.question(prompt);
-    } catch {
-      return null;
+  // Track Ctrl+J (0x0A) vs Enter (0x0D) via raw stdin bytes.
+  // In raw mode, Enter sends \r (0x0D) and Ctrl+J sends \n (0x0A).
+  let lastWasCtrlJ = false;
+  const dataHandler = (chunk: Buffer) => {
+    for (const byte of chunk) {
+      if (byte === 0x0A) lastWasCtrlJ = true;
+      else if (byte === 0x0D) lastWasCtrlJ = false;
     }
+  };
+  process.stdin.on('data', dataHandler);
 
-    buffer += (buffer ? "\n" : "") + line;
+  try {
+    while (true) {
+      const prompt = buffer ? "... " : getPrompt();
+      let line: string;
 
-    if (isInsideBlock(buffer)) {
-      continue;
+      try {
+        line = await rl.question(prompt);
+      } catch {
+        return null;
+      }
+
+      const shouldContinue = lastWasCtrlJ;
+      lastWasCtrlJ = false;
+
+      buffer += (buffer ? "\n" : "") + line;
+
+      if (shouldContinue || isInsideBlock(buffer)) {
+        continue;
+      }
+
+      const trimmed = buffer.trim();
+      if (trimmed.length === 0) {
+        buffer = "";
+        continue;
+      }
+
+      return trimmed;
     }
-
-    const trimmed = buffer.trim();
-    if (trimmed.length === 0) {
-      buffer = "";
-      continue;
-    }
-
-    return trimmed;
+  } finally {
+    process.stdin.removeListener('data', dataHandler);
   }
 }
 
