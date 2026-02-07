@@ -2,6 +2,7 @@ import { int, eof, seq, either, alpha, alnum, many, lex, lexMode, fwd, sepBy, se
 import { fromString } from "@spakhm/ts-parsec";
 import type { SymbolObj } from "../bootstrap/symbol";
 import { isAssignable, type Pattern, type MapPatternField } from "../runtime/pattern";
+import { desugarClauses } from "./clauses";
 
 const identFirstChar = either(alpha, "_");
 const identChar = either(alnum, "_");
@@ -529,8 +530,10 @@ export function parse(input: string, intern: (name: string) => SymbolObj): Expr 
     Top-level
   */
   const topLevelClause: parser<Expr> = either(useStatement, mixIntoStatement, definition, statement, expr);
-  const topLevel = seq(sepBy(topLevelClause, xsep(";")), eof).map(([exprs, _]): Expr =>
-    exprs.length === 1 ? exprs[0] : { type: "block", exprs });
+  const topLevel = seq(sepBy(topLevelClause, xsep(";")), eof).map(([exprs, _]): Expr => {
+    const desugared = desugarClauses(exprs, intern);
+    return desugared.length === 1 ? desugared[0] : { type: "block", exprs: desugared };
+  });
 
   const stream = fromString(input);
   const result = topLevel(stream);

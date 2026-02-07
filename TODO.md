@@ -2,7 +2,6 @@
 # KNOWN BUGS
 
 # NEXT
-- Combine contiguous function definitions into pattern matching cases
 - Support optional arguments
 - Consider `def foo(a, { b // 1, c // 2})`-- second arg should be optional
 
@@ -37,6 +36,7 @@
 - clean up O(N^2) impelementations in `enum`
 - add own method definition syntax (e.g. `def list/@@zip() ...`)
 - repl support to reload modules (in an actually usable way)
+- better error message for incorrect fn arity at callsite
 
 # DONE
 - Support for functions (i.e. module methods) as outlined above.
