@@ -1,5 +1,5 @@
 
-use stdlib/enum/[enum]
+use std/enum/[enum]
 
 def range/make_iter()
   range_iter.new(this, this.start())

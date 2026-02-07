@@ -1,4 +1,4 @@
-use stdlib/io
+use std/io
 
 def rpn()
   let stack = []

@@ -17,7 +17,7 @@ import { initStruct, initStructMethods, type StructTypeObj, type NamedStructType
 import { initRange, initRangeMethods, type RangeObj, type RangeTypeObj } from "../data_structures/range";
 import { initPrototype, initPrototypeMethods, type PrototypeTypeObj, type NamedPrototypeTypeObj } from "../runtime/prototype";
 import { initFunction, initFunctionMethods, type FunctionObj, type FunctionTypeObj, type NativeFn as FunctionNativeFn } from "./function";
-import { initIO } from "../stdlib_native/io";
+import { initIO } from "../std_native/io";
 
 export type BeepContext = {
   symbolSpaceObj: SymbolSpaceObj,
@@ -352,7 +352,7 @@ function importNativeStdlib(k: BeepContext) {
 function importStdlib(k: BeepContext) {
   // These modules add methods to built-in types (e.g., iterators).
   // We just load them for side effects, no need to bind them.
-  const stdlibModules: string[] = ['stdlib/list.beep', 'stdlib/range.beep', 'stdlib/map.beep', 'stdlib/string.beep'];
+  const stdlibModules: string[] = ['std/list.beep', 'std/range.beep', 'std/map.beep', 'std/string.beep'];
   for (const filepath of stdlibModules) {
     k.findAndLoadModule(filepath);
   }

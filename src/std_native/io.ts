@@ -6,7 +6,7 @@ import { readSync } from "fs";
 export function initIO(k: BeepContext) {
   const { makeModuleObj, intern, makeNativeFunctionObj, makeStringObj, makeIntObj } = k;
 
-  const ioModule = makeModuleObj(intern('stdlib/io'));
+  const ioModule = makeModuleObj(intern('std/io'));
 
   // readline: reads a single line from stdin synchronously
   const readlineFn = makeNativeFunctionObj(intern('readline'), 0, () => {

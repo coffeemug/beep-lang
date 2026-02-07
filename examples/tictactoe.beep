@@ -1,4 +1,4 @@
-use stdlib/io/[print]
+use std/io/[print]
 
 def game_over?(board)
   'horizontal'

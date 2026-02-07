@@ -1,5 +1,5 @@
 
-use stdlib/enum/[enum]
+use std/enum/[enum]
 
 def string/make_iter()
   @list().make_iter()

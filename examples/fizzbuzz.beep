@@ -1,4 +1,4 @@
-use stdlib/io
+use std/io
 
 def fizzbuzz(n)
   for x in 1..n
